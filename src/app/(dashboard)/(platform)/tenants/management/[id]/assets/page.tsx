@@ -3,5 +3,10 @@ import { TenantsManagementidAssetsClient } from '@/features/platform-tenants/man
 export const dynamic = 'force-dynamic'
 
 export default async function AssetsPage(props: any) {
-    return <TenantsManagementidAssetsClient {...props} />
+    return (
+        <div className="">
+            Asset
+        </div>
+    )
+    // return <TenantsManagementidAssetsClient {...props} />
 }

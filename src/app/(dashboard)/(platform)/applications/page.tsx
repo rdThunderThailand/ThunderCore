@@ -1,4 +1,4 @@
-import { ApplicationHomeClient } from '@/features/app-registry/ApplicationHomeClient'
+import { ApplicationHomeClient } from '@/features/applications/ApplicationHomeClient'
 
 export const dynamic = 'force-dynamic'
 

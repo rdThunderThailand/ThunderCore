@@ -104,7 +104,7 @@ export function OrgSettingsClient({ initialTenant, userRole }: OrgSettingsClient
     return (
         <div className="p-6 lg:p-8 space-y-6 max-w-5xl mx-auto animate-in fade-in duration-500">
             {/* Breadcrumb + Title */}
-            <div>
+            {/* <div>
                 <div className="flex items-center gap-2 text-sm text-blue-600 mb-1">
                     <Link
                         href="/tenants"
@@ -117,7 +117,7 @@ export function OrgSettingsClient({ initialTenant, userRole }: OrgSettingsClient
                     <span className="text-slate-500">Tenant Settings</span>
                 </div>
                 <h1 className="text-2xl font-bold text-slate-900">Tenants Settings</h1>
-            </div>
+            </div> */}
 
             {/* Error Message */}
             {error && (

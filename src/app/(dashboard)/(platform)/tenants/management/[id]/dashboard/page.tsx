@@ -2,10 +2,10 @@ import { TenantsManagementidApplicationsClient } from '@/features/platform-tenan
 
 export const dynamic = 'force-dynamic'
 
-export default async function OrgManagementApplications(props: any) {
+export default async function OrgManagementDashboard(props: any) {
     return (
         <div className="">
-            Application
+            Dashboard
         </div>
     )
     // return <TenantsManagementidApplicationsClient {...props} />

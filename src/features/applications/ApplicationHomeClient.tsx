@@ -1,7 +1,7 @@
 'use client'
 
-import { SearchInput } from '@/components/ui'
-import { TableSkeleton } from '@/components/ui/table-skeleton'
+// import { SearchInput } from '@/components/ui'
+// import { TableSkeleton } from '@/components/ui/table-skeleton'
 import { useTranslation } from '@/i18n/context'
 import { SystemApplication } from '@/models/Application'
 import { UserRole } from '@/types/auth'
@@ -135,18 +135,18 @@ export function ApplicationHomeClient() {
     if (isLoading) {
         return (
             <div className="flex-1 w-full bg-[#F8F9FC] min-h-screen pt-4">
-                <TableSkeleton
+                {/* <TableSkeleton
                     title="Loading Applications..."
                     description="Please wait while we fetch the application data and statistics."
                     icon={AppWindow}
                     hasStats={true}
-                />
+                /> */}
             </div>
         )
     }
 
     return (
-        <div className="p-8 space-y-8 bg-[#F8F9FC] min-h-screen font-sans text-slate-900">
+        <div className="p-8 space-y-8 min-h-screen font-sans text-slate-900">
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
@@ -182,12 +182,12 @@ export function ApplicationHomeClient() {
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
                 {/* Actions Row */}
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
-                    <SearchInput
+                    {/* <SearchInput
                         value={searchTerm}
                         onChange={setSearchTerm}
                         placeholder={t('app.searchByApp')}
                         className="w-full md:w-96"
-                    />
+                    /> */}
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
                         className="w-full md:w-auto px-6 py-2.5 bg-[#0F53FF] text-white font-medium rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2 text-sm shadow-sm shadow-blue-200"

@@ -11,11 +11,18 @@ export interface UserProfile {
 }
 
 export const mockUser: UserProfile = {
-    name: "พีชพีชพีชพีช",
+    name: "หัวหน้าพีชพีชพีชพีช",
     role: "super_admin",
     email: "peach@gmail.com",
-    avatar_url: "https://dicebear.com"
+    avatar_url: "https://ichef.bbci.co.uk/ace/standard/609/cpsprodpb/a0d9/live/211e77d0-7cd1-11f1-926f-c90d1bcfbc84.jpg"
 }
+
+// export const mockUser: UserProfile = {
+//     name: "พีชพีชพีชพีช",
+//     role: "company_admin",
+//     email: "peach@gmail.com",
+//     avatar_url: "https://ichef.bbci.co.uk/ace/standard/609/cpsprodpb/a0d9/live/211e77d0-7cd1-11f1-926f-c90d1bcfbc84.jpg"
+// }
 
 
 interface AuthStore {

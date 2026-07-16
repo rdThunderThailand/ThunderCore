@@ -19,6 +19,12 @@ import logoFull from "../../../public/logo-full.png";
 
 import { mockUser, type UserProfile } from '@/store/useAuthStore';
 import Image from 'next/image';
+import {
+    superAdminNavigationItems,
+    superAdminNavigationItemsAtManagement,
+    companyAdminNavigationItems,
+    defaultNavigationItems
+} from './sidebar-nav';
 
 export interface NavItem {
     label: string;
@@ -46,10 +52,8 @@ export interface SidebarProps {
     user?: UserProfile;
     onLogout?: () => void;
 
-    // Custom Style Overrides Object
     customStyles?: SidebarStyleOverrides;
 }
-
 
 export const SideBar = ({
     brandLogo = <Image src={logo} alt="brand-logo" className="w-full h-full object-contain" />,
@@ -60,6 +64,18 @@ export const SideBar = ({
     customStyles = {}
 }: SidebarProps) => {
     const pathname = usePathname();
+    const resolvedNavigationItems = navigationItems ?? (() => {
+        if (user?.role === "super_admin") {
+            if (pathname.includes("/management/")) {
+                return superAdminNavigationItemsAtManagement;
+            }
+            return superAdminNavigationItems;
+        }
+        if (user?.role === "company_admin") {
+            return companyAdminNavigationItems;
+        }
+        return defaultNavigationItems;
+    })();
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isOpenMobile, setIsOpenMobile] = useState(false);
 
@@ -103,7 +119,7 @@ export const SideBar = ({
                 <div className="flex flex-col gap-6">
 
                     {/* Brand Header Section */}
-                    <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center justify-center gap-6">
                         <Link href="/" className={cn(
                             "flex items-center gap-2 transition-all duration-300 min-h-[40px] justify-center",
                             isCollapsed ? "" : "ml-2"
@@ -111,7 +127,9 @@ export const SideBar = ({
 
                             {isCollapsed ?
                                 <div className={`shrink-0 flex items-center justify-center h-10`}>
-                                    {brandLogo}
+                                    <div className="h-7">
+                                        {brandLogo}
+                                    </div>
                                 </div>
                                 :
                                 <div className={`shrink-0 flex items-center justify-center h-10`}>
@@ -134,7 +152,7 @@ export const SideBar = ({
 
                     {/* Navigation Links Area */}
                     <nav className="flex flex-col gap-1.5 overflow-y-auto max-h-[calc(100vh-180px)] scrollbar-none pr-0.5">
-                        {navigationItems?.map((item) => {
+                        {resolvedNavigationItems?.map((item) => {
                             const isActive = item.href === pathname;
                             const Icon = item.icon;
                             return (
@@ -173,7 +191,6 @@ export const SideBar = ({
                                         <>
                                             <div className="flex flex-col min-w-0 leading-tight">
                                                 <span className="text-sm truncate select-none">{item.label}</span>
-                                                <span className="text-[10px] text-current opacity-60 truncate select-none">({item.labelTh})</span>
                                             </div>
                                             {item.badge !== undefined && item.badge > 0 && (
                                                 <span className={cn(
@@ -192,12 +209,12 @@ export const SideBar = ({
                 </div>
 
                 {/* Footer Section: Settings, Information, Logout (fixed, single-language) */}
-                <div className={cn(
+                {/* <div className={cn(
                     "flex flex-col gap-1.5 min-w-0 transition-all duration-300",
                     isCollapsed ? "items-center" : ""
                 )}>
 
-                    {/* <div className="mb-12">
+                    <div className="mb-12">
                         <button
                             onClick={() => console.log("Settings clicked")}
                             className={cn(
@@ -236,36 +253,8 @@ export const SideBar = ({
                             <LogOut className="w-5 h-5" />
                             {!isCollapsed && <p>ออกจากระบบ</p>}
                         </button>
-                    </div> */}
-
-                    <div className="">
-                        {!isCollapsed && (
-                            <div className="flex items-center gap-1.5 px-2 pt-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                                <span className="text-[10px] text-slate-400 truncate select-none">CityZen OS v2.30</span>
-                            </div>
-                        )}
                     </div>
-
-
-                    <div className="flex items-center gap-3 min-w-0 p-2">
-                        <img
-                            src={user.avatar_url}
-                            alt="companyImg"
-                            className="w-10 h-10 rounded-xl object-cover ring-2 ring-slate-100/50 shrink-0"
-                            onError={(e) => {
-                                // Fallback avatar in case URL fails
-                                (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`;
-                            }}
-                        />
-                        {!isCollapsed && (
-                            <div className="flex flex-col min-w-0 transition-opacity duration-300">
-                                <span className="text-sm font-semibold text-slate-800 truncate leading-tight">{user.role}</span>
-                            </div>
-                        )}
-                    </div>
-
-                </div>
+                </div> */}
             </aside>
         </>
     );
