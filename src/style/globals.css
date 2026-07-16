@@ -1,0 +1,187 @@
+@import "tailwindcss";
+
+@theme {
+    --font-button: "Montserrat", Helvetica, sans-serif;
+
+    --color-border: hsl(var(--border));
+    --color-input: hsl(var(--input));
+    --color-ring: hsl(var(--ring));
+    --color-background: hsl(var(--background));
+    --color-foreground: hsl(var(--foreground));
+
+    --color-primary: hsl(var(--primary));
+    --color-primary-foreground: hsl(var(--primary-foreground));
+
+    --color-secondary: hsl(var(--secondary));
+    --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+    --color-destructive: hsl(var(--destructive));
+    --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+    --color-muted: hsl(var(--muted));
+    --color-muted-foreground: hsl(var(--muted-foreground));
+
+    --color-accent: hsl(var(--accent));
+    --color-accent-foreground: hsl(var(--accent-foreground));
+
+    --color-popover: hsl(var(--popover));
+    --color-popover-foreground: hsl(var(--popover-foreground));
+
+    --color-card: hsl(var(--card));
+    --color-card-foreground: hsl(var(--card-foreground));
+
+    --radius: 0.5rem;
+
+    /* Animations */
+    --animate-fade-in: fade-in 1s var(--animation-delay, 0s) ease forwards;
+    --animate-fade-up: fade-up 1s var(--animation-delay, 0s) ease forwards;
+    --animate-marquee: marquee var(--duration) infinite linear;
+    --animate-image-glow: image-glow 1s ease-out;
+    --animate-spin: spin 1s linear infinite;
+
+    @keyframes spin {
+        to {
+            transform: rotate(1turn);
+        }
+    }
+
+    @keyframes fade-in {
+        0% {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    @keyframes fade-up {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+}
+
+/* User Custom Tokens defined as CSS Variables for direct usage */
+:root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+
+    /* Specific Layout Tokens from Figma */
+    --button-button-font-family: "Montserrat", Helvetica;
+    --button-button-font-size: 14px;
+    --button-button-font-style: normal;
+    --button-button-font-weight: 500;
+    --button-button-letter-spacing: 0px;
+    --button-button-line-height: 16px;
+    --global-tokens-colors-primary-700: rgba(11, 38, 71, 1);
+    --primatives-border-radius-rounded-lg: 8px;
+    --primatives-height-h-9: 36px;
+    --spacing-p-2: 8px;
+    --spacing-p-4: 16px;
+    --theme-radius-rounded-md: var(--primatives-border-radius-rounded-lg);
+}
+
+@layer base {
+
+    *,
+    ::after,
+    ::before {
+        box-sizing: border-box;
+        border-width: 0;
+        border-style: solid;
+        border-color: var(--color-border, currentColor);
+    }
+
+    html {
+        font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    }
+
+    body {
+        background-color: hsl(var(--background));
+        color: hsl(var(--foreground));
+        font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+        font-family: inherit;
+        font-size: 100%;
+        margin: 0;
+        padding: 0;
+        line-height: inherit;
+        color: inherit;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.3);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(148, 163, 184, 0.5);
+    }
+    
+    /* Firefox */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+    }
+}
+
+@layer utilities {
+    .all-\[unset\] {
+        all: unset;
+    }
+    .mapboxgl-ctrl-logo {
+        display: none !important;
+    }
+
+}
