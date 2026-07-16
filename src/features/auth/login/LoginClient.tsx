@@ -3,10 +3,10 @@
 import { AlertCircle, Loader2 } from 'lucide-react'
 import Link from "next/link"
 import { useActionState, useState } from "react"
-import { login } from "@/src/features/auth/actions"
-import AuthShell from "@/src/features/auth/components/AuthShell"
-import EmailField from "@/src/features/auth/components/EmailField"
-import PasswordField from "@/src/features/auth/components/PasswordField"
+import { login } from "@/features/auth/actions"
+import AuthShell from "@/features/auth/components/AuthShell"
+import EmailField from "@/features/auth/components/EmailField"
+import PasswordField from "@/features/auth/components/PasswordField"
 
 export default function LoginClient() {
     const [state, formAction, isPending] = useActionState(login, {})

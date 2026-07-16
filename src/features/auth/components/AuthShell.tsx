@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import SocialButtons from "@/src/features/auth/components/SocialButtons"
+import SocialButtons from "@/features/auth/components/SocialButtons"
 
 const BOLT_IMAGE = "/auth/image-13.png"
 const TECH_IMAGE = "/auth/image-32.png"

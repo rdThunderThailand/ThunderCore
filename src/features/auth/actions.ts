@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
-import { isAxiosError, loginRequest, registerRequest } from '@/src/lib/thunder-core'
+import { isAxiosError, loginRequest, registerRequest } from '@/lib/thunder-core'
 
 export type LoginState = {
   error?: string

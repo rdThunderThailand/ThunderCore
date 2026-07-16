@@ -2,10 +2,10 @@
 
 import { Loader2, Zap } from 'lucide-react'
 import { useActionState, useState } from "react"
-import { registerAccount } from "@/src/features/auth/actions"
-import AuthShell from "@/src/features/auth/components/AuthShell"
-import EmailField from "@/src/features/auth/components/EmailField"
-import PasswordField from "@/src/features/auth/components/PasswordField"
+import { registerAccount } from "@/features/auth/actions"
+import AuthShell from "@/features/auth/components/AuthShell"
+import EmailField from "@/features/auth/components/EmailField"
+import PasswordField from "@/features/auth/components/PasswordField"
 
 export default function RegisterClient() {
     const [state, formAction, isPending] = useActionState(registerAccount, {})
