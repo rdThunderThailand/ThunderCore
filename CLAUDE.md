@@ -1,4 +1,14 @@
-## Workflow Rules
+## What this is
+
+Thunder Core is the **multi-tenant control plane** for the Thunder platform: it owns tenants,
+users, memberships, roles, and the registry of applications that plug into it. Asset/fuel/SAI
+modules are tenant-facing features built on top of that core. Every app-layer product
+(e.g. cityzen) authenticates and authorizes against Thunder Core rather than running its own
+identity stack.
+
+Stack: **Next.js 16 App Router · Supabase (Postgres + Auth + RLS) · Tailwind CSS 4 · TypeScript strict**.
+
+# Workflow Rules
 
 - **Ask First (Pre-Execution Review):** ก่อนเขียนโค้ดหรือเปลี่ยนโครงสร้างหลัก ต้องเสนอ 2–3 ทางเลือกและรอการอนุมัติ
 - **Risk tags:** R0 = irreversible (ขออนุญาตก่อน) / R1 = costly (ระบุเหตุผล) / R2 = easy (ทำได้เลย)
