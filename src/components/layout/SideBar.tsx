@@ -23,7 +23,8 @@ import {
     superAdminNavigationItems,
     superAdminNavigationItemsAtManagement,
     companyAdminNavigationItems,
-    defaultNavigationItems
+    defaultNavigationItems,
+    superAdminNavigationItemsAtApplicationsManagement
 } from './sidebar-nav';
 
 export interface NavItem {
@@ -66,8 +67,11 @@ export const SideBar = ({
     const pathname = usePathname();
     const resolvedNavigationItems = navigationItems ?? (() => {
         if (user?.role === "super_admin") {
-            if (pathname.includes("/management/")) {
+            if (pathname.includes("/tenants/management/")) {
                 return superAdminNavigationItemsAtManagement;
+            }
+            if (pathname.includes("/applications/")) {
+                return superAdminNavigationItemsAtApplicationsManagement;
             }
             return superAdminNavigationItems;
         }
@@ -120,7 +124,7 @@ export const SideBar = ({
 
                     {/* Brand Header Section */}
                     <div className="flex items-center justify-center gap-6">
-                        <Link href="/" className={cn(
+                        <Link href="/tenants" className={cn(
                             "flex items-center gap-2 transition-all duration-300 min-h-[40px] justify-center",
                             isCollapsed ? "" : "ml-2"
                         )}>

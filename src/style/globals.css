@@ -168,7 +168,7 @@
     ::-webkit-scrollbar-thumb:hover {
         background: rgba(148, 163, 184, 0.5);
     }
-    
+
     /* Firefox */
     * {
         scrollbar-width: thin;
@@ -180,6 +180,7 @@
     .all-\[unset\] {
         all: unset;
     }
+
     .mapboxgl-ctrl-logo {
         display: none !important;
     }
