@@ -1,5 +1,7 @@
+
+
 // Tier = roles.role_type (shared across tenants). Persona (operator_technician, …) lives in roles.code, not here.
-export type UserRole = 'super_admin' | 'company_admin' | 'executive_viewer' | 'operator' | 'viewer_auditor';
+export type UserRole = 'super_admin' | 'company_admin' | 'executive_viewer' | 'operator' | 'viewer_auditor' | 'User';
 
 export type UserPermissions = {
     can_invite: boolean;

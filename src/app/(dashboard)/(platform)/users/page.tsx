@@ -1,8 +1,9 @@
+import { UsersHomeClient } from '@/features/platform-users/UsersHomeClient'
 
 export const dynamic = 'force-dynamic'
 
-export default async function UsersPage(props: any) {
+export default async function UsersPage() {
     return (
-        <div className="">Users</div>
+        <UsersHomeClient />
     )
 }
