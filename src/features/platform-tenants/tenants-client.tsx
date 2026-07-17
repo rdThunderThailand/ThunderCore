@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, useDeferredValue } from 'react';
 import { toast } from 'sonner';
-// import { createTenant, deleteTenant, updateTenant } from './actions';
+import { createTenant, deleteTenant, updateTenant } from './actions';
 
 interface TenantsClientProps {
     initialTenants: Tenant[]
