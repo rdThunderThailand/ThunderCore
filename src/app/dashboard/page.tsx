@@ -90,9 +90,8 @@ export default async function DashboardPage() {
                         </span>
                       )}
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
-                          m.status === 'active' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'
-                        }`}
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${m.status === 'active' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'
+                          }`}
                       >
                         {m.status}
                       </span>
