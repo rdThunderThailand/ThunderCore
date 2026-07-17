@@ -1,4 +1,4 @@
-import { ApplicationManagementidSettingsClient } from '@/features/app-registry/management/[id]/settings/ApplicationManagementidSettingsClient'
+import { ApplicationManagementidSettingsClient } from '@/features/applications/management/[id]/settings/ApplicationManagementidSettingsClient'
 
 export const dynamic = 'force-dynamic'
 

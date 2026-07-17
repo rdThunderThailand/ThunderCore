@@ -39,6 +39,9 @@ export const translations: Record<Locale, Record<string, string>> = {
         'nav.backToApps': 'Back to Applications',
         'nav.overview': 'Overview',
 
+        // Header
+        'header.switchLanguage': 'Switch Language',
+
         // Tenants page
         'org.title': 'Tenants',
         'org.totalTenants': 'Total Tenants',
@@ -209,6 +212,9 @@ export const translations: Record<Locale, Record<string, string>> = {
         'nav.backToOrgs': 'กลับไปหน้าองค์กร',
         'nav.backToApps': 'กลับไปหน้าแอปพลิเคชัน',
         'nav.overview': 'ภาพรวม',
+
+        // Header
+        'header.switchLanguage': 'เปลี่ยนภาษา',
 
         // Tenants page
         'org.title': 'องค์กร',

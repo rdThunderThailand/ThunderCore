@@ -1,3 +1,4 @@
+import Header from "@/components/layout/Header"
 import Navbar from "@/components/layout/NavBar"
 import Sidebar from "@/components/layout/SideBar"
 import { ToastProvider } from "@/components/toast"
@@ -8,8 +9,8 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
     return (
         <I18nProvider>
             <ToastProvider>
-                <div className="flex h-screen bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-100/60 via-slate-50 to-white overflow-hidden">
-                    {/* Sidebar: Flexible width, full height - Hidden on Mobile */}
+                {/* <div className="flex h-screen bg-red-500 overflow-hidden"> */}
+                <div className="flex h-screen w-full bg-[radial-gradient(ellipse_at_top_left,rgba(219,234,254,0.6),rgb(248,250,252),rgb(255,255,255))] overflow-hidden">                   {/* Sidebar: Flexible width, full height - Hidden on Mobile */}
                     <div className="hidden lg:flex shrink-0 relative z-50">
                         <Suspense fallback={<div className="w-64 h-full bg-white/0" />}>
                             <Sidebar />
@@ -21,7 +22,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 
                         {/* Desktop Navbar: Sticky at top of content area - Hidden on Mobile */}
                         <div className="hidden lg:block">
-                            <Navbar />
+                            <Header />
                         </div>
 
                         {/* Scrollable Page Content */}
