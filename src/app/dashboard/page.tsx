@@ -1,13 +1,13 @@
 import { redirect } from 'next/navigation'
 
-import { logout } from '@/src/features/auth/actions'
+import { logout } from '@/features/auth/actions'
 import {
   getCurrentUser,
   getMyMemberships,
   isAxiosError,
   type CurrentUser,
   type Membership,
-} from '@/src/lib/thunder-core'
+} from '@/lib/thunder-core'
 
 export default async function DashboardPage() {
   let user: CurrentUser
