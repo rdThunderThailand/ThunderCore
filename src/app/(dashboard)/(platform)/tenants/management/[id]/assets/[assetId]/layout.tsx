@@ -1,6 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { getAdminClient } from "@/utils/supabase/admin"
-import { requireAdmin } from "@/utils/auth-context"
+import { getAsset } from "@/features/platform-tenants/management/[id]/assets/actions"
 import { Server, Smartphone, Laptop, Radio, Cpu, Wifi, Monitor, ChevronLeft } from 'lucide-react'
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -22,17 +20,11 @@ export default async function AssetDetailLayout(props: {
     children: React.ReactNode,
     params: Promise<{ id: string, assetId: string }>
 }) {
-    const { supabase } = await requireAdmin()
     const { id: tenantId, assetId } = await props.params
 
-    const { data: asset, error } = await supabase
-        .from('assets')
-        .select('*')
-        .eq('id', assetId)
-        .eq('tenant_id', tenantId)
-        .single()
+    const asset = await getAsset(tenantId, assetId)
 
-    if (error || !asset) {
+    if (!asset) {
         return notFound()
     }
 
