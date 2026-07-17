@@ -1,4 +1,15 @@
-import { Profile } from '@/types/dashboard'
+export type Profile = {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    role: string;
+    can_invite: boolean;
+    can_create_app: boolean;
+    can_view_logs: boolean;
+    created_at: string;
+    is_active: boolean;
+}
 
 export const MOCK_USERS: Profile[] = [
     // Page 1

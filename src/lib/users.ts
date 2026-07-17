@@ -4,7 +4,7 @@ import { MOCK_USERS } from './mock/users'
 
 // Living endpoint catalog — each signature is the future REST contract.
 export async function getUsers(): Promise<Profile[]> {
-    if (isDevBypass()) return MOCK_USERS
+    if (isDevBypass()) return MOCK_USERS as unknown as Profile[]
     throw new Error('getUsers: no REST endpoint yet — set NEXT_PUBLIC_DEV_BYPASS=true to use mock data')
 }
 

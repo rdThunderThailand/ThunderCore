@@ -3,6 +3,7 @@
 import { Profile } from '@/types/dashboard'
 import { ChevronLeft, ChevronRight, Plus, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { deleteUser } from '@/lib/users'
 
@@ -12,6 +13,7 @@ interface UsersClientProps {
 }
 
 export function UsersClient({ initialUsers }: UsersClientProps) {
+    const router = useRouter()
     const [users, setUsers] = useState<Profile[]>(initialUsers)
     const [searchTerm, setSearchTerm] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
@@ -106,9 +108,8 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
     return (
         <div className="min-h-screen bg-[#F0F4F8] pb-24 lg:pb-0">
             <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6 lg:space-y-8 animate-in fade-in duration-500">
-
-                {/* Header title */}
-                {/* <div className="flex justify-between items-center bg-red-500">
+                {/* Header title
+                <div className="flex justify-between items-center">
                     <h1 className="text-[28px] font-bold text-indigo-950 leading-tight tracking-wide">
                         Users
                     </h1>
@@ -194,15 +195,18 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                                         const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.email || 'Anonymous User'
                                         const isSelected = selectedUserIds.includes(user.id)
                                         const firstLetter = user.email ? user.email.charAt(0).toUpperCase() : ''
-                                        const isSuperAdminUser = user.role === 'super_admin'
+                                        const roleStr = (user.role as string) || ''
+                                        const isSuperAdminUser = roleStr === 'super_admin' || roleStr === 'Super Admin'
+                                        const isAdminUser = roleStr === 'admin' || roleStr === 'Admin'
 
                                         return (
                                             <tr
                                                 key={user.id}
-                                                className={`group transition-colors ${isSelected ? 'bg-blue-50/60 hover:bg-blue-50' : 'hover:bg-slate-50/50'}`}
+                                                onClick={() => router.push(`/settings?user=${user.id}`)}
+                                                className={`group transition-colors cursor-pointer ${isSelected ? 'bg-blue-50/60 hover:bg-blue-50' : 'hover:bg-slate-50/50'}`}
                                             >
                                                 {/* Checkbox cell */}
-                                                <td className="py-4 px-4">
+                                                <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
                                                     <input
                                                         type="checkbox"
                                                         className="rounded border-slate-300 text-blue-600 focus:ring-0 w-4 h-4 cursor-pointer"
@@ -231,6 +235,10 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                                                         <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-green-50 border border-green-200 text-green-700">
                                                             Super Admin
                                                         </span>
+                                                    ) : isAdminUser ? (
+                                                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-blue-50 border border-blue-200 text-blue-700">
+                                                            Admin
+                                                        </span>
                                                     ) : (
                                                         <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 border border-slate-200 text-slate-600">
                                                             User
@@ -246,7 +254,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                                                 </td>
 
                                                 {/* ACTION cell */}
-                                                <td className="py-4 px-4 text-right">
+                                                <td className="py-4 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                                                     <button
                                                         onClick={() => handleDelete(user.id, displayName)}
                                                         className="text-sm font-medium text-blue-500 hover:text-blue-700 hover:underline cursor-pointer"
@@ -284,8 +292,8 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                                         key={i}
                                         onClick={() => setCurrentPage(i + 1)}
                                         className={`w-8 h-8 flex items-center justify-center rounded-lg border ${currentPage === i + 1
-                                            ? 'bg-blue-50 border-blue-200 text-blue-600 font-bold'
-                                            : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+                                                ? 'bg-blue-50 border-blue-200 text-blue-600 font-bold'
+                                                : 'border-slate-200 text-slate-500 hover:bg-slate-50'
                                             } font-medium text-sm transition-all cursor-pointer`}
                                     >
                                         {i + 1}
