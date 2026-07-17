@@ -72,7 +72,7 @@ importers:
         specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
       react-hook-form:
-        specifier: ^7.71.0
+        specifier: ^7.81.0
         version: 7.81.0(react@19.2.4)
       react-map-gl:
         specifier: ^7.1.7
@@ -90,7 +90,7 @@ importers:
         specifier: ^3.6.0
         version: 3.6.0
       zod:
-        specifier: ^4.3.5
+        specifier: ^4.4.3
         version: 4.4.3
       zustand:
         specifier: ^5.0.14
