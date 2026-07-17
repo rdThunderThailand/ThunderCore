@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **Read `docs/SESSION_LOG.md` first** — a running log of what each past session
+> changed and what's left to do. It's the history/context that keeps you from
+> re-deriving work already done. Add an entry there when you finish a session.
+
 ## What this is
 
 Thunder Core is the **multi-tenant control plane** for the Thunder platform: it owns tenants,
@@ -96,6 +100,46 @@ folder. Each feature owns its `actions.ts` (Server Actions), `components/`, and 
 Shared: `src/lib/` (clients, repositories, validations), `src/types/`, `src/utils/`, `src/components/`.
 
 **Import alias:** `@/*` → `./src/*`.
+
+## Project structure
+
+Where things live and where new code goes. `@/*` → `src/*`.
+
+```
+src/
+├── app/                      # Next.js App Router — routes ONLY (thin)
+│   ├── (auth)/               #   login, register, register/confirmed
+│   ├── (dashboard)/
+│   │   ├── (platform)/       #   tenants, applications, users (+ management/[id]/… nested)
+│   │   └── layout.tsx
+│   └── dashboard/            #   post-login /me landing
+│       page.tsx              # each page.tsx is thin: renders a *Client from features/
+│
+├── features/<feature>/       # UI + logic per feature (the real code lives here)
+│   ├── <Feature>Client.tsx   #   client/entry component the route renders
+│   ├── actions.ts            #   Server Actions ('use server') — delegate to src/lib seam
+│   └── components/           #   feature-local components
+│   # current: auth, platform-tenants, platform-applications
+│
+├── lib/                      # Data layer = the living endpoint catalog (see Architecture)
+│   ├── thunder-core.ts       #   server-only axios client for Thunder Core core/v1 (auth)
+│   ├── <domain>.ts           #   per-domain seam: REST contract; bypass→mock, else throw
+│   ├── dev.ts                #   isDevBypass(), getDevRole() — dev bypass via env
+│   └── mock/<domain>.ts      #   fixtures served when NEXT_PUBLIC_DEV_BYPASS=true
+│
+├── components/               # Shared UI (layout/, ui/, toast) — not feature-specific
+├── models/                   # Domain entity types (Application, Asset, Log)
+├── types/                    # Shared TypeScript types (index.ts barrel)
+├── store/                    # Zustand client state (useAuthStore)
+├── i18n/                     # Translations + context
+└── utils/                    # Small helpers (cn, …). NOTE: utils/supabase was deleted — do not re-add.
+```
+
+**Rules of thumb for new code:**
+- New page → thin `app/.../page.tsx` that renders a `*Client.tsx` from `features/`.
+- New data access → a function in `src/lib/<domain>.ts` (never call Supabase/axios from components).
+- Mutations → `features/<feature>/actions.ts` (`'use server'`) that call the `src/lib` seam.
+- Running without a backend → guard with `isDevBypass()` and serve `src/lib/mock/<domain>.ts`.
 
 # Workflow Rules
 
