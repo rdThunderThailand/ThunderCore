@@ -3,8 +3,9 @@
 สำหรับคนในทีม (และ AI ที่ช่วยเขียนโค้ด) ที่ต้องต่อ `thundercore` (frontend) เข้ากับ `Thunder_Core` (backend)
 
 > **สถานะไฟล์นี้:** ส่วน "API สองฝั่ง" อ้างอิงโค้ดที่มีอยู่จริงทั้งสอง repo
-> ส่วน "Middleware" เป็น **ข้อเสนอ** — `src/middleware.ts` ยังไม่มีในโปรเจกต์
-> ส่วน "RBAC ฝั่ง frontend" ยังไม่ได้ implement เช่นกัน
+> ส่วน "Proxy/Middleware" เป็น **ข้อเสนอ** — `src/proxy.ts` ยังไม่มีในโปรเจกต์ (เป็นงานของอีกทีม)
+> ส่วน "RBAC ฝั่ง frontend" ยังไม่ได้ implement เช่นกัน (งานของอีกทีม)
+> `POST /auth/refresh` ✅ สร้างและเทสต์ผ่านแล้ว 2026-07-20
 
 ---
 
@@ -49,7 +50,14 @@ Browser ──cookie(httpOnly)──> thundercore (Next.js Server)
 
 ถ้าคนถือ cookie ปลอมผ่าน middleware เข้ามาได้ เขาจะเจอหน้าเปล่าที่ทุก data fetch ตอบ 401 — ซึ่งถูกต้องแล้ว
 
-### 1.2 โค้ดที่ต้องเขียน — `src/middleware.ts`
+### 1.2 โค้ดที่ต้องเขียน — `src/proxy.ts`
+
+> ⚠️ **Next.js 16 เปลี่ยนชื่อ Middleware เป็น Proxy แล้ว** — ไฟล์คือ `src/proxy.ts` และ export ชื่อ `proxy`
+> ถ้าเขียนเป็น `src/middleware.ts` มันยังทำงานอยู่แต่ dev server จะขึ้น deprecation warning
+> ความสามารถเหมือนเดิมทุกอย่าง เปลี่ยนแค่ชื่อ (ยืนยันกับ `node_modules/next/dist/docs/01-app/01-getting-started/16-proxy.md` ของ next 16.2.10)
+>
+> เอกสาร Next เองก็ระบุตรงกับหัวข้อ 1.1 ข้างบน: proxy เหมาะกับ **optimistic check** เท่านั้น
+> "should not be used as a full session management or authorization solution"
 
 ```ts
 import { NextResponse, type NextRequest } from "next/server";
@@ -59,7 +67,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATHS = ["/login", "/register", "/register/confirmed"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hasSession = Boolean(request.cookies.get("tc_access_token")?.value);
   const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
@@ -81,7 +89,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // กัน middleware วิ่งทับ static assets และ /api — matcher นี้สำคัญกว่าที่คิด
+  // กัน proxy วิ่งทับ static assets และ /api — matcher นี้สำคัญกว่าที่คิด
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
@@ -99,7 +107,16 @@ export const config = {
 ตอนนี้ `tc_refresh_token` ถูก set ตอน login ([auth/actions.ts:56](../src/features/auth/actions.ts:56)) แต่**ไม่เคยถูกใช้เลย**
 พอ access token หมดอายุ user จะเจอ 401 แล้วต้อง login ใหม่
 
-ต้องมี `POST /api/core/v1/auth/refresh` ที่ Thunder_Core ก่อน (ยังไม่มี) รับ `{ refresh_token }` คืน `LoginSession` ก้อนเดิม
+✅ **`POST /api/core/v1/auth/refresh` สร้างแล้วและเทสต์ผ่าน 12/12** (2026-07-20)
+รับ `{ refresh_token }` คืน `{ data: { access_token, refresh_token, expires_at, user_id } }` — shape เดียวกับ `/auth/login` เป๊ะ
+เทสต์: `node --env-file=.env tests/api/auth-refresh.test.mjs` (ที่ repo Thunder_Core, ต้องมี dev server ที่ :3000)
+
+**สองข้อที่ต้องรู้ก่อนเขียนโค้ดฝั่ง client:**
+
+1. **Supabase หมุน refresh token ทุกครั้ง** — token เก่าใช้ไม่ได้อีกหลังพ้น grace window
+   ต้อง**เขียนทับ cookie `tc_refresh_token` ด้วยค่าใหม่ทุกครั้ง** ถ้าลืม จะ**ผ่านรอบแรกแล้วพังรอบสอง** ซึ่งเป็นบั๊กที่หาเจอยากมากตอนขึ้น production
+2. **มี grace window ~10 วินาที** (`refresh_token_reuse_interval` ของ Supabase) ที่ token เก่ายังใช้ได้ และจะคืน **session เดิม** ไม่ใช่ปั๊มใหม่
+   แปลว่า request สองเส้นที่ยิง refresh พร้อมกันจะไม่ตีกัน — ไม่ต้องทำ mutex/queue ให้ยุ่ง (ยืนยันด้วยเทสต์แล้ว)
 
 พอมีแล้ว ให้ทำ refresh ที่ **axios response interceptor** ไม่ใช่ที่ middleware:
 
@@ -390,4 +407,18 @@ const handleSave = async (id: string, name: string) => {
 
 ก่อนจะสั่งให้ backend สร้างเส้นใหม่ **ไปเช็ค `Thunder_Core/src/app/api/core/v1/` ก่อนเสมอ** — บางเส้นอาจแค่ต้อง map ชื่อให้ตรงกับที่ seam ต้องการ ไม่ต้องเขียนใหม่
 
-⚠️ ที่ยืนยันแล้วว่า**ยังไม่มีจริง**และเป็น blocker: `POST /auth/refresh`
+✅ `POST /auth/refresh` — blocker เดิม สร้างแล้วเมื่อ 2026-07-20 (ดูหัวข้อ 1.3)
+
+**ที่สำคัญกว่านั้น:** Thunder_Core ยังมี API surface ที่สองชื่อ **`/api/v0.1/`** ซึ่งมี logic ครบเกือบทั้ง catalog แล้ว —
+`/v0.1/tenants`, `/tenants/stats`, `/tenants/[id]/members`, `/tenants/[id]/applications`,
+`/applications/[id]/api-key`, `/scenario`, `/users` ฯลฯ (ดูทั้งหมดด้วย `find src/app/api/v0.1 -name route.ts`)
+
+ทิศทางที่ตกลงกันคือ **promote v0.1 → core/v1** ไม่ใช่เขียนใหม่ สิ่งที่ต้องเติมตอน promote มี 5 อย่าง:
+
+| # | v0.1 เป็นแบบนี้ | core/v1 ต้องเป็นแบบนี้ |
+|---|---|---|
+| 1 | ไม่มี `requireAppKey` | ต้องมีทุกเส้น |
+| 2 | ไม่มี `requireUuid` — id ดิบเข้า `.eq()` | ต้องมี |
+| 3 | คืน array/object ดิบ | คืน `{ success, data }` |
+| 4 | คืน camelCase (`memberCount`, `createdAt`) | คืน snake_case ตาม DB |
+| 5 | `PUT` ยัด body เข้า `.update()` ตรงๆ | whitelist field ด้วย zod |

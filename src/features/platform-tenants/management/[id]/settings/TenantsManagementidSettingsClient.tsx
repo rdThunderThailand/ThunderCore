@@ -3,7 +3,8 @@ import { MOCK_TENANTS } from '@/lib/mock/tenants'
 import { mockUser } from '@/store/useAuthStore'
 
 export async function TenantsManagementidSettingsClient({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
+    const tenant = MOCK_TENANTS.find((t) => t.id === id) ?? MOCK_TENANTS[0]
 
-
-    return <OrgSettingsClient initialTenant={MOCK_TENANTS[0]} userRole={mockUser.role} />
+    return <OrgSettingsClient initialTenant={tenant} userRole={mockUser.role} />
 }

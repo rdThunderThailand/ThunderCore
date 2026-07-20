@@ -15,7 +15,7 @@ const STATUS_STYLES: Record<SystemApplication['status'], string> = {
     inactive: 'bg-slate-100 text-slate-500',
 }
 
-const PAGE_SIZE = 8
+const PAGE_SIZE = 6
 
 export function ApplicationHomeClient() {
     const isSuperAdmin = getDevRole() === 'super_admin' || 'company_admin'
@@ -71,49 +71,50 @@ export function ApplicationHomeClient() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen text-slate-400 gap-2">
+            <div className="flex items-center justify-center w-full py-20 text-slate-400 gap-2">
                 <Loader2 className="w-5 h-5 animate-spin" /> Loading applications…
             </div>
         )
     }
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden p-8 gap-6 font-sans text-slate-900">
-            {/* Summary cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 shrink-0">
-                <StatCard label="Total Applications" value={apps.length} sub="All time" icon={LayoutGrid} tint="bg-blue-50 text-blue-600" />
-                <StatCard
-                    label="Created This Month"
-                    value={thisMonth}
-                    sub={new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                    icon={Plus}
-                    tint="bg-emerald-50 text-emerald-600"
-                />
-            </div>
-
-            {/* Table card — fills remaining height */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col min-h-0 flex-1">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
-                    <div className="relative w-full md:w-96">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search by application name"
-                            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
-                        />
-                    </div>
-                    {isSuperAdmin && (
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="w-full md:w-auto px-6 py-2.5 bg-[#0F53FF] text-white font-medium rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 text-sm"
-                        >
-                            <Plus className="w-4 h-4" /> Create Application
-                        </button>
-                    )}
+        <div className="w-full max-w-full overflow-hidden pb-24 lg:pb-0">
+            <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6 lg:space-y-8 animate-in fade-in duration-500 font-sans text-slate-900">
+                {/* Summary cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                    <StatCard label="Total Applications" value={apps.length} sub="All time" icon={LayoutGrid} tint="bg-blue-50 text-blue-600" />
+                    <StatCard
+                        label="Created This Month"
+                        value={thisMonth}
+                        sub={new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                        icon={Plus}
+                        tint="bg-emerald-50 text-emerald-600"
+                    />
                 </div>
 
-                <div className="flex-1 overflow-y-auto mt-4">
+                {/* Table card */}
+                <div className="bg-white rounded-[20px] border border-slate-200 shadow-sm p-4 lg:p-6 flex flex-col overflow-hidden">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search by application name..."
+                                className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
+                            />
+                        </div>
+                        {isSuperAdmin && (
+                            <button
+                                onClick={() => setIsModalOpen(true)}
+                                className="px-4 py-2.5 bg-blue-600 text-white font-semibold text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-lg shadow-blue-600/20 shrink-0"
+                            >
+                                <Plus className="w-4 h-4" /> Create Application
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="flex-1 overflow-x-auto w-full max-w-full">
                     {filtered.length === 0 ? (
                         <div className="py-16 text-center text-slate-400 flex flex-col items-center gap-2">
                             <AppWindow className="w-8 h-8" />
@@ -159,6 +160,7 @@ export function ApplicationHomeClient() {
 
                 <Pagination page={page} totalPages={pages} onChange={setPage} className="shrink-0 mt-2" />
             </div>
+        </div>
 
             {isModalOpen && (
                 <CreateModal

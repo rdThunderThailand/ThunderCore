@@ -30,13 +30,13 @@ export function ApplicationManagementidScenarioClient() {
     }
 
     return (
-        <div className="p-8 space-y-6 bg-[#F8F9FC] min-h-screen">
+        <div className="p-8 space-y-6 min-h-screen">
             {/* Header */}
             <div>
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
                     {app?.name ?? 'Application'}
                 </p>
-                <h1 className="text-2xl font-bold text-slate-900">Scenario Control</h1>
+                {/* <h1 className="text-2xl font-bold text-slate-900">Scenario Control</h1> */}
                 <p className="text-sm text-slate-500 mt-1">
                     ตั้งค่าระดับความเข้มข้นของสถานการณ์ที่ส่งไปยัง CityZen แบบ Real-time
                 </p>

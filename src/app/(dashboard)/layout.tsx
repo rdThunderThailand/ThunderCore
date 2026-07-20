@@ -1,6 +1,6 @@
 import Header from "@/components/layout/Header"
-import Navbar from "@/components/layout/NavBar"
 import Sidebar from "@/components/layout/SideBar"
+import { DashboardMain } from "@/components/layout/DashboardMain"
 import { ToastProvider } from "@/components/toast"
 import { I18nProvider } from "@/i18n/context"
 import React, { Suspense } from "react"
@@ -26,13 +26,10 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                             <Header />
                         </div>
 
-                        {/* Scrollable Page Content */}
-                        <main className="flex-1 overflow-y-auto overflow-x-hidden">
-                            {/* Container wrapper if needed, or let pages handle their own padding */}
-                            <div className="w-full">
-                                {children}
-                            </div>
-                        </main>
+                        {/* Scrollable Page Content with Auto Scroll Reset */}
+                        <DashboardMain>
+                            {children}
+                        </DashboardMain>
                     </div>
                 </div>
             </ToastProvider>
