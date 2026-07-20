@@ -30,3 +30,11 @@ export interface GetMembersOptions {
     limit?: number;
     search?: string;
 }
+
+export interface MemberDetails extends Membership {
+    profiles: {
+        first_name: string;
+        last_name: string;
+        email: string;
+    };
+}

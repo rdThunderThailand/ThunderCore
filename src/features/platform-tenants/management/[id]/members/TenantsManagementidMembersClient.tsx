@@ -106,7 +106,7 @@ export function TenantsManagementidMembersClient() {
     }
 
     return (
-        <div className="p-8 space-y-8 bg-[#F8F9FC] min-h-screen font-sans text-slate-900">
+        <div className="p-8 space-y-8 min-h-screen font-sans text-slate-900">
             {/* Header / Actions */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex flex-col md:flex-row gap-4 justify-between items-center">
                 <div className="relative flex-1 w-full md:max-w-xl flex gap-2">
