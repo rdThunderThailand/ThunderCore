@@ -5,20 +5,38 @@ import { MOCK_ASSETS } from './mock/assets'
 import { MOCK_MEMBERS } from './mock/members'
 import { MOCK_TENANT_ACTIVITY } from './mock/tenant-activity'
 import { MOCK_TENANTS, MOCK_TENANT_USAGE } from './mock/tenants'
+import { thunderCore } from './thunder-core'
 
-// Living endpoint catalog — each signature is the future REST contract.
-// Swap the body to axios (GET core/v1/tenants) when the endpoint lands; callers don't change.
+// Living endpoint catalog — each signature is the REST contract.
+// Backed by Thunder Core core/v1/tenants. Requests send snake_case (they mirror DB columns),
+// responses come back camelCase (they mirror the Tenant view model) — that asymmetry is the
+// server's contract, not an oversight here.
+
+type ThunderResponse<T> = { success: boolean; data: T }
 
 export async function getTenants(): Promise<Tenant[]> {
     if (isDevBypass()) return MOCK_TENANTS
-    // ponytail: Supabase shim — replace with axios GET core/v1/tenants when it exists
-    throw new Error('getTenants: no REST endpoint yet — set NEXT_PUBLIC_DEV_BYPASS=true to use mock data')
+    const res = await thunderCore.get<ThunderResponse<Tenant[]>>('/tenants')
+    return res.data.data
 }
 
-export async function getTenantUsageStats(): Promise<typeof MOCK_TENANT_USAGE> {
+export type TenantUsageStats = {
+    totalTenants: number
+    activeTenants: number
+    totalApps: number
+    totalMembers: number
+}
+
+export async function getTenantUsageStats(): Promise<TenantUsageStats> {
     if (isDevBypass()) return MOCK_TENANT_USAGE
-    // ponytail: Supabase shim — replace with axios GET core/v1/tenants/usage when it exists
-    throw new Error('getTenantUsageStats: no REST endpoint yet — set NEXT_PUBLIC_DEV_BYPASS=true to use mock data')
+    const res = await thunderCore.get<ThunderResponse<TenantUsageStats>>('/tenants/usage')
+    return res.data.data
+}
+
+export async function getTenant(id: string): Promise<Tenant | null> {
+    if (isDevBypass()) return MOCK_TENANTS.find((t) => t.id === id) ?? null
+    const res = await thunderCore.get<ThunderResponse<Tenant>>(`/tenants/${id}`)
+    return res.data.data
 }
 
 export type TenantInput = {
@@ -31,39 +49,40 @@ export type TenantInput = {
 }
 
 export async function createTenant(data: TenantInput): Promise<Tenant> {
-    if (!isDevBypass()) throw new Error('createTenant: no REST endpoint yet — enable NEXT_PUBLIC_DEV_BYPASS')
-    const newTenant: Tenant = {
-        id: crypto.randomUUID(),
-        name: data.name,
-        type: data.type,
-        status: data.status,
-        memberCount: 0,
-        appCount: 0,
-        deviceQuota: 50,
-        deviceCount: 0,
-        createdAt: new Date().toISOString(),
+    if (isDevBypass()) {
+        // ponytail: echo a shaped row so the client can render it; the real POST returns the
+        // server row. Not persisted across requests in bypass mode.
+        return {
+            id: crypto.randomUUID(),
+            name: data.name,
+            type: data.type,
+            status: data.status,
+            memberCount: 0,
+            appCount: 0,
+            deviceQuota: 50,
+            deviceCount: 0,
+            createdAt: new Date().toISOString(),
+        }
     }
-    MOCK_TENANTS.unshift(newTenant)
-    return newTenant
+    // tenant_code is generated server-side — nothing to send for it.
+    const res = await thunderCore.post<ThunderResponse<Tenant>>('/tenants', data)
+    return res.data.data
 }
 
 export async function updateTenant(id: string, data: Partial<TenantInput>): Promise<Tenant> {
-    if (!isDevBypass()) throw new Error('updateTenant: no REST endpoint yet — enable NEXT_PUBLIC_DEV_BYPASS')
-    const index = MOCK_TENANTS.findIndex((t) => t.id === id)
-    if (index !== -1) {
-        MOCK_TENANTS[index] = { ...MOCK_TENANTS[index], ...data }
-        return MOCK_TENANTS[index]
+    if (isDevBypass()) {
+        const base = MOCK_TENANTS.find((t) => t.id === id) ?? MOCK_TENANTS[0]
+        return { ...base, id, ...data }
     }
-    const base = MOCK_TENANTS[0]
-    return { ...base, id, ...data }
+    // The server rejects any key outside its whitelist with a 400 rather than ignoring it,
+    // so never spread extra state into `data` here.
+    const res = await thunderCore.patch<ThunderResponse<Tenant>>(`/tenants/${id}`, data)
+    return res.data.data
 }
 
 export async function deleteTenant(id: string): Promise<void> {
-    if (!isDevBypass()) throw new Error('deleteTenant: no REST endpoint yet — enable NEXT_PUBLIC_DEV_BYPASS')
-    const index = MOCK_TENANTS.findIndex((t) => t.id === id)
-    if (index !== -1) {
-        MOCK_TENANTS.splice(index, 1)
-    }
+    if (isDevBypass()) return // ponytail: no-op in bypass; client drops it from local state.
+    await thunderCore.delete(`/tenants/${id}`)
 }
 
 export async function getTenantDashboard(tenantId: string): Promise<TenantDashboard | null> {
@@ -114,6 +133,8 @@ export async function getTenantDashboard(tenantId: string): Promise<TenantDashbo
             createdAt: tenant.createdAt,
         }
     }
-    // ponytail: Supabase shim — replace with axios GET core/v1/tenants/:id/dashboard when it exists
-    throw new Error('getTenantDashboard: no REST endpoint yet — set NEXT_PUBLIC_DEV_BYPASS=true to use mock data')
+    // The server composes this in one call — quota, device counts, members and logs are
+    // joined there rather than fanned out across seam functions like the bypass branch does.
+    const res = await thunderCore.get<ThunderResponse<TenantDashboard>>(`/tenants/${tenantId}/dashboard`)
+    return res.data.data
 }
