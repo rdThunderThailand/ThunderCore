@@ -1,8 +1,10 @@
+import { ApplicationManagementidScenarioClient } from "@/features/platform-scenario/ApplicationManagementidScenarioClient";
 
-export const dynamic = 'force-dynamic'
-
-export default async function ScenarioPage(props: any) {
+export default function ScenarioPage() {
     return (
-        <div className="">Application Scenario</div>
+        <div>
+            <h1>Scenario Page</h1>
+            <ApplicationManagementidScenarioClient />
+        </div>
     )
 }
