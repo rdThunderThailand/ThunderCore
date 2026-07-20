@@ -3,7 +3,7 @@ import { TenantsManagementidClient } from "@/features/platform-tenants/managemen
 export const dynamic = 'force-dynamic'
 
 export default async function OrgManagementOverview(props: any) {
-    // return <TenantsManagementidClient {...props} />
-    return <div className="">Peach</div>
+    return <TenantsManagementidClient {...props} />
+    // return <div className="">Peach</div>
 
 }

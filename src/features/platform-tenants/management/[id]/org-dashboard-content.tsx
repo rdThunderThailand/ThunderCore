@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslation } from '@/i18n/context'
+import { TenantDashboard } from '@/types/tenants'
 import { Calendar } from 'lucide-react'
 import { PlayerStatusChart } from './components/player-status-chart'
 import { LicensesChart } from './components/licenses-chart'
@@ -11,19 +12,7 @@ import Map, { NavigationControl } from 'react-map-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 interface OrgDashboardContentProps {
-    tenant: {
-        id: string
-        name: string
-        status: string
-        type: string
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        quota: any
-        playerStatus: { online: number, offline: number, busy: number, error: number, total: number }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        members: any[]
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        recentLogs: any[]
-    }
+    tenant: TenantDashboard
     createdDate: string
 }
 
@@ -32,7 +21,7 @@ export function OrgDashboardContent({ tenant, createdDate }: OrgDashboardContent
     const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
     return (
-        <div className="min-h-screen bg-[#F0F4F8] pb-24 lg:pb-0">
+        <div className="min-h-screen pb-24 lg:pb-0">
             <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6 lg:space-y-8 animate-in fade-in duration-500">
 
                 {/* Header Section */}
