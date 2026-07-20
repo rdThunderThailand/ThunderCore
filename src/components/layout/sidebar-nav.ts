@@ -33,7 +33,7 @@ export const getSuperAdminNavigationItemsAtApplicationsManagement = (application
 export const getCompanyAdminNavigationItems = (tenantId: string): NavItem[] => [
     { label: "Dashboard", href: `/tenants/management/${tenantId}`, icon: SquareKanban },
     { label: "Assets", href: `/tenants/management/${tenantId}/assets`, icon: MonitorCog },
-    { label: "Applications", href: `/tenants/management/${tenantId}/portal`, icon: AppWindow },
+    { label: "Applications", href: `/tenants/management/${tenantId}/applications`, icon: AppWindow },
     { label: "Members", href: `/tenants/management/${tenantId}/members`, icon: UsersRound },
     { label: "Settings", href: `/tenants/management/${tenantId}/settings`, icon: Settings },
 ];

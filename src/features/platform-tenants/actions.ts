@@ -9,7 +9,7 @@ export async function createTenant(data: { name: string; type: Tenant['type']; s
     return tenants.createTenant(data)
 }
 
-export async function updateTenant(id: string, data: { name?: string; type?: Tenant['type']; status?: Tenant['status'] }) {
+export async function updateTenant(id: string, data: { name?: string; type?: Tenant['type']; status?: Tenant['status']; contact_email?: string; website_url?: string; description?: string }) {
     return tenants.updateTenant(id, data)
 }
 
