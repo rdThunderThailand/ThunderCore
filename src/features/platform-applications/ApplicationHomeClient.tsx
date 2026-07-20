@@ -15,7 +15,7 @@ const STATUS_STYLES: Record<SystemApplication['status'], string> = {
     inactive: 'bg-slate-100 text-slate-500',
 }
 
-const PAGE_SIZE = 8
+const PAGE_SIZE = 7
 
 export function ApplicationHomeClient() {
     const isSuperAdmin = getDevRole() === 'super_admin' || 'company_admin'
@@ -71,16 +71,16 @@ export function ApplicationHomeClient() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen text-slate-400 gap-2">
+            <div className="flex items-center justify-center w-full py-20 text-slate-400 gap-2">
                 <Loader2 className="w-5 h-5 animate-spin" /> Loading applications…
             </div>
         )
     }
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden p-8 gap-6 font-sans text-slate-900">
+        <div className="w-full max-w-full flex-1 flex flex-col min-h-0 overflow-hidden p-4 lg:p-6 gap-4 animate-in fade-in duration-500 font-sans text-slate-900 pb-24 lg:pb-0">
             {/* Summary cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 shrink-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0">
                 <StatCard label="Total Applications" value={apps.length} sub="All time" icon={LayoutGrid} tint="bg-blue-50 text-blue-600" />
                 <StatCard
                     label="Created This Month"
@@ -91,8 +91,8 @@ export function ApplicationHomeClient() {
                 />
             </div>
 
-            {/* Table card — fills remaining height */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col min-h-0 flex-1">
+            {/* Table card */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 lg:p-6 flex flex-col flex-1 min-h-0 overflow-hidden">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
                     <div className="relative w-full md:w-96">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -113,7 +113,7 @@ export function ApplicationHomeClient() {
                     )}
                 </div>
 
-                <div className="flex-1 overflow-y-auto mt-4">
+                <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden w-full max-w-full mt-4">
                     {filtered.length === 0 ? (
                         <div className="py-16 text-center text-slate-400 flex flex-col items-center gap-2">
                             <AppWindow className="w-8 h-8" />

@@ -27,9 +27,9 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                         </div>
 
                         {/* Scrollable Page Content */}
-                        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+                        <main className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col min-h-0">
                             {/* Container wrapper if needed, or let pages handle their own padding */}
-                            <div className="w-full">
+                            <div className="w-full flex-1 flex flex-col min-h-0">
                                 {children}
                             </div>
                         </main>

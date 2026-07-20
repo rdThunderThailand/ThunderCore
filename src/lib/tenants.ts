@@ -25,9 +25,7 @@ type TenantInput = { name: string; type: Tenant['type']; status: Tenant['status'
 
 export async function createTenant(data: TenantInput): Promise<Tenant> {
     if (!isDevBypass()) throw new Error('createTenant: no REST endpoint yet — enable NEXT_PUBLIC_DEV_BYPASS')
-    // ponytail: echo a shaped row so the client can render it; real POST returns the server row.
-    // Not persisted across requests in bypass mode — the client holds it in local state.
-    return {
+    const newTenant: Tenant = {
         id: crypto.randomUUID(),
         name: data.name,
         type: data.type,
@@ -38,17 +36,27 @@ export async function createTenant(data: TenantInput): Promise<Tenant> {
         deviceCount: 0,
         createdAt: new Date().toISOString(),
     }
+    MOCK_TENANTS.unshift(newTenant)
+    return newTenant
 }
 
 export async function updateTenant(id: string, data: Partial<TenantInput>): Promise<Tenant> {
     if (!isDevBypass()) throw new Error('updateTenant: no REST endpoint yet — enable NEXT_PUBLIC_DEV_BYPASS')
-    const base = MOCK_TENANTS.find((t) => t.id === id) ?? MOCK_TENANTS[0]
+    const index = MOCK_TENANTS.findIndex((t) => t.id === id)
+    if (index !== -1) {
+        MOCK_TENANTS[index] = { ...MOCK_TENANTS[index], ...data }
+        return MOCK_TENANTS[index]
+    }
+    const base = MOCK_TENANTS[0]
     return { ...base, id, ...data }
 }
 
-export async function deleteTenant(_id: string): Promise<void> {
+export async function deleteTenant(id: string): Promise<void> {
     if (!isDevBypass()) throw new Error('deleteTenant: no REST endpoint yet — enable NEXT_PUBLIC_DEV_BYPASS')
-    // ponytail: no-op in bypass; client drops it from local state.
+    const index = MOCK_TENANTS.findIndex((t) => t.id === id)
+    if (index !== -1) {
+        MOCK_TENANTS.splice(index, 1)
+    }
 }
 
 export async function getTenantDashboard(tenantId: string): Promise<TenantDashboard | null> {

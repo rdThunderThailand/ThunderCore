@@ -259,7 +259,7 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
     return (
-        <div className="min-h-screen pb-24 lg:pb-0">
+        <div className="w-full max-w-full overflow-hidden pb-24 lg:pb-0">
 
 
             <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6 lg:space-y-8 animate-in fade-in duration-500">
@@ -283,7 +283,7 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
                 </div>
 
                 {/* Main Content Card */}
-                <div className="bg-white rounded-[20px] border border-slate-200 shadow-sm p-4 lg:p-6 min-h-[600px] flex flex-col">
+                <div className="bg-white rounded-[20px] border border-slate-200 shadow-sm p-4 lg:p-6 flex flex-col overflow-hidden">
 
                     {/* Search & Actions */}
                     <div className="flex flex-row gap-3 mb-6">
@@ -325,7 +325,7 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
                     )}
 
                     {/* Table / List */}
-                    <div className="flex-1 overflow-x-auto -mx-4 lg:-mx-0">
+                    <div className="flex-1 overflow-x-auto w-full max-w-full">
                         <table className="w-full min-w-[600px] lg:min-w-0">
                             <thead>
                                 <tr className="border-b border-slate-100">
@@ -371,7 +371,7 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
                                                 </div>
                                             </td>
                                             <td className="py-4 px-4">
-                                                <span className="text-sm font-medium text-slate-700 block truncate max-w-[120px] sm:max-w-none">{org.name}</span>
+                                                <span className="text-sm font-medium text-slate-700 block truncate max-w-[150px] sm:max-w-[250px] lg:max-w-xs">{org.name}</span>
                                             </td>
                                             <td className="hidden md:table-cell py-4 px-4 text-center">
                                                 <span className="text-sm text-slate-600">{org.memberCount}</span>
