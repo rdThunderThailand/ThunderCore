@@ -1,8 +1,6 @@
+import { ApplicationManagementidPortalCustomizationClient } from '@/features/platform-applications/management/portal/customization/ApplicationManagementidPortalCustomizationClient'
 
-export const dynamic = 'force-dynamic'
-
-export default async function PortalCustomizationPage(props: any) {
-    return (
-        <div className="">customization</div>
-    )
+export default async function PortalCustomizationPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
+    return <ApplicationManagementidPortalCustomizationClient appId={id} />
 }

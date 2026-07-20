@@ -1,8 +1,6 @@
+import { ApplicationManagementidPortalDomainsClient } from '@/features/platform-applications/management/portal/domains/ApplicationManagementidPortalDomainsClient'
 
-export const dynamic = 'force-dynamic'
-
-export default async function DomainSettingsPage(props: any) {
-    return (
-        <div className="">domains</div>
-    )
+export default async function DomainSettingsPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
+    return <ApplicationManagementidPortalDomainsClient appId={id} />
 }

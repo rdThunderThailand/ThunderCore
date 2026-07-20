@@ -1,10 +1,6 @@
+import { ApplicationManagementidSettingsClient } from '@/features/platform-applications/management/setting/ApplicationManagementidSettingsClient'
 
-export const dynamic = 'force-dynamic'
-
-export default async function ApplicationSettingsPage(props: any) {
-    return (
-        <div className="">
-            <p>Applications Settings</p>
-        </div>
-    )
+export default async function ApplicationSettingsPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
+    return <ApplicationManagementidSettingsClient appId={id} />
 }

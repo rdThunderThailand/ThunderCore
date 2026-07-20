@@ -18,7 +18,8 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                     </div>
 
                     {/* Main Content Area: Flex column for Navbar + Page Content */}
-                    <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
+                    {/* ponytail: no z-index here — a stacking context would trap fixed modals below the z-50 sidebar, leaving its column uncovered by the backdrop. */}
+                    <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
 
                         {/* Desktop Navbar: Sticky at top of content area - Hidden on Mobile */}
                         <div className="hidden lg:block">

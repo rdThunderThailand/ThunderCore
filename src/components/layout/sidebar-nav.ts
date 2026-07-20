@@ -1,8 +1,6 @@
 import { AppWindow, BarChart3, LayoutDashboard, LayoutGrid, MonitorCog, Radar, Settings, SquareKanban, Trash2, UsersRound } from "lucide-react";
 import { NavItem } from "./SideBar";
 
-const TENANT_ID = 'e316bbcf-2eb6-48ae-b5d9-74d631dec359'
-
 export const defaultNavigationItems: NavItem[] = [
     { label: "Dashboard", href: "#dashboard", icon: LayoutDashboard },
     { label: "Waste Management", href: "#waste", icon: Trash2 },
@@ -15,35 +13,35 @@ export const superAdminNavigationItems: NavItem[] = [
     { label: "Users", href: "/users", icon: UsersRound },
 ];
 
-export const superAdminNavigationItemsAtManagement: NavItem[] = [
-    { label: "Dashboard", href: `/tenants/management/${TENANT_ID}`, icon: SquareKanban },
-    { label: "Assets", href: `/tenants/management/${TENANT_ID}/assets`, icon: MonitorCog },
-    { label: "Applications", href: `/tenants/management/${TENANT_ID}/applications`, icon: AppWindow },
-    { label: "Members", href: `/tenants/management/${TENANT_ID}/members`, icon: UsersRound },
-    { label: "Tenant Settings", href: `/tenants/management/${TENANT_ID}/settings`, icon: Settings },
+export const getSuperAdminNavigationItemsAtManagement = (tenantId: string): NavItem[] => [
+    { label: "Dashboard", href: `/tenants/management/${tenantId}`, icon: SquareKanban },
+    { label: "Assets", href: `/tenants/management/${tenantId}/assets`, icon: MonitorCog },
+    { label: "Applications", href: `/tenants/management/${tenantId}/applications`, icon: AppWindow },
+    { label: "Members", href: `/tenants/management/${tenantId}/members`, icon: UsersRound },
+    { label: "Tenant Settings", href: `/tenants/management/${tenantId}/settings`, icon: Settings },
 ];
 
-export const superAdminNavigationItemsAtApplicationsManagement: NavItem[] = [
-    { label: "Dashboard", href: `/applications/management/${TENANT_ID}`, icon: SquareKanban },
-    { label: "Scenario", href: `/applications/management/${TENANT_ID}/scenario`, icon: Radar },
-    { label: "Applications", href: `/applications/management/${TENANT_ID}/portal`, icon: AppWindow },
-    { label: "Members", href: `/applications/management/${TENANT_ID}/members`, icon: UsersRound },
-    { label: "Settings", href: `/applications/management/${TENANT_ID}/settings`, icon: Settings },
+export const getSuperAdminNavigationItemsAtApplicationsManagement = (applicationId: string): NavItem[] => [
+    { label: "Dashboard", href: `/applications/management/${applicationId}`, icon: SquareKanban },
+    { label: "Scenario", href: `/applications/management/${applicationId}/scenario`, icon: Radar },
+    { label: "Applications", href: `/applications/management/${applicationId}/portal`, icon: AppWindow },
+    { label: "Members", href: `/applications/management/${applicationId}/members`, icon: UsersRound },
+    { label: "Settings", href: `/applications/management/${applicationId}/settings`, icon: Settings },
 ];
 
 
-export const companyAdminNavigationItems: NavItem[] = [
-    { label: "Dashboard", href: `/tenants/management/${TENANT_ID}`, icon: SquareKanban },
-    { label: "Assets", href: `/tenants/management/${TENANT_ID}/assets`, icon: MonitorCog },
-    { label: "Applications", href: `/tenants/management/${TENANT_ID}/portal`, icon: AppWindow },
-    { label: "Members", href: `/tenants/management/${TENANT_ID}/members`, icon: UsersRound },
-    { label: "Settings", href: `/tenants/management/${TENANT_ID}/settings`, icon: Settings },
+export const getCompanyAdminNavigationItems = (tenantId: string): NavItem[] => [
+    { label: "Dashboard", href: `/tenants/management/${tenantId}`, icon: SquareKanban },
+    { label: "Assets", href: `/tenants/management/${tenantId}/assets`, icon: MonitorCog },
+    { label: "Applications", href: `/tenants/management/${tenantId}/portal`, icon: AppWindow },
+    { label: "Members", href: `/tenants/management/${tenantId}/members`, icon: UsersRound },
+    { label: "Settings", href: `/tenants/management/${tenantId}/settings`, icon: Settings },
 ];
 
-export const companyAdminNavigationItemsAtManagement: NavItem[] = [
-    { label: "Dashboard", href: "#dashboard", icon: SquareKanban },
-    { label: "Scenario", href: "#scenario", icon: AppWindow },
-    { label: "Applications", href: "#applications", icon: AppWindow },
-    { label: "Members", href: "#members", icon: UsersRound },
-    { label: "Settings", href: "#tenant-setting", icon: Settings },
+export const getCompanyAdminNavigationItemsAtApplicationsManagement = (applicationId: string): NavItem[] => [
+    { label: "Dashboard", href: `/applications/management/${applicationId}`, icon: SquareKanban },
+    { label: "Scenario", href: `/applications/management/${applicationId}/scenario`, icon: Radar },
+    { label: "Applications", href: `/applications/management/${applicationId}/portal`, icon: AppWindow },
+    { label: "Members", href: `/applications/management/${applicationId}/members`, icon: UsersRound },
+    { label: "Settings", href: `/applications/management/${applicationId}/settings`, icon: Settings },
 ];
