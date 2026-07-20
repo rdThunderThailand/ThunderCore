@@ -51,7 +51,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsSaving(true)
-        
+
         // Simulate save delay
         await new Promise((resolve) => setTimeout(resolve, 800))
         setIsSaving(false)
@@ -66,15 +66,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
     }
 
     return (
-        <div className="min-h-screen bg-[#F0F4F8] pb-24">
+        <div className="min-h-screen pb-24">
             <div className="max-w-4xl mx-auto p-4 lg:p-6 space-y-6 lg:space-y-8 animate-in fade-in duration-500">
-                
-                {/* Header title */}
-                <div>
-                    <h1 className="text-[28px] font-bold text-indigo-950 leading-tight tracking-wide">
-                        User Detail
-                    </h1>
-                </div>
 
                 <form onSubmit={handleSave} className="space-y-6">
                     {/* Card 1: Authorized Provider */}
@@ -190,14 +183,12 @@ export function SettingsClient({ user }: SettingsClientProps) {
                             <button
                                 type="button"
                                 onClick={() => setIsActive(!isActive)}
-                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                    isActive ? 'bg-blue-600' : 'bg-slate-200'
-                                }`}
+                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isActive ? 'bg-blue-600' : 'bg-slate-200'
+                                    }`}
                             >
                                 <span
-                                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                                        isActive ? 'translate-x-5' : 'translate-x-0'
-                                    }`}
+                                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${isActive ? 'translate-x-5' : 'translate-x-0'
+                                        }`}
                                 />
                             </button>
                         </div>
@@ -216,14 +207,12 @@ export function SettingsClient({ user }: SettingsClientProps) {
                             <button
                                 type="button"
                                 onClick={() => setEmailNotifications(!emailNotifications)}
-                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                    emailNotifications ? 'bg-blue-600' : 'bg-slate-200'
-                                }`}
+                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${emailNotifications ? 'bg-blue-600' : 'bg-slate-200'
+                                    }`}
                             >
                                 <span
-                                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                                        emailNotifications ? 'translate-x-5' : 'translate-x-0'
-                                    }`}
+                                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${emailNotifications ? 'translate-x-5' : 'translate-x-0'
+                                        }`}
                                 />
                             </button>
                         </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Bell, ChevronDown, Settings, Info, LogOut, Languages, ChevronLeft } from "lucide-react";
 import { useTranslation } from "@/i18n/context";
@@ -9,55 +9,12 @@ import { cn } from "../../utils/cn";
 import { mockUser, type UserProfile } from '@/store/useAuthStore';
 import { superAdminNavigationItems } from "./sidebar-nav";
 
-// Helper function to derive cleaner page titles from pathnames
+// Helper function to derive cleaner page titles from pathnames (fallback for routes
+// with no dedicated breadcrumb trail, e.g. /users)
 function getPageTitle(pathname: string, sectionLabel: string): string {
     const segments = pathname.split("/").filter(Boolean);
     if (segments.length <= 1) {
         return sectionLabel;
-    }
-
-    if (pathname.includes("/tenants/management/")) {
-        const mgmtIndex = segments.indexOf("management");
-        if (mgmtIndex !== -1 && segments.length > mgmtIndex + 1) {
-
-            const subActionIndex = mgmtIndex + 2;
-            if (segments.length <= subActionIndex) {
-                return "Tenant Overview";
-            }
-
-            const action = segments[subActionIndex];
-            if (action === "settings") {
-                return "Tenant Settings";
-            }
-            if (action === "assets") {
-                return "Tenant Assets";
-            }
-            if (action === "members") {
-                // Check if it goes deeper, e.g., /members/[memberId]/settings
-                if (segments.length > subActionIndex + 2 && segments[subActionIndex + 2] === "settings") {
-                    return "Member Settings";
-                }
-                return "Tenant Members";
-            }
-            if (action === "applications") {
-                return "Tenant Applications";
-            }
-        }
-    }
-
-
-    if (pathname.includes("/applications/management/")) {
-        const mgmtIndex = segments.indexOf("management");
-        if (mgmtIndex !== -1 && segments.length > mgmtIndex + 1) {
-            const subActionIndex = mgmtIndex + 2;
-            if (segments.length <= subActionIndex) {
-                return "Application Overview";
-            }
-            const action = segments[subActionIndex];
-            if (action === "settings") {
-                return "Application Settings";
-            }
-        }
     }
 
     const lastSegment = segments[segments.length - 1];
@@ -72,6 +29,91 @@ function getPageTitle(pathname: string, sectionLabel: string): string {
     return lastSegment.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
 
+interface Crumb {
+    label: string;
+    href: string;
+}
+
+// Full breadcrumb trail for the tenants/management/[id]/... and applications/management/[id]/...
+// subtrees, one crumb per route depth — so a step-3 page shows step1/step2/step3, not step1/step3.
+// The leading "Tenants"/"Applications" list crumb is only reachable by super_admin, so it's
+// omitted entirely for other roles instead of linking somewhere they can't go.
+// The dashboard itself (the [id] root) only appears as a crumb on its own page (as the current,
+// non-clickable step) — subpages below it skip straight to their own section instead of
+// repeating "Tenant Dashboard" on every crumb trail.
+function getManagementBreadcrumbs(pathname: string, isSuperAdmin: boolean): Crumb[] {
+    const segments = pathname.split("/").filter(Boolean);
+
+    const tenantMatch = pathname.match(/^\/tenants\/management\/([^/]+)/);
+    if (tenantMatch) {
+        const base = `/tenants/management/${tenantMatch[1]}`;
+        const rest = segments.slice(3);
+        const crumbs: Crumb[] = [];
+        if (isSuperAdmin) crumbs.push({ label: "Tenants", href: "/tenants" });
+
+        if (rest.length === 0) {
+            crumbs.push({ label: "Tenant Dashboard", href: base });
+            return crumbs;
+        }
+
+        if (rest[0] === "assets") {
+            crumbs.push({ label: "Tenant Assets", href: `${base}/assets` });
+            if (rest[1]) {
+                crumbs.push({ label: "Asset Detail", href: `${base}/assets/${rest[1]}` });
+                if (rest[2] === "settings") crumbs.push({ label: "Asset Settings", href: pathname });
+                else if (rest[2] === "devices" && rest[3]) crumbs.push({ label: "Device Detail", href: pathname });
+            }
+        } else if (rest[0] === "applications") {
+            crumbs.push({ label: "Tenant Applications", href: `${base}/applications` });
+        } else if (rest[0] === "members") {
+            crumbs.push({ label: "Tenant Members", href: `${base}/members` });
+            if (rest[1] && rest[2] === "settings") crumbs.push({ label: "Member Settings", href: pathname });
+        } else if (rest[0] === "settings") {
+            crumbs.push({ label: "Tenant Settings", href: pathname });
+        }
+        return crumbs;
+    }
+
+    const appMatch = pathname.match(/^\/applications\/management\/([^/]+)/);
+    if (appMatch) {
+        const base = `/applications/management/${appMatch[1]}`;
+        const rest = segments.slice(3);
+        const crumbs: Crumb[] = [];
+        if (isSuperAdmin) crumbs.push({ label: "Applications", href: "/applications" });
+
+        if (rest.length === 0) {
+            crumbs.push({ label: "Application Dashboard", href: base });
+            return crumbs;
+        }
+
+        if (rest[0] === "scenario") {
+            crumbs.push({ label: "Scenario", href: pathname });
+        } else if (rest[0] === "portal") {
+            crumbs.push({ label: "Portal", href: `${base}/portal` });
+            if (rest[1] === "customization") crumbs.push({ label: "Customization", href: pathname });
+            else if (rest[1] === "domains") crumbs.push({ label: "Domains", href: pathname });
+        } else if (rest[0] === "members") {
+            crumbs.push({ label: "Members", href: pathname });
+        } else if (rest[0] === "settings") {
+            crumbs.push({ label: "Settings", href: pathname });
+        }
+        return crumbs;
+    }
+
+    return [];
+}
+
+// /settings?user=[id] is the user-detail settings page reached from /users — same
+// "leading list crumb only for super_admin" rule as the tenant/application trails above.
+function getUserSettingsBreadcrumbs(pathname: string, userId: string | null, isSuperAdmin: boolean): Crumb[] {
+    if (pathname !== "/settings" || !userId) return [];
+
+    const crumbs: Crumb[] = [];
+    if (isSuperAdmin) crumbs.push({ label: "Users", href: "/users" });
+    crumbs.push({ label: "User Settings", href: `/settings?user=${userId}` });
+    return crumbs;
+}
+
 export interface HeaderProps {
     navigationText?: string;
     user?: UserProfile;
@@ -82,6 +124,7 @@ export const Header = ({
     user,
 }: HeaderProps) => {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const router = useRouter();
     const { locale, setLocale, t } = useTranslation();
     const defaultUser = user ?? mockUser;
@@ -103,6 +146,8 @@ export const Header = ({
     }, []);
 
 
+    const isSuperAdmin = defaultUser.role === "super_admin";
+
     const allNavItems = superAdminNavigationItems;
 
     const topLevelItem = allNavItems.find((item) =>
@@ -114,15 +159,43 @@ export const Header = ({
     const sectionLabel = topLevelItem?.label ?? "";
     const SectionIcon = topLevelItem?.icon ?? null;
 
-    const derivedPageTitle = navigationText || getPageTitle(pathname, sectionLabel);
+    const isManagementPath = /^\/(tenants|applications)\/management\//.test(pathname);
+    const managementTrail = getManagementBreadcrumbs(pathname, isSuperAdmin);
+    const userSettingsTrail = getUserSettingsBreadcrumbs(pathname, searchParams.get("user"), isSuperAdmin);
+    const breadcrumbTrail = managementTrail.length > 0 ? managementTrail : userSettingsTrail;
+    const hasBreadcrumbTrail = breadcrumbTrail.length > 0;
+
+    const derivedPageTitle =
+        navigationText ||
+        (hasBreadcrumbTrail ? breadcrumbTrail[breadcrumbTrail.length - 1].label : getPageTitle(pathname, sectionLabel));
 
     return (
         <div className="w-full min-h-[8vh] px-6 pt-5 pb-2 flex items-center justify-between gap-3 z-3">
             <div className="flex flex-col justify-center min-w-0">
                 {/* Upper: breadcrumb path (section / sub-path) with back link */}
-                {sectionLabel && (
-                    <div className="flex items-center gap-2 text-sm text-blue-600 mb-1">
-                        {isTopLevel ? (
+                {((sectionLabel && !isManagementPath) || hasBreadcrumbTrail) && (
+                    <div className="flex items-center gap-2 text-sm text-blue-600 mb-1 flex-wrap">
+                        {hasBreadcrumbTrail ? (
+                            breadcrumbTrail.map((crumb, index) => {
+                                const isLast = index === breadcrumbTrail.length - 1;
+                                return (
+                                    <span key={crumb.href} className="flex items-center gap-2">
+                                        {index > 0 && <span className="text-slate-300">/</span>}
+                                        {isLast ? (
+                                            <span className="text-slate-500 font-medium">{crumb.label}</span>
+                                        ) : (
+                                            <Link
+                                                href={crumb.href}
+                                                className="hover:underline flex items-center gap-1 font-semibold text-blue-600"
+                                            >
+                                                {index === 0 && <ChevronLeft className="w-4 h-4 text-blue-600" />}
+                                                {crumb.label}
+                                            </Link>
+                                        )}
+                                    </span>
+                                );
+                            })
+                        ) : isTopLevel ? (
                             <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
                                 {SectionIcon && <SectionIcon className="w-3.5 h-3.5 shrink-0" />}
                                 <span>{sectionLabel}</span>
