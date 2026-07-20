@@ -2,7 +2,10 @@
 
 สถานะ ณ 2026-07-20 (branch `feat/application`). แหล่งความจริง = `src/lib/*.ts` (seam = endpoint catalog).
 
-**สรุปตัวเลข: 4 endpoints integrate แล้ว / ~48 endpoints ยังไม่มี** — ทุกหน้าที่ไม่ใช่ auth วิ่งด้วย mock (`NEXT_PUBLIC_DEV_BYPASS=true`) และจะ throw ทันทีถ้าปิด bypass.
+**อัปเดต 2026-07-20:** auth/refresh + tenants ทั้งชุด promote จาก `/api/v0.1/` ขึ้น `core/v1` แล้ว
+รวม **12 endpoints integrate แล้ว** (ดูหัวข้อ 1) — ตัวเลขด้านล่างเป็นสถานะก่อนหน้า
+
+**สรุปตัวเลขเดิม: 4 endpoints integrate แล้ว / ~48 endpoints ยังไม่มี** — ทุกหน้าที่ไม่ใช่ auth วิ่งด้วย mock (`NEXT_PUBLIC_DEV_BYPASS=true`) และจะ throw ทันทีถ้าปิด bypass.
 
 Supabase = **0 references เหลือแล้ว** (ลบครบ) ดังนั้นทุกอย่างที่ไม่ใช่ `thunder-core.ts` = ช่องว่างล้วนๆ
 
@@ -17,7 +20,27 @@ Supabase = **0 references เหลือแล้ว** (ลบครบ) ดั
 | `GET /me` | `getCurrentUser` | `/dashboard` | ✅ E2E |
 | `GET /me/memberships` | `getMyMemberships` | `/dashboard` | ✅ E2E |
 
+| `POST /auth/refresh` | `refreshSession` (ยังไม่ต่อ) | — | ✅ 12/12 assert |
+| `GET /tenants` | `getTenants` | `/tenants` | ✅ API 39/39 · ⚠️ ยังไม่ E2E |
+| `GET /tenants/usage` | `getTenantUsageStats` | `/tenants` | ✅ API · ⚠️ ยังไม่ E2E |
+| `POST /tenants` | `createTenant` | `/tenants` | ✅ API · ⚠️ ยังไม่ E2E |
+| `GET /tenants/:id` | `getTenant` (ใหม่) | `.../settings` | ✅ API · ⚠️ ยังไม่ E2E |
+| `PATCH /tenants/:id` | `updateTenant` | `/tenants`, `.../settings` | ✅ API · ⚠️ ยังไม่ E2E |
+| `DELETE /tenants/:id` | `deleteTenant` | `/tenants` | ✅ API · ⚠️ ยังไม่ E2E |
+| `GET /tenants/:id/dashboard` | `getTenantDashboard` | `.../management/[id]` | ✅ API · ⚠️ ยังไม่ E2E |
+
 Session = httpOnly cookies `tc_access_token` / `tc_refresh_token`.
+
+เทสต์ (ที่ repo Thunder_Core, dev server :3000 ต้องรัน):
+```
+node --env-file=.env tests/api/auth-refresh.test.mjs      # 12 assert
+node --env-file=.env tests/api/tenants-core-v1.test.mjs   # 39 assert
+```
+
+**⚠️ "ยังไม่ E2E" หมายถึงอะไร:** สัญญาฝั่ง API ยืนยันครบด้วย 39 assert (ชื่อ field ตรงกับที่
+component อ่านจริง) แต่ยังไม่เคยเปิดเบราว์เซอร์ดูโดยปิด `NEXT_PUBLIC_DEV_BYPASS` เพราะ
+`THUNDER_CORE_URL` ใน `.env` ชี้ไป `thundercore.vercel.app` ซึ่ง**ยังไม่มี endpoint ชุดนี้** (มีแค่ในเครื่อง)
+ต้อง deploy Thunder_Core ก่อน หรือชี้ไป `http://localhost:3000` แล้วรัน frontend คนละ port
 
 ---
 

@@ -18,6 +18,7 @@ Stack: **Next.js 16 App Router · React 19 · Supabase (Postgres + Auth + RLS) �
 Package manager: **pnpm** (`pnpm-lock.yaml`, `pnpm-workspace.yaml`).
 
 Key libraries (grouped by job):
+
 - **Data / backend:** `axios` (Thunder Core REST client), `@supabase/supabase-js` + `@supabase/ssr`
   (stopgap DB access), `jose` (JWT), `swr` (client fetching), `zustand` (client state, `src/store/`)
 - **Forms / validation:** `react-hook-form` + `@hookform/resolvers` + `zod`
@@ -54,7 +55,7 @@ The catch: Thunder_Core's REST surface is still thin (basically auth), and the f
 the frontend needs isn't known yet. So ~23 files currently read Supabase directly as a temporary
 **shim** for endpoints that don't exist. Don't big-bang remove it (features would lose their data)
 and don't try to design the endpoint list up front — instead contain the shim so it removes cleanly
-and *tells you which endpoints to build*:
+and _tells you which endpoints to build_:
 
 1. **Thunder Core REST API (the only correct source).** `src/features/auth/*` and `src/app/dashboard`
    call the Thunder Core `core/v1` API through a single server-side axios client,
@@ -84,11 +85,12 @@ and *tells you which endpoints to build*:
      `src/utils/supabase/`.
 
 **RBAC.** Roles are tiers keyed by `roles.role_type` (NOT `roles.code`, the persona):
-`super_admin > executive_viewer > company_admin > viewer_auditor > operator`. `rbac.ts` always
+`super_admin > company_admin > executive_viewer > viewer_auditor > operator`. `rbac.ts` always
 queries the DB as source of truth and normalizes legacy pre-migration role strings — don't trust
 `app_metadata.role`.
 
 **Routing** (App Router, route groups):
+
 - `src/app/(auth)/` — login, register, register/confirmed
 - `src/app/(dashboard)/(platform)/` — `app-registry` and `tenants` management surfaces (nested
   `management/[id]/...` for assets, devices, members, portal, settings)
@@ -136,6 +138,7 @@ src/
 ```
 
 **Rules of thumb for new code:**
+
 - New page → thin `app/.../page.tsx` that renders a `*Client.tsx` from `features/`.
 - New data access → a function in `src/lib/<domain>.ts` (never call Supabase/axios from components).
 - Mutations → `features/<feature>/actions.ts` (`'use server'`) that call the `src/lib` seam.
