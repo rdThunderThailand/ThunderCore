@@ -68,7 +68,7 @@ export function ApplicationHomeClient() {
     }
 
     return (
-        <div className="p-8 space-y-8 bg-[#F8F9FC] min-h-screen font-sans text-slate-900">
+        <div className="p-8 space-y-8  min-h-screen font-sans text-slate-900">
             {/* Summary cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <StatCard label="Total Applications" value={apps.length} sub="All time" icon={LayoutGrid} tint="bg-blue-50 text-blue-600" />

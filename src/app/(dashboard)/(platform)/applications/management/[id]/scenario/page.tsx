@@ -1,8 +1,6 @@
+import { ApplicationManagementidScenarioClient } from '@/features/platform-applications/management/scenario/ApplicationManagementidScenarioClient'
 
-export const dynamic = 'force-dynamic'
-
-export default async function ScenarioPage(props: any) {
-    return (
-        <div className="">Application Scenario</div>
-    )
+export default async function ScenarioPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
+    return <ApplicationManagementidScenarioClient appId={id} />
 }

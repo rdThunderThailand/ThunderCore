@@ -1,8 +1,6 @@
+import { ApplicationManagementidClient } from '@/features/platform-applications/management/ApplicationManagementidClient'
 
-export const dynamic = 'force-dynamic'
-
-export default async function ApplicationDashboard(props: any) {
-    return (
-        <div className="">Applications Management [id]</div>
-    )
+export default async function ApplicationDashboard({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
+    return <ApplicationManagementidClient appId={id} />
 }
