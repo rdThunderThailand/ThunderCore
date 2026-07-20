@@ -4,3 +4,6 @@ export { Table } from './Table'
 export type { TableColumn, TableProps } from './Table'
 
 export { EmptyState } from './empty-state'
+
+export { Pagination, paginate, calcTotalPages } from './Pagination'
+export type { PaginationProps } from './Pagination'

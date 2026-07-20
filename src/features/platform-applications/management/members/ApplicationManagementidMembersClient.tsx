@@ -1,7 +1,7 @@
 'use client'
 
 import { AppMember } from '@/lib/applications'
-import { ChevronLeft, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
@@ -83,8 +83,8 @@ export function ApplicationManagementidMembersClient({ appId }: { appId: string 
     }
 
     return (
-        <div className="space-y-6 p-8 animate-in fade-in duration-500">
-            <section className="rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="flex flex-col h-screen overflow-hidden p-8 gap-6 animate-in fade-in duration-500">
+            <section className="rounded-2xl border border-slate-200 bg-white p-6 flex flex-col min-h-0 flex-1">
                 <MembersListHeader appName={appName} onInviteClick={() => setShowInviteModal(true)} />
 
                 <MembersTable

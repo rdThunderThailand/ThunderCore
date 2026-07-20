@@ -1,7 +1,11 @@
 'use client'
 
+import { calcTotalPages, paginate, Pagination } from '@/components/ui'
 import { AppMember } from '@/lib/applications'
-import { MoreVertical, Search, Shield, Trash2, Users } from 'lucide-react'
+import { MoreVertical, Search, Shield, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+
+const PAGE_SIZE = 8
 
 interface MembersTableProps {
     members: AppMember[]
@@ -20,27 +24,38 @@ export function MembersTable({
     setActiveDropdown,
     onRemoveMember
 }: MembersTableProps) {
+    const [page, setPage] = useState(1)
+
+    // reset page when search changes
+    const handleSearch = (v: string) => {
+        setSearchTerm(v)
+        setPage(1)
+    }
+
+    const pages = calcTotalPages(members.length, PAGE_SIZE)
+    const pageItems = paginate(members, page, PAGE_SIZE)
+
     return (
-        <div>
-            <div className="mb-4 relative max-w-md">
+        <div className="flex flex-col min-h-0 flex-1">
+            <div className="mb-4 relative max-w-md shrink-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                     type="text"
                     placeholder="Search members..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => handleSearch(e.target.value)}
                     className="w-full rounded-lg border border-slate-200 pl-9 pr-3 py-2 text-sm outline-none focus:border-blue-500"
                 />
             </div>
 
-            {members.length === 0 ? (
-                <div className="py-12 text-center text-sm text-slate-500">
-                    {searchTerm ? 'No members match your search.' : 'Invite team members to collaborate.'}
-                </div>
-            ) : (
-                <div className="overflow-x-auto">
+            <div className="flex-1 overflow-y-auto">
+                {members.length === 0 ? (
+                    <div className="py-12 text-center text-sm text-slate-500">
+                        {searchTerm ? 'No members match your search.' : 'Invite team members to collaborate.'}
+                    </div>
+                ) : (
                     <table className="w-full text-sm">
-                        <thead>
+                        <thead className="sticky top-0 bg-white">
                             <tr className="border-b border-slate-100 text-left text-slate-500">
                                 <th className="py-2 font-medium">Member</th>
                                 <th className="py-2 font-medium">Role</th>
@@ -49,7 +64,7 @@ export function MembersTable({
                             </tr>
                         </thead>
                         <tbody>
-                            {members.map((member) => (
+                            {pageItems.map((member) => (
                                 <tr key={member.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
                                     <td className="py-3">
                                         <div className="flex items-center gap-3">
@@ -97,8 +112,10 @@ export function MembersTable({
                             ))}
                         </tbody>
                     </table>
-                </div>
-            )}
+                )}
+            </div>
+
+            <Pagination page={page} totalPages={pages} onChange={setPage} className="shrink-0 mt-2" />
         </div>
     )
 }

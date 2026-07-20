@@ -1,5 +1,6 @@
 'use client'
 
+import { calcTotalPages, paginate, Pagination } from '@/components/ui'
 import { getDevRole } from '@/lib/dev'
 import { SystemApplication } from '@/models/Application'
 import { AppWindow, Globe, LayoutGrid, Loader2, Plus, Search, Trash2, X } from 'lucide-react'
@@ -14,6 +15,8 @@ const STATUS_STYLES: Record<SystemApplication['status'], string> = {
     inactive: 'bg-slate-100 text-slate-500',
 }
 
+const PAGE_SIZE = 8
+
 export function ApplicationHomeClient() {
     const isSuperAdmin = getDevRole() === 'super_admin'
 
@@ -22,6 +25,7 @@ export function ApplicationHomeClient() {
     const [isLoading, setIsLoading] = useState(true)
     const [search, setSearch] = useState('')
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [page, setPage] = useState(1)
 
     useEffect(() => {
         Promise.all([getAllApplications(), getTenantsForSelect()])
@@ -38,6 +42,9 @@ export function ApplicationHomeClient() {
         [apps, search]
     )
 
+    // Reset page when search changes
+    useEffect(() => { setPage(1) }, [search])
+
     const thisMonth = useMemo(() => {
         const now = new Date()
         return apps.filter((a) => {
@@ -45,6 +52,9 @@ export function ApplicationHomeClient() {
             return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
         }).length
     }, [apps])
+
+    const pages = calcTotalPages(filtered.length, PAGE_SIZE)
+    const pageItems = paginate(filtered, page, PAGE_SIZE)
 
     const handleDelete = async (id: string) => {
         if (!isSuperAdmin || !confirm('Delete this application?')) return
@@ -68,9 +78,9 @@ export function ApplicationHomeClient() {
     }
 
     return (
-        <div className="p-8 space-y-8  min-h-screen font-sans text-slate-900">
+        <div className="flex flex-col h-screen overflow-hidden p-8 gap-6 font-sans text-slate-900">
             {/* Summary cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 shrink-0">
                 <StatCard label="Total Applications" value={apps.length} sub="All time" icon={LayoutGrid} tint="bg-blue-50 text-blue-600" />
                 <StatCard
                     label="Created This Month"
@@ -81,9 +91,9 @@ export function ApplicationHomeClient() {
                 />
             </div>
 
-            {/* Table card */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-6">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            {/* Table card — fills remaining height */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col min-h-0 flex-1">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
                     <div className="relative w-full md:w-96">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input
@@ -103,15 +113,15 @@ export function ApplicationHomeClient() {
                     )}
                 </div>
 
-                {filtered.length === 0 ? (
-                    <div className="py-16 text-center text-slate-400 flex flex-col items-center gap-2">
-                        <AppWindow className="w-8 h-8" />
-                        No applications found.
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
+                <div className="flex-1 overflow-y-auto mt-4">
+                    {filtered.length === 0 ? (
+                        <div className="py-16 text-center text-slate-400 flex flex-col items-center gap-2">
+                            <AppWindow className="w-8 h-8" />
+                            No applications found.
+                        </div>
+                    ) : (
                         <table className="w-full text-sm">
-                            <thead>
+                            <thead className="sticky top-0 bg-white">
                                 <tr className="text-left text-slate-400 border-b border-slate-100">
                                     <th className="py-3 font-medium">Name</th>
                                     <th className="py-3 font-medium">Owner</th>
@@ -121,7 +131,7 @@ export function ApplicationHomeClient() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filtered.map((app) => (
+                                {pageItems.map((app) => (
                                     <tr key={app.id} className="border-b border-slate-50 hover:bg-slate-50/50">
                                         <td className="py-3">
                                             <Link href={`/applications/management/${app.id}`} className="font-medium text-slate-900 hover:text-blue-600 flex items-center gap-2">
@@ -144,8 +154,10 @@ export function ApplicationHomeClient() {
                                 ))}
                             </tbody>
                         </table>
-                    </div>
-                )}
+                    )}
+                </div>
+
+                <Pagination page={page} totalPages={pages} onChange={setPage} className="shrink-0 mt-2" />
             </div>
 
             {isModalOpen && (
