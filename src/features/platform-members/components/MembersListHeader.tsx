@@ -11,7 +11,7 @@ export function MembersListHeader({ appName, onInviteClick }: MembersListHeaderP
     return (
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
-                <h1 className="text-4xl font-black text-slate-900 tracking-tight">Application Members</h1>
+                {/* <h1 className="text-4xl font-black text-slate-900 tracking-tight">Application Members</h1> */}
                 <p className="text-slate-500 font-bold mt-1">
                     Manage users who have access to <span className="text-violet-600">{appName}</span>
                 </p>

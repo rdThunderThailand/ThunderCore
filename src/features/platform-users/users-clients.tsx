@@ -43,7 +43,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
     })
 
     // Pagination setup
-    const itemsPerPage = 8
+    const itemsPerPage = 7
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
     const startIndex = (currentPage - 1) * itemsPerPage
     const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage)
@@ -106,8 +106,8 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
     }
 
     return (
-        <div className="min-h-screen bg-[#F0F4F8] pb-24 lg:pb-0">
-            <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6 lg:space-y-8 animate-in fade-in duration-500">
+        <div className="w-full max-w-full overflow-hidden flex-1 flex flex-col min-h-0 bg-[#F0F4F8] pb-24 lg:pb-0">
+            <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col min-h-0 p-4 lg:p-6 space-y-6 lg:space-y-8 animate-in fade-in duration-500">
                 {/* Header title
                 <div className="flex justify-between items-center">
                     <h1 className="text-[28px] font-bold text-indigo-950 leading-tight tracking-wide">
@@ -116,7 +116,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                 </div> */}
 
                 {/* Main Content Card */}
-                <div className="bg-white rounded-[20px] border border-slate-200 shadow-sm p-4 lg:p-6 min-h-[600px] flex flex-col">
+                <div className="bg-white rounded-[20px] border border-slate-200 shadow-sm p-4 lg:p-6 flex-1 min-h-0 flex flex-col overflow-hidden">
 
                     {/* Search & Invite Actions */}
                     <div className="flex flex-row items-center justify-between gap-3 mb-6">
@@ -164,7 +164,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                     )}
 
                     {/* Users Table */}
-                    <div className="flex-1 overflow-x-auto -mx-4 lg:-mx-0">
+                    <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden w-full max-w-full">
                         <table className="w-full min-w-[600px] lg:min-w-0">
                             <thead>
                                 <tr className="border-b border-slate-100">
@@ -224,7 +224,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
 
                                                 {/* NAME cell */}
                                                 <td className="py-4 px-4">
-                                                    <span className="text-sm font-medium text-slate-700 block truncate max-w-[200px] sm:max-w-none">
+                                                    <span className="text-sm font-medium text-slate-700 block truncate max-w-[200px] sm:max-w-[250px] lg:max-w-xs">
                                                         {displayName}
                                                     </span>
                                                 </td>

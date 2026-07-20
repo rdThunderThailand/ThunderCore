@@ -123,13 +123,13 @@ export function ApplicationManagementidMembersClient() {
                 </div>
             )}
 
-            <button
+            {/* <button
                 onClick={() => router.back()}
                 className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors font-bold text-sm"
             >
                 <ChevronLeft className="w-4 h-4" />
                 Back
-            </button>
+            </button> */}
 
             <MembersListHeader
                 appName={app?.name || ''}
