@@ -21,7 +21,14 @@ export async function getTenantUsageStats(): Promise<typeof MOCK_TENANT_USAGE> {
     throw new Error('getTenantUsageStats: no REST endpoint yet — set NEXT_PUBLIC_DEV_BYPASS=true to use mock data')
 }
 
-type TenantInput = { name: string; type: Tenant['type']; status: Tenant['status'] }
+export type TenantInput = {
+    name: string
+    type: Tenant['type']
+    status: Tenant['status']
+    contact_email?: string
+    website_url?: string
+    description?: string
+}
 
 export async function createTenant(data: TenantInput): Promise<Tenant> {
     if (!isDevBypass()) throw new Error('createTenant: no REST endpoint yet — enable NEXT_PUBLIC_DEV_BYPASS')

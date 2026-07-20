@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Plus, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { deleteUser } from '@/lib/users'
+import { deleteUser } from './actions'
 
 interface UsersClientProps {
     initialUsers: Profile[]
