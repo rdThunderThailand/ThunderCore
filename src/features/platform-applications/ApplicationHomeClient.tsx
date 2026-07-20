@@ -15,7 +15,7 @@ const STATUS_STYLES: Record<SystemApplication['status'], string> = {
 }
 
 export function ApplicationHomeClient() {
-    const isSuperAdmin = getDevRole() === 'super_admin'
+    const isSuperAdmin = getDevRole() === 'super_admin' || 'company_admin'
 
     const [apps, setApps] = useState<SystemApplication[]>([])
     const [tenants, setTenants] = useState<Array<{ id: string; name: string }>>([])

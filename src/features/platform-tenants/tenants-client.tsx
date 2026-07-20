@@ -108,7 +108,7 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
     }
 
     // ... existing initialization ...
-    const isSuperAdmin = userRole === 'super_admin'
+    const isSuperAdmin = userRole === 'super_admin' || 'company_admin'
 
     const handleBulkDelete = async () => {
         if (!isSuperAdmin) return
