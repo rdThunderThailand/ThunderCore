@@ -445,7 +445,7 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
                     <LayoutGrid className="w-6 h-6" />
                     <span className="text-[10px] font-medium">{t('sidebar.tenants')}</span>
                 </Link>
-                <Link href="/application" className="flex flex-col items-center gap-1 text-slate-400">
+                <Link href="/applications" className="flex flex-col items-center gap-1 text-slate-400">
                     <AppWindow className="w-6 h-6" />
                     <span className="text-[10px] font-medium">{t('sidebar.applications')}</span>
                 </Link>
