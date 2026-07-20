@@ -31,10 +31,42 @@ Supabase = **0 references เหลือแล้ว** (ลบครบ) ดั
 
 Session = httpOnly cookies `tc_access_token` / `tc_refresh_token`.
 
-เทสต์ (ที่ repo Thunder_Core, dev server :3000 ต้องรัน):
+**Members (2026-07-20, backend only — ทีม frontend ต่อเอง):**
+
+| Endpoint | seam fn ที่จะมาต่อ |
+|---|---|
+| `GET /tenants/:id/members` (`?page`,`?limit`,`?search`) | `getMemberships` |
+| `POST /tenants/:id/members` | `addMembership` |
+| `GET /tenants/:id/members/:memberId` | `getMemberDetails` |
+| `DELETE /tenants/:id/members/:memberId` | `removeMembership` |
+| `PATCH /tenants/:id/members/:memberId/role` | `updateMemberRole` |
+| `GET /tenants/:id/members/:memberId/applications` | `getMemberApplications` |
+| `POST /tenants/:id/members/:memberId/applications` | `assignApplicationToMember` |
+| `DELETE /tenants/:id/members/:memberId/applications/:appId` | `removeApplicationFromMember` |
+| `PATCH /users/:id` | `updateMemberProfile` |
+
+**⚠️ 4 เรื่องที่ทีม frontend ต้องรู้ก่อนต่อ members** (สัญญาไม่ตรงกับ mock เดิม):
+
+1. **ไม่มี field `role` เป็น string แล้ว** — คืน `role_type` + `role_code` แทน เพราะ DB จริงไม่มีค่า
+   `'owner'|'admin'|'member'` เลย ที่มีคือ `admin_company`/`company_admin`, `operator_technician`/`operator`,
+   `super_admin`, `executive_viewer`, `department_admin`, `main_staff` — map เป็น label ฝั่ง UI เอง
+   (`role_type` = tier ใช้ตัดสินสิทธิ์, `role_code` = persona ใช้แสดงผล)
+2. **`:memberId` คือ `memberships.id` ไม่ใช่ `user_id`** — สองค่านี้คนละคอลัมน์ และ `PATCH /users/:id`
+   (แก้โปรไฟล์) ใช้ `user_id` ไม่ใช่ `memberId` ตัว response มีทั้งสองค่าให้
+3. **`POST /members` ต้องเป็น user ที่มีบัญชีอยู่แล้ว** — รับ `{ email, role_code }` และคืน 404 ถ้าไม่มีบัญชี
+   การเชิญคนนอกเป็นคนละ flow (`/tenants/:id/invites`)
+4. **revoke app access เป็น soft flag** (`is_active=false`) ไม่ได้ลบ row — grant ซ้ำหลัง revoke จะปลุกแถวเดิม
+   คืน 201 ไม่ใช่ 409
+
+**หมายเหตุ: `PATCH /users/:id` แก้โปรไฟล์ข้ามทุก tenant** เพราะตาราง `users` เป็น global
+tenant admin แก้ชื่อสมาชิก = ชื่อเปลี่ยนใน tenant อื่นด้วย (อนุญาตเพราะหน้า member settings ต้องใช้
+ไม่ใช่เพราะไม่มีผล) ถ้าอนาคตต้องการโปรไฟล์แยกราย tenant ต้องไปเก็บที่ `memberships`
+
+เทสต์ (ที่ repo Thunder_Core, dev server ต้องรัน — ใส่ `TC_BASE_URL` ถ้า Next เด้งไป port อื่น):
 ```
 node --env-file=.env tests/api/auth-refresh.test.mjs      # 12 assert
 node --env-file=.env tests/api/tenants-core-v1.test.mjs   # 39 assert
+node --env-file=.env tests/api/members-core-v1.test.mjs   # 45 assert
 ```
 
 **⚠️ "ยังไม่ E2E" หมายถึงอะไร:** สัญญาฝั่ง API ยืนยันครบด้วย 39 assert (ชื่อ field ตรงกับที่
