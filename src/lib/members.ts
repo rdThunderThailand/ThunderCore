@@ -1,6 +1,10 @@
-import { GetMembersOptions, Membership } from '@/types/members'
+import { GetMembersOptions, MemberDetails, Membership } from '@/types/members'
 import { isDevBypass } from './dev'
 import { MOCK_MEMBERS } from './mock/members'
+
+const noEndpoint = (fn: string): never => {
+    throw new Error(`${fn}: no REST endpoint yet — set NEXT_PUBLIC_DEV_BYPASS=true to use mock data`)
+}
 
 // Living endpoint catalog — each signature is the future REST contract.
 // Swap the body to axios (core/v1/tenants/:id/members) when the endpoint lands; callers don't change.
@@ -64,4 +68,31 @@ export async function updateMemberRole(
 ): Promise<void> {
     if (!isDevBypass()) throw new Error('updateMemberRole: no REST endpoint yet — enable NEXT_PUBLIC_DEV_BYPASS')
     // ponytail: no-op in bypass; client holds the updated role in local state.
+}
+
+export async function getMemberDetails(memberId: string, tenantId: string): Promise<MemberDetails> {
+    if (isDevBypass()) {
+        const member = MOCK_MEMBERS.find((m) => m.id === memberId && m.tenant_id === tenantId)
+        if (!member) throw new Error('getMemberDetails: member not found')
+
+        const fullName = member.user?.full_name ?? ''
+        const [firstName, ...rest] = fullName.split(' ')
+
+        return {
+            ...member,
+            profiles: {
+                first_name: firstName ?? '',
+                last_name: rest.join(' '),
+                email: member.user?.email ?? '',
+            },
+        }
+    }
+    return noEndpoint('getMemberDetails')
+}
+
+type UpdateMemberProfileInput = { first_name: string; last_name: string }
+
+export async function updateMemberProfile(_userId: string, _data: UpdateMemberProfileInput): Promise<void> {
+    if (!isDevBypass()) noEndpoint('updateMemberProfile')
+    // ponytail: no-op in bypass; client holds the updated profile in local state.
 }

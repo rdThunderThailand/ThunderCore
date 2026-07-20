@@ -9,6 +9,8 @@ import {
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { Application } from '@/types/applications'
+import { MemberDetails } from '@/types/members'
 import {
     assignApplicationToMember, getMemberApplications, getMemberDetails, getTenantApplications, removeApplicationFromMember, updateMemberProfile
 } from '../../actions'
@@ -22,15 +24,12 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
 
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [member, setMember] = useState<any>(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [applications, setApplications] = useState<any[]>([])
+    const [member, setMember] = useState<MemberDetails | null>(null)
+    const [applications, setApplications] = useState<Application[]>([])
 
     // Add Application Modal State
     const [showAddAppModal, setShowAddAppModal] = useState(false)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [orgApps, setOrgApps] = useState<any[]>([])
+    const [orgApps, setOrgApps] = useState<Application[]>([])
     const [selectedAppId, setSelectedAppId] = useState('')
     const [isAddingApp, setIsAddingApp] = useState(false)
     const [appToDelete, setAppToDelete] = useState<string | null>(null)
@@ -42,12 +41,7 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
     const [successMsg, setSuccessMsg] = useState<string | null>(null)
     const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-    useEffect(() => {
-        loadData()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [memberId, tenantId])
-
-    const loadData = async () => {
+    async function loadData() {
         try {
             setIsLoading(true)
             const [memberData, appsData, orgAppsData] = await Promise.all([
@@ -61,14 +55,9 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
             setOrgApps(orgAppsData)
 
             // Init form
-            if (memberData.profiles) {
-                setFirstName(memberData.profiles.first_name || '')
-                setLastName(memberData.profiles.last_name || '')
-                setEmail(memberData.profiles.email || '')
-            } else {
-                // Fallback if no profile record but user exists (unlikely given logic)
-                setEmail('Unknown')
-            }
+            setFirstName(memberData.profiles.first_name)
+            setLastName(memberData.profiles.last_name)
+            setEmail(memberData.profiles.email)
 
         } catch (err) {
             console.error('Error loading member settings:', err)
@@ -77,6 +66,11 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
             setIsLoading(false)
         }
     }
+
+    useEffect(() => {
+        loadData()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [memberId, tenantId])
 
     const handleSaveProfile = async () => {
         if (!member?.user_id) return
@@ -111,11 +105,8 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
             setIsAddingApp(true)
             setErrorMsg(null)
 
-            await assignApplicationToMember(tenantId, memberId, selectedAppId)
-
-            // Refresh local data
-            const updatedApps = await getMemberApplications(tenantId, memberId)
-            setApplications(updatedApps)
+            const newApp = await assignApplicationToMember(tenantId, memberId, selectedAppId)
+            setApplications((prev) => [...prev, newApp])
 
             setShowAddAppModal(false)
             setSelectedAppId('')
@@ -141,9 +132,7 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
             setErrorMsg(null)
             await removeApplicationFromMember(tenantId, memberId, appToDelete)
 
-            // Refresh
-            const updatedApps = await getMemberApplications(tenantId, memberId)
-            setApplications(updatedApps)
+            setApplications((prev) => prev.filter((app) => app.id !== appToDelete))
             setSuccessMsg('Application removed successfully')
             setTimeout(() => setSuccessMsg(null), 3000)
             setAppToDelete(null)

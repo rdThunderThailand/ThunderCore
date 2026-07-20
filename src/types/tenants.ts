@@ -15,3 +15,48 @@ export interface Tenant {
     websiteUrl?: string | null;
     description?: string | null;
 }
+
+export interface TenantDashboardMember {
+    id: string;
+    role: string;
+    created_at: string;
+    profile: {
+        first_name: string;
+        last_name: string;
+        avatar_url?: string;
+    };
+}
+
+export interface TenantDashboardLog {
+    id: string;
+    created_at: string;
+    action: string;
+    description: string;
+}
+
+export interface TenantDashboardQuota {
+    max_assets: number;
+    used_assets: number;
+    max_storage_mb: number;
+    used_storage_mb: number;
+}
+
+export interface TenantDashboardPlayerStatus {
+    online: number;
+    offline: number;
+    busy: number;
+    error: number;
+    total: number;
+}
+
+export interface TenantDashboard {
+    id: string;
+    name: string;
+    status: TenantStatus;
+    type: TenantType;
+    quota: TenantDashboardQuota;
+    playerStatus: TenantDashboardPlayerStatus;
+    members: TenantDashboardMember[];
+    recentLogs: TenantDashboardLog[];
+    createdAt: string;
+}

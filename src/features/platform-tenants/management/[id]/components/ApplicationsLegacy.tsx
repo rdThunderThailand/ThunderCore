@@ -10,7 +10,7 @@ import {
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-export function TenantsManagementidApplicationsClient() {
+export default function OrgManagementApplications() {
     const params = useParams()
     const router = useRouter()
     const tenantId = params.id as string
@@ -71,7 +71,7 @@ export function TenantsManagementidApplicationsClient() {
             resetForm()
             setSuccess(t('applications.createSuccess'))
             setTimeout(() => setSuccess(null), 3000)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setError(err.message || 'Failed to create application')
         } finally {
@@ -89,7 +89,7 @@ export function TenantsManagementidApplicationsClient() {
             resetForm()
             setSuccess(t('applications.updateSuccess'))
             setTimeout(() => setSuccess(null), 3000)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setError(err.message || 'Failed to update application')
         } finally {
@@ -106,7 +106,7 @@ export function TenantsManagementidApplicationsClient() {
             setDeleteConfirm(null)
             setSuccess(t('applications.deleteSuccess'))
             setTimeout(() => setSuccess(null), 3000)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setError(err.message || 'Failed to delete application')
         } finally {
@@ -118,7 +118,7 @@ export function TenantsManagementidApplicationsClient() {
         try {
             const launch_url = await getLaunchUrl(tenantId, app.id)
             window.open(launch_url, '_blank')
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setError(err.message || 'Failed to launch application')
         }
@@ -205,13 +205,20 @@ export function TenantsManagementidApplicationsClient() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-6 space-y-8 animate-in fade-in duration-500">
+        <div className="max-w-7xl mx-auto p-8 space-y-10 animate-in fade-in duration-500">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
-                    <p className="text-slate-500 font-medium text-sm">Manage applications deployed for this entity.</p>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">Tenant Apps</h1>
+                    <p className="text-slate-500 font-bold mt-1">Manage applications deployed for this entity.</p>
                 </div>
-
+                <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="flex items-center gap-2 px-8 py-3.5 bg-slate-900 text-white font-black rounded-[2rem] hover:bg-slate-800 transition-all shadow-2xl shadow-slate-200"
+                >
+                    <Plus className="w-5 h-5" />
+                    New Application
+                </button>
             </div>
 
             {/* Alerts */}
@@ -229,7 +236,7 @@ export function TenantsManagementidApplicationsClient() {
             )}
 
             {/* Search */}
-            <div className="relative w-full gap-50 flex justify-between">
+            <div className="relative max-w-md">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                     type="text"
@@ -238,14 +245,6 @@ export function TenantsManagementidApplicationsClient() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-violet-50/50 outline-none transition-all font-bold"
                 />
-
-                <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="flex items-center whitespace-nowrap gap-2 px-6 py-3.5 bg-slate-900 text-white font-black rounded-[2rem] hover:bg-slate-800 transition-all shadow-2xl shadow-slate-200"
-                >
-                    <Plus className="w-5 h-5" />
-                    New Application
-                </button>
             </div>
 
             {/* Apps Grid */}
@@ -268,7 +267,7 @@ export function TenantsManagementidApplicationsClient() {
                     {filteredApps.map((app) => (
                         <div
                             key={app.id}
-                            onClick={() => router.push(`/applications/management/${app.id}`)}
+                            onClick={() => router.push(`/dashboard/application/management/${app.id}`)}
                             className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm space-y-6 group hover:shadow-xl transition-all border-b-4 border-b-transparent hover:border-b-violet-500 cursor-pointer"
                         >
                             <div className="flex justify-between items-start">
