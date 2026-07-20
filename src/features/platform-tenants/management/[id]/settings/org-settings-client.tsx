@@ -20,7 +20,7 @@ export function OrgSettingsClient({ initialTenant, userRole }: OrgSettingsClient
     const router = useRouter()
     const tenantId = params.id as string
 
-    const isSuperAdmin = userRole === 'super_admin'
+    const isSuperAdmin = userRole === 'super_admin' || 'company_admin'
     const canEdit = isSuperAdmin || userRole === 'company_admin'
 
     const [formData, setFormData] = useState({

@@ -196,7 +196,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                                         const isSelected = selectedUserIds.includes(user.id)
                                         const firstLetter = user.email ? user.email.charAt(0).toUpperCase() : ''
                                         const roleStr = (user.role as string) || ''
-                                        const isSuperAdminUser = roleStr === 'super_admin' || roleStr === 'Super Admin'
+                                        const isSuperAdminUser = roleStr === 'super_admin' || roleStr === 'company_admin'
                                         const isAdminUser = roleStr === 'admin' || roleStr === 'Admin'
 
                                         return (
@@ -292,8 +292,8 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                                         key={i}
                                         onClick={() => setCurrentPage(i + 1)}
                                         className={`w-8 h-8 flex items-center justify-center rounded-lg border ${currentPage === i + 1
-                                                ? 'bg-blue-50 border-blue-200 text-blue-600 font-bold'
-                                                : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+                                            ? 'bg-blue-50 border-blue-200 text-blue-600 font-bold'
+                                            : 'border-slate-200 text-slate-500 hover:bg-slate-50'
                                             } font-medium text-sm transition-all cursor-pointer`}
                                     >
                                         {i + 1}

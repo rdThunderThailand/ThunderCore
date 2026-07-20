@@ -21,10 +21,11 @@ import { mockUser, type UserProfile } from '@/store/useAuthStore';
 import Image from 'next/image';
 import {
     superAdminNavigationItems,
-    superAdminNavigationItemsAtManagement,
-    companyAdminNavigationItems,
+    getSuperAdminNavigationItemsAtManagement,
+    getCompanyAdminNavigationItems,
     defaultNavigationItems,
-    superAdminNavigationItemsAtApplicationsManagement
+    getSuperAdminNavigationItemsAtApplicationsManagement,
+    getCompanyAdminNavigationItemsAtApplicationsManagement
 } from './sidebar-nav';
 
 export interface NavItem {
@@ -65,18 +66,24 @@ export const SideBar = ({
     customStyles = {}
 }: SidebarProps) => {
     const pathname = usePathname();
+    const managementId = pathname.match(/\/(?:tenants|applications)\/management\/([^/]+)/)?.[1] ?? '';
     const resolvedNavigationItems = navigationItems ?? (() => {
         if (user?.role === "super_admin") {
             if (pathname.includes("/tenants/management/")) {
-                return superAdminNavigationItemsAtManagement;
+                return getSuperAdminNavigationItemsAtManagement(managementId);
             }
             if (pathname.includes("/applications/")) {
-                return superAdminNavigationItemsAtApplicationsManagement;
+                return getSuperAdminNavigationItemsAtApplicationsManagement(managementId);
             }
             return superAdminNavigationItems;
         }
         if (user?.role === "company_admin") {
-            return companyAdminNavigationItems;
+            if (pathname.includes("/tenants/management/")) {
+                return getCompanyAdminNavigationItems(managementId);
+            }
+            if (pathname.includes("/applications/")) {
+                return getCompanyAdminNavigationItemsAtApplicationsManagement(managementId);
+            }
         }
         return defaultNavigationItems;
     })();
