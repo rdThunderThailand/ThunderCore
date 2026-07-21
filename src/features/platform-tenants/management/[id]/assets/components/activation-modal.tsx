@@ -36,30 +36,6 @@ export function ActivationModal({ tenantId, asset, onClose }: {
         alert('Copied to clipboard!')
     }
 
-    const simulateActivation = async () => {
-        if (!activationCode) return
-        setIsLoading(true)
-        try {
-            const res = await fetch('/api/player/retrieve', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ activation_code: activationCode })
-            })
-
-            const data = await res.json()
-            if (!res.ok) throw new Error(data.error || 'Failed to activate device')
-
-            alert('Device activated successfully!')
-            window.location.reload() // Reload the page to show the updated active status
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            console.error(error)
-            alert(error.message || 'Error activating device')
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
     return (
         <ModalOverlay onClose={onClose}>
             <div className="bg-white w-full max-w-lg rounded-[1.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-200">
@@ -134,15 +110,6 @@ export function ActivationModal({ tenantId, asset, onClose }: {
                             )}
                         </div>
                     </div>
-
-                    <button
-                        onClick={simulateActivation}
-                        disabled={!activationCode || isLoading}
-                        className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-200 mt-4 disabled:opacity-50 disabled:shadow-none"
-                    >
-                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 fill-current" />}
-                        Activate Device
-                    </button>
                 </div>
             </div>
         </ModalOverlay>

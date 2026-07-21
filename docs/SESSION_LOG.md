@@ -11,6 +11,55 @@ decisions were made). This file is the *history*; those are the *rules*.
 
 ---
 
+## 2026-07-21 — Auth/RBAC fix plan (T4–T6): token refresh, redirect loop, dead activation button
+
+**Branch:** `feat/api` · **Commits:** this session — see below (T1–T3 + earlier work
+already landed in `3da4091` before this entry)
+
+**Goal:** work through `docs/plans/auth-rbac-fixes.md` (T1–T6, six independent fixes
+from the prior session's middleware audit). T1–T3 and the `/no-access` Suspense
+bug were already committed (`3da4091`) before this entry; this entry covers T4–T6.
+
+**Done + verified:**
+- **T4 — token refresh in middleware (FE).** `tc_refresh_token` was written on login
+  but never read; access-token expiry logged everyone out even with a valid refresh
+  token. Added `src/lib/auth-cookies.ts` (shared cookie-option helpers for login +
+  refresh, so the two paths can't drift) and rewrote `src/middleware.ts` to call
+  `POST /auth/refresh` when the access cookie is missing but the refresh cookie
+  survives — persists the rotated refresh token, clears both cookies and redirects
+  to `/login` on failure. Refresh cookie always resets to a sliding 30-day window on
+  rotation (confirmed with user: no "remember me" flag survives to middleware, so
+  this is the accepted simplification over adding a flag-carrying cookie).
+  **Verified against the real BE and real middleware** (not just build): logged in
+  as a real account via browser, then drove `localhost:3000/dashboard` with
+  hand-crafted `Cookie` headers via Node — missing-access+valid-refresh → 200 +
+  rotated cookies; corrupted refresh → 307 to `/login` + both cookies cleared, no
+  loop; valid access token → 200 + zero `Set-Cookie` (confirms no needless refresh
+  calls).
+- **T5 — middleware redirect-loop branch removed (FE).** `src/middleware.ts` no
+  longer redirects `/login` → `/dashboard` when a session cookie exists. That branch
+  was the root cause of an infinite loop when a token is revoked server-side but not
+  yet expired (dashboard 401s → redirects to `/login` → middleware sees the cookie
+  → bounces back). Decided with user: delete the branch (plan's option A) rather
+  than add a `/logout` route handler — a signed-in user who visits `/login` now just
+  sees the login form.
+- **T6 — dead "Activate Device" button removed (FE).** `activation-modal.tsx` POSTed
+  to `/api/player/retrieve`, a route that doesn't exist anywhere in FE — 404 on every
+  submit. Confirmed first that the modal *is* reachable from a real asset-row menu
+  (not orphaned dead code) before deciding. Removed only the broken half: the
+  "Activate Device" button and its `simulateActivation` handler. The "Retrieve"
+  button (shows the activation code via the existing `getAssetCredentials` Server
+  Action) still works and is untouched.
+
+**Not done / next up:**
+- BE test suite (`node tests/api/users-core-v1.test.mjs`) and the two T1 manual
+  login checks (`napat@thunder.co.th`, `companyadmin@thunder.com`) from the plan
+  were not re-run this session — T1's code change was build-verified only.
+- T6 option B (real activate-by-code Server Action + BE endpoint) is still open if
+  that feature is wanted; current state just removes the broken button.
+
+---
+
 ## 2026-07-20 — Users path: BE/FE wired + settings page Save/Delete made real
 
 **Branch:** `feat/api` · **Commits:** none yet (uncommitted)
