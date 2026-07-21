@@ -103,6 +103,10 @@ export const translations: Record<Locale, Record<string, string>> = {
         'modal.activateUserDesc': 'Are you sure you want to activate this user?',
         'modal.deactivateUserDesc': 'Are you sure you want to deactivate this user?',
         'modal.successDeleted': 'Success! Your member have been deleted.',
+        'modal.changeRoleTitle': 'Change Role',
+        'modal.changeRoleDesc': 'Are you sure you want to change the role of',
+        'modal.roleFrom': 'from',
+        'modal.roleTo': 'to',
 
         // Users page
         'users.title': 'Users',
@@ -277,6 +281,10 @@ export const translations: Record<Locale, Record<string, string>> = {
         'modal.activateUserDesc': 'คุณแน่ใจว่าต้องการเปิดใช้งานผู้ใช้นี้?',
         'modal.deactivateUserDesc': 'คุณแน่ใจว่าต้องการปิดใช้งานผู้ใช้นี้?',
         'modal.successDeleted': 'สำเร็จ! ผู้ใช้ถูกลบออกแล้ว',
+        'modal.changeRoleTitle': 'เปลี่ยนบทบาท',
+        'modal.changeRoleDesc': 'คุณแน่ใจว่าต้องการเปลี่ยนบทบาทของ',
+        'modal.roleFrom': 'จาก',
+        'modal.roleTo': 'เป็น',
 
         // Users page
         'users.title': 'ผู้ใช้',

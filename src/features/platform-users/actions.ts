@@ -7,3 +7,7 @@ import * as users from '@/lib/users'
 export async function deleteUser(id: string) {
     return users.deleteUser(id)
 }
+
+export async function updateUserRole(id: string, role: string) {
+    return users.updateUserRole(id, role)
+}
