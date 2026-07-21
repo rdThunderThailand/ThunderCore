@@ -14,13 +14,14 @@ modules are tenant-facing features built on top of that core. Every app-layer pr
 (e.g. cityzen) authenticates and authorizes against Thunder Core rather than running its own
 identity stack.
 
-Stack: **Next.js 16 App Router · React 19 · Supabase (Postgres + Auth + RLS) · Tailwind CSS 4 · TypeScript strict**.
+Stack: **Next.js 16 App Router · React 19 · Thunder Core REST (core/v1) · Tailwind CSS 4 · TypeScript strict**.
 Package manager: **pnpm** (`pnpm-lock.yaml`, `pnpm-workspace.yaml`).
 
 Key libraries (grouped by job):
 
-- **Data / backend:** `axios` (Thunder Core REST client), `@supabase/supabase-js` + `@supabase/ssr`
-  (stopgap DB access), `jose` (JWT), `swr` (client fetching), `zustand` (client state, `src/store/`)
+- **Data / backend:** `axios` (Thunder Core REST client), `jose` (JWT), `swr` (client fetching),
+  `zustand` (client state, `src/store/`). `@supabase/supabase-js` + `@supabase/ssr` are still in
+  `package.json` but unused dead weight — nothing imports them (see Architecture).
 - **Forms / validation:** `react-hook-form` + `@hookform/resolvers` + `zod`
 - **UI:** `lucide-react` (icons), `sonner` (toasts), `clsx` + `tailwind-merge` (class merging), `recharts` (charts)
 - **Maps / calendar:** `mapbox-gl` + `react-map-gl`, `@fullcalendar/*`
@@ -36,7 +37,7 @@ pnpm lint     # eslint (next core-web-vitals + typescript configs)
 ```
 
 No test runner is configured — there are no unit/e2e tests in the repo. Verification is manual
-build + E2E against live Thunder Core / Supabase (see Workflow Rules).
+build + E2E against live Thunder Core (see Workflow Rules).
 
 `node_modules/next/dist/docs/` holds the docs for this exact Next.js version — this is Next.js 16,
 which differs from older App Router conventions. Consult it before writing framework code
@@ -44,57 +45,65 @@ which differs from older App Router conventions. Consult it before writing frame
 
 ## Architecture
 
-**This app is the frontend. It should never talk to Supabase.** The backend is the (old,
+**This app is the frontend. It never talks to Supabase.** The backend is the (old,
 parallel-running) Thunder_Core service — Thunder_Core owns the database; the frontend's only
-correct data source is the **Thunder_Core REST API**. The Supabase deps (`@supabase/*`) and
-`src/utils/supabase/` were **copied in by mistake** from the old backend codebase; they are not an
-intended part of this app. Target end-state: **zero Supabase in this repo.**
-See `docs/adr/0001-rest-boundary-and-supabase-seam.md`.
+correct data source is the **Thunder_Core REST API**. `src/utils/supabase/` has already been
+deleted and no file imports it. See `docs/adr/0001-rest-boundary-and-supabase-seam.md` for why —
+that ADR's Supabase-shim removal is now **done**; what's below describes the seam pattern it left
+behind, which is still active. (`@supabase/*` remain in `package.json` but nothing imports them —
+pruning the deps themselves is a separate, harmless cleanup, not blocking anything.)
 
-The catch: Thunder_Core's REST surface is still thin (basically auth), and the full set of endpoints
-the frontend needs isn't known yet. So ~23 files currently read Supabase directly as a temporary
-**shim** for endpoints that don't exist. Don't big-bang remove it (features would lose their data)
-and don't try to design the endpoint list up front — instead contain the shim so it removes cleanly
-and _tells you which endpoints to build_:
+The catch: Thunder_Core's REST surface is still thin, and the full set of endpoints the frontend
+needs isn't known yet. So `src/lib/*.ts` seam functions for an unimplemented endpoint don't fall
+back to Supabase anymore — they either serve fixture data under dev-bypass, or throw a
+`"no REST endpoint yet"` error otherwise:
 
 1. **Thunder Core REST API (the only correct source).** `src/features/auth/*` and `src/app/dashboard`
    call the Thunder Core `core/v1` API through a single server-side axios client,
    `src/lib/thunder-core.ts` (login/register, `/me`, `/me/memberships`). The app API key is a
    secret — **`thunder-core.ts` must only be imported from Server Components / Server Actions**,
    never from a `'use client'` file. Sessions are httpOnly cookies `tc_access_token` /
-   `tc_refresh_token` set by the login Server Action.
+   `tc_refresh_token` set by the login Server Action, refreshed transparently in `src/middleware.ts`.
 
-2. **Supabase = temporary shim behind a per-domain seam (to be deleted).** `app-registry` and
-   `platform-tenants` still read Supabase via `src/utils/supabase/*` (`server.ts`, `admin.ts`,
-   `client.ts`, `middleware-client.ts`). Treat every such call as a placeholder for a missing REST
-   endpoint.
+2. **Unimplemented endpoints = mock-or-throw behind a per-domain seam (no Supabase involved).**
+   Every `src/lib/<domain>.ts` function checks `isDevBypass()` first — `true` returns fixture data
+   from `src/lib/mock/<domain>.ts`; `false` on an endpoint that exists calls `thunderCore` (real
+   axios); `false` on one that doesn't yet throws via a `noEndpoint(fnName)` helper (see
+   `src/lib/applications.ts` for the pattern) so the failure is loud instead of silently serving
+   stale/wrong data in production.
 
    **Rules for anything new or touched:**
-   - Feature code (components, `actions.ts`) **must not import `utils/supabase` directly.** Route all
-     data access through a per-domain module in `src/lib/` (same shape as `thunder-core.ts`), named
-     after **REST resources** (`listTenants`, `getTenant`, `createApplication`) — not Supabase tables.
-     Mark the shim: `// ponytail: Supabase shim — remove when GET /tenants exists`.
+   - Feature code (components, `actions.ts`) **must not call Thunder Core or any external API
+     directly.** Route all data access through a per-domain module in `src/lib/`, named after
+     **REST resources** (`listTenants`, `getTenant`, `createApplication`).
    - **`src/lib/*.ts` is the living catalog of endpoints the backend must build.** Each function's
-     signature is the future REST contract. When an endpoint lands (old Thunder_Core or Go), swap that
-     **one function's** body from a Supabase call to an axios call — features calling it don't change.
-   - The Go rewrite is a non-event for the frontend precisely because of this seam — it only ever swaps
-     internals of `src/lib/*.ts`, one file at a time.
-   - **Migrate `'use client'` Supabase calls first** (highest-risk: browser-direct DB access guarded
-     only by RLS/anon key, and impossible once Go owns the DB).
-   - **Last step, only when no seam function calls Supabase anymore:** delete `@supabase/*` deps and
-     `src/utils/supabase/`.
+     signature is the future REST contract. When an endpoint lands, swap that **one function's**
+     `noEndpoint(...)` branch for a real `thunderCore` call — features calling it don't change.
+   - The Go rewrite is a non-event for the frontend precisely because of this seam — it only ever
+     swaps internals of `src/lib/*.ts`, one file at a time.
+   - Check `docs/api-checklist.md` for which endpoints already exist on the backend before assuming
+     one needs building.
 
 **RBAC.** Roles are tiers keyed by `roles.role_type` (NOT `roles.code`, the persona):
 `super_admin > company_admin > executive_viewer > viewer_auditor > operator`. `rbac.ts` always
 queries the DB as source of truth and normalizes legacy pre-migration role strings — don't trust
 `app_metadata.role`.
 
-**Routing** (App Router, route groups):
+**Routing** (App Router, route groups). Platform routes are split by tier into two route groups
+under `(dashboard)/` — `(super-admin)` and `(company-admin)`:
 
 - `src/app/(auth)/` — login, register, register/confirmed
-- `src/app/(dashboard)/(platform)/` — `app-registry` and `tenants` management surfaces (nested
-  `management/[id]/...` for assets, devices, members, portal, settings)
-- `src/app/dashboard/` — the post-login `/me` landing page
+- `src/app/(dashboard)/(super-admin)/` — platform-wide surfaces, all guarded with
+  `requireRole('super_admin')`: `tenants` (+ `management/[id]/...` for assets, devices, members,
+  settings), `applications` (+ `management/[id]/...` for scenario, members, portal, settings),
+  `users`, `settings` (the `/settings?user=<id>` user-edit page), `no-access`, `redirect`.
+- `src/app/(dashboard)/(company-admin)/[id]/` — **WIP, all files currently empty stubs, no
+  guard/logic yet**: `dashboard`, `assets`, `members` (+ `members/[id]/settings`), `settings`.
+  Intended as the company-admin-scoped counterpart to `(super-admin)/tenants/management/[id]/...`,
+  keyed by tenant id (`[id]`) instead of living under `/tenants/management/`. Do not assume any
+  behavior here beyond routing — check the file before building on it, per NO MAGIC.
+- `src/app/dashboard/` — the post-login `/me` landing page (bare, outside both groups, no
+  explicit RBAC guard — branches on `getCurrentUser()`/`getMyMemberships()` directly).
 
 **Feature-folder convention.** UI + logic live under `src/features/<feature>/`, not in `app/`.
 Route files (`src/app/.../page.tsx`) are thin and render a `*Client.tsx` from the matching feature
@@ -112,7 +121,10 @@ src/
 ├── app/                      # Next.js App Router — routes ONLY (thin)
 │   ├── (auth)/               #   login, register, register/confirmed
 │   ├── (dashboard)/
-│   │   ├── (platform)/       #   tenants, applications, users (+ management/[id]/… nested)
+│   │   ├── (super-admin)/    #   tenants, applications, users, settings, no-access, redirect
+│   │   │                     #   (+ management/[id]/… nested) — all require_role('super_admin')
+│   │   ├── (company-admin)/  #   [id]/{dashboard,assets,members,settings} — WIP, empty stubs,
+│   │   │                     #   no guard/logic yet. Verify before building on it.
 │   │   └── layout.tsx
 │   └── dashboard/            #   post-login /me landing
 │       page.tsx              # each page.tsx is thin: renders a *Client from features/
@@ -140,7 +152,7 @@ src/
 **Rules of thumb for new code:**
 
 - New page → thin `app/.../page.tsx` that renders a `*Client.tsx` from `features/`.
-- New data access → a function in `src/lib/<domain>.ts` (never call Supabase/axios from components).
+- New data access → a function in `src/lib/<domain>.ts` (never call axios/Thunder Core from components directly).
 - Mutations → `features/<feature>/actions.ts` (`'use server'`) that call the `src/lib` seam.
 - Running without a backend → guard with `isDevBypass()` and serve `src/lib/mock/<domain>.ts`.
 
