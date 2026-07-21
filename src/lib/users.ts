@@ -38,3 +38,8 @@ export async function deleteUser(id: string): Promise<void> {
     // ponytail: Supabase shim removed — uses DELETE /users/:id
     await thunderCore.delete(`/users/${id}`)
 }
+
+export async function updateUserRole(_id: string, _role: string): Promise<void> {
+    if (!isDevBypass()) throw new Error('updateUserRole: no REST endpoint yet — enable NEXT_PUBLIC_DEV_BYPASS')
+    // ponytail: no-op in bypass; client applies the new role to local state.
+}

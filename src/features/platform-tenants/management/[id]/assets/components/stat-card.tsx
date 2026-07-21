@@ -1,10 +1,11 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function StatCardWithIcon({ label, value, icon: Icon, color }: { label: string, value: number, icon: any, color: 'blue' | 'amber' | 'emerald' | 'red' }) {
+export function StatCardWithIcon({ label, value, icon: Icon, color }: { label: string, value: number, icon: any, color: 'blue' | 'amber' | 'emerald' | 'red' | 'purple' }) {
     const styles = {
         blue: { text: 'text-blue-600', bg: 'bg-blue-50', icon: 'text-blue-500' },
         amber: { text: 'text-amber-600', bg: 'bg-amber-50', icon: 'text-amber-500' },
         emerald: { text: 'text-emerald-600', bg: 'bg-emerald-50', icon: 'text-emerald-500' },
         red: { text: 'text-red-600', bg: 'bg-red-50', icon: 'text-red-500' },
+        purple: { text: 'text-purple-600', bg: 'bg-purple-50', icon: 'text-purple-500' },
     }
     const style = styles[color]
 

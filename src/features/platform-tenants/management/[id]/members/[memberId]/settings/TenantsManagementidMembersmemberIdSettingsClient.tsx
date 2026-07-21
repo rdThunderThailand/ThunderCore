@@ -151,7 +151,7 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
     }
 
     return (
-        <div className="p-8 space-y-8 bg-[#F8F9FC] min-h-screen font-sans text-slate-900">
+        <div className="p-8 space-y-8 min-h-screen font-sans text-slate-900">
             {/* Note: Header is handled in Navbar based on route */}
 
             {/* Profile Settings Card */}

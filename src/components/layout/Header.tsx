@@ -74,29 +74,46 @@ function getManagementBreadcrumbs(pathname: string, isSuperAdmin: boolean): Crum
         return crumbs;
     }
 
-    const appMatch = pathname.match(/^\/applications\/management\/([^/]+)/);
+    const appMatch = pathname.match(/^\/applications\/([^/]+)/);
     if (appMatch) {
-        const base = `/applications/management/${appMatch[1]}`;
-        const rest = segments.slice(3);
+        const base = `/applications/${appMatch[1]}`;
+        const rest = segments.slice(2);
         const crumbs: Crumb[] = [];
         if (isSuperAdmin) crumbs.push({ label: "Applications", href: "/applications" });
 
-        if (rest.length === 0) {
-            crumbs.push({ label: "Application Dashboard", href: base });
-            return crumbs;
+        // if (rest.length === 0) {
+        //     crumbs.push({ label: "Application Dashboard", href: base });
+        //     return crumbs;
+        // }
+
+        if (rest[0] === "settings") {
+            crumbs.push({ label: "Application Settings", href: pathname });
+        }
+        // if (rest[0] === "scenario") {
+        //     crumbs.push({ label: "Scenario", href: pathname });
+        // } else if (rest[0] === "portal") {
+        //     crumbs.push({ label: "Portal", href: `${base}/portal` });
+        //     if (rest[1] === "customization") crumbs.push({ label: "Customization", href: pathname });
+        //     else if (rest[1] === "domains") crumbs.push({ label: "Domains", href: pathname });
+        // } else if (rest[0] === "members") {
+        //     crumbs.push({ label: "Members", href: pathname });
+        // } else if (rest[0] === "settings") {
+        //     crumbs.push({ label: "Settings", href: pathname });
+        // }
+        return crumbs;
+    }
+
+    const userMatch = pathname.match(/^\/users\/([^/]+)/);
+    if (userMatch) {
+        const base = `/users/${userMatch[1]}`;
+        const rest = segments.slice(2);
+        const crumbs: Crumb[] = [];
+        if (isSuperAdmin) crumbs.push({ label: "Users", href: "/users" });
+
+        if (rest[0] === "settings") {
+            crumbs.push({ label: "User Settings", href: pathname });
         }
 
-        if (rest[0] === "scenario") {
-            crumbs.push({ label: "Scenario", href: pathname });
-        } else if (rest[0] === "portal") {
-            crumbs.push({ label: "Portal", href: `${base}/portal` });
-            if (rest[1] === "customization") crumbs.push({ label: "Customization", href: pathname });
-            else if (rest[1] === "domains") crumbs.push({ label: "Domains", href: pathname });
-        } else if (rest[0] === "members") {
-            crumbs.push({ label: "Members", href: pathname });
-        } else if (rest[0] === "settings") {
-            crumbs.push({ label: "Settings", href: pathname });
-        }
         return crumbs;
     }
 
