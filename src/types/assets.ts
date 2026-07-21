@@ -47,6 +47,7 @@ export interface Asset {
     cctv_url: string | null;
     location_url: string | null;
     sync_media: boolean;
+    image_url: string | null;
 }
 
 export interface DeviceCredentials {
@@ -64,7 +65,7 @@ export interface CreateAssetInput {
     serial_number?: string;
     mac_address?: string;
     model?: string;
-    device_type: string;
+    device_type?: string;
     site?: string;
     zone?: string;
     app_version?: string;
@@ -72,6 +73,8 @@ export interface CreateAssetInput {
     screen_ratio?: string;
     screen_dimension?: string;
     tags?: string[];
+    activation_code?: string;
+    image_url?: string;
 
     // Config Settings
     download_mode?: string;

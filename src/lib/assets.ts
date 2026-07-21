@@ -173,8 +173,8 @@ export async function createAsset(tenantId: string, input: CreateAssetInput): Pr
         serial_number: normalizedSerial || null,
         mac_address: normalizedMac || null,
         model: input.model?.trim() || null,
-        type: input.device_type,
-        device_type: input.device_type,
+        type: input.device_type ?? 'Other',
+        device_type: input.device_type ?? 'Other',
         folder_id: null,
         site: input.site?.trim() || null,
         zone: input.zone?.trim() || null,
@@ -204,6 +204,7 @@ export async function createAsset(tenantId: string, input: CreateAssetInput): Pr
         cctv_url: input.cctv_url || null,
         location_url: input.location_url || null,
         sync_media: input.sync_media ?? false,
+        image_url: input.image_url?.trim() || null,
     }
 
     const credentials: DeviceCredentials = {
