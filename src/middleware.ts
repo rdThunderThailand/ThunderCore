@@ -8,23 +8,24 @@ import { isDevBypass } from '@/lib/dev'
 const PUBLIC_PATHS = ['/login', '/register', '/register/confirmed']
 
 export function middleware(request: NextRequest) {
-    // const { pathname } = request.nextUrl
-    // // ponytail: dev-bypass has no real login flow to set tc_access_token, so treat it as an always-valid session.
-    // const hasSession = isDevBypass() || Boolean(request.cookies.get('tc_access_token')?.value)
-    // const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p))
+    const { pathname } = request.nextUrl
+    // ponytail: dev-bypass has no real login flow to set tc_access_token, so treat it as an always-valid session.
+    const hasSession = isDevBypass() || Boolean(request.cookies.get('tc_access_token')?.value)
+    // '/' is exact-match only — startsWith('/') would make every path public.
+    const isPublic = pathname === '/' || PUBLIC_PATHS.some((p) => pathname.startsWith(p))
 
-    // if (!hasSession && !isPublic) {
-    //     const url = request.nextUrl.clone()
-    //     url.pathname = '/login'
-    //     url.searchParams.set('next', pathname)
-    //     return NextResponse.redirect(url)
-    // }
+    if (!hasSession && !isPublic) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/login'
+        url.searchParams.set('next', pathname)
+        return NextResponse.redirect(url)
+    }
 
-    // if (hasSession && isPublic) {
-    //     return NextResponse.redirect(new URL('/dashboard', request.url))
-    // }
+    if (hasSession && isPublic) {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
 
-    // return NextResponse.next()
+    return NextResponse.next()
 }
 
 export const config = {

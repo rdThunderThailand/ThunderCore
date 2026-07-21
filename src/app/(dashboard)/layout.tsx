@@ -23,7 +23,9 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 
                         {/* Desktop Navbar: Sticky at top of content area - Hidden on Mobile */}
                         <div className="hidden lg:block">
-                            <Header />
+                            <Suspense fallback={null}>
+                                <Header />
+                            </Suspense>
                         </div>
 
                         {/* Scrollable Page Content with Auto Scroll Reset */}

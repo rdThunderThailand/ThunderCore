@@ -3,13 +3,16 @@
 import { Profile } from '@/types/dashboard'
 import { Save, Upload, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { deleteUser, updateUser } from './actions'
 
 interface SettingsClientProps {
     user: Profile
 }
 
 export function SettingsClient({ user }: SettingsClientProps) {
+    const router = useRouter()
     // Normalize role string to match either 'Super Admin', 'Admin', or 'User'
     const getNormalizedRole = (r: string) => {
         if (r === 'super_admin' || r === 'Super Admin') return 'Super Admin'
@@ -22,7 +25,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     const [email, setEmail] = useState(user.email || '')
     const [role, setRole] = useState<string>(getNormalizedRole((user.role as string) || 'User'))
     const [mfaEnabled, _setMfaEnabled] = useState(false)
-    const [isActive, setIsActive] = useState(user.is_active)
+    const [isActive, _setIsActive] = useState(user.is_active)
     const [emailNotifications, setEmailNotifications] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
 
@@ -51,17 +54,32 @@ export function SettingsClient({ user }: SettingsClientProps) {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsSaving(true)
-
-        // Simulate save delay
-        await new Promise((resolve) => setTimeout(resolve, 800))
-        setIsSaving(false)
-        toast.success('User settings saved successfully.')
+        try {
+            // ponytail: backend PATCH /users/:id only accepts first_name/last_name —
+            // email, role, MFA, and active status have no update endpoint yet.
+            const updated = await updateUser(user.id, { first_name: firstName, last_name: lastName })
+            setFirstName(updated.first_name)
+            setLastName(updated.last_name)
+            toast.success('User settings saved successfully.')
+        } catch (error) {
+            const err = error as Error
+            toast.error(err.message || 'Failed to save user settings.')
+        } finally {
+            setIsSaving(false)
+        }
     }
 
-    const handleDeleteUser = () => {
+    const handleDeleteUser = async () => {
         const confirmed = window.confirm(`Are you sure you want to delete user "${firstName} ${lastName}"? This action is irreversible.`)
-        if (confirmed) {
-            toast.success('User account deletion process initiated.')
+        if (!confirmed) return
+
+        try {
+            await deleteUser(user.id)
+            toast.success('User deleted successfully.')
+            router.push('/users')
+        } catch (error) {
+            const err = error as Error
+            toast.error(err.message || 'Failed to delete user.')
         }
     }
 
@@ -134,10 +152,12 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
                                 <div className="space-y-1">
                                     <label className="text-xs font-bold text-slate-500">Role</label>
+                                    {/* ponytail: no PATCH endpoint for role yet — read-only until one exists */}
                                     <select
                                         value={role}
                                         onChange={(e) => setRole(e.target.value)}
-                                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-700 cursor-pointer"
+                                        disabled
+                                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-400 cursor-not-allowed"
                                     >
                                         <option value="User">User</option>
                                         <option value="Admin">Admin</option>
@@ -180,10 +200,11 @@ export function SettingsClient({ user }: SettingsClientProps) {
                             <span className={`text-sm font-bold ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>
                                 {isActive ? 'Active' : 'Inactive'}
                             </span>
+                            {/* ponytail: no PATCH endpoint for status yet — toggle is read-only */}
                             <button
                                 type="button"
-                                onClick={() => setIsActive(!isActive)}
-                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isActive ? 'bg-blue-600' : 'bg-slate-200'
+                                disabled
+                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-not-allowed opacity-60 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isActive ? 'bg-blue-600' : 'bg-slate-200'
                                     }`}
                             >
                                 <span

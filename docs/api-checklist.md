@@ -8,7 +8,7 @@
 | **FE** | `thundercore/src/lib/<domain>.ts` เรียก axios จริงแล้ว (ไม่ใช่ `throw`) |
 | **E2E** | เปิดเบราว์เซอร์ใช้จริงโดยปิด `NEXT_PUBLIC_DEV_BYPASS` แล้วผ่าน |
 
-**สถานะรวม: BE 21/65 · FE 11/65 · E2E 4/65** (2026-07-20)
+**สถานะรวม: BE 23/65 · FE 13/65 · E2E 6/65** (2026-07-20)
 
 > ⚠️ BE ผ่านไม่ได้แปลว่าใช้งานได้จริง — ทุกเส้นที่ E2E ยังไม่ติ๊ก ยังไม่เคยมีคนเปิดหน้าเว็บดู
 
@@ -142,8 +142,11 @@ super_admin gate ต้อง enforce ที่ backend
 
 | Endpoint | ทำอะไร | BE | FE | E2E |
 |---|---|:--:|:--:|:--:|
-| `GET /users` | ผู้ใช้ทั้งระบบ (หน้า `/users`, `/settings`) | ⬜ | ⬜ | ⬜ |
-| `DELETE /users/:id` | ลบผู้ใช้ | ⬜ | ⬜ | ⬜ |
+| `GET /users` | ผู้ใช้ทั้งระบบ (หน้า `/users`, `/settings`) | ✅ | ✅ | ✅ |
+| `DELETE /users/:id` | ลบผู้ใช้ | ✅ | ✅ | ✅ |
+
+> BE verify ด้วย `tests/api/users-core-v1.test.mjs` รันจริงกับ Thunder_Core บน `localhost:3001` — 10/10 ผ่าน (2026-07-20).
+> E2E verify ด้วยมือในเบราว์เซอร์จริง (`NEXT_PUBLIC_DEV_BYPASS=false`, login เป็น super_admin จริง): `/users` ดึงข้อมูลจาก Supabase จริง (เช็คโดย query DB ตรงเทียบ id), คลิกแถว → `/settings?user=...` โหลด user ถูกคน, **Save** เขียนจริง (ทดสอบบน `benyapa.thon@gmail.com`, เห็น `updated_at` เปลี่ยนใน DB), **Delete** ลบจริงแบบ soft-delete (ทดสอบบน disposable test user ที่สร้าง+ลบเองเพื่อไม่แตะข้อมูลจริง) แล้ว redirect กลับ `/users` list ถูกต้อง (2026-07-20). ไม่ใช่ scripted E2E — เป็น manual browser verification.
 
 ---
 
