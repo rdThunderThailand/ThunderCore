@@ -106,8 +106,8 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
     }
 
     return (
-        <div className="w-full max-w-full overflow-hidden flex-1 flex flex-col min-h-0 bg-[#F0F4F8] pb-24 lg:pb-0">
-            <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col min-h-0 p-4 lg:p-6 space-y-6 lg:space-y-8 animate-in fade-in duration-500">
+        <div className="w-full max-w-full flex-1 flex flex-col min-h-0 bg-[#F0F4F8] pb-24 lg:pb-12">
+            <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col min-h-0 p-4 lg:p-6 pb-8 lg:pb-12 space-y-6 lg:space-y-8 animate-in fade-in duration-500">
                 {/* Header title
                 <div className="flex justify-between items-center">
                     <h1 className="text-[28px] font-bold text-indigo-950 leading-tight tracking-wide">

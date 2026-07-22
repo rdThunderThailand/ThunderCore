@@ -1,7 +1,23 @@
-import { GetMembersOptions, MemberDetails, Membership } from '@/types/members'
+import { GetMembersOptions, MemberDetails, Membership, TenantRole } from '@/types/members'
 import { isDevBypass } from './dev'
 import { MOCK_MEMBERS } from './mock/members'
-import { thunderCore } from './thunder-core'
+import { isAxiosError, thunderCore } from './thunder-core'
+
+function mapRoleToBackend(role: string): string {
+    switch (role) {
+        case 'Executive Viewer':
+            return 'executive_viewer'
+        case 'Department Admin':
+        case 'company_admin':
+            return 'company_admin'
+        case 'Operator':
+            return 'operator'
+        case 'Auditor':
+            return 'viewer_auditor'
+        default:
+            return role.toLowerCase().replace(/\s+/g, '_')
+    }
+}
 
 const noEndpoint = (fn: string): never => {
     throw new Error(`${fn}: no REST endpoint yet — set NEXT_PUBLIC_DEV_BYPASS=true to use mock data`)
@@ -42,15 +58,10 @@ export async function getMemberships(
     // ponytail: Supabase shim — replace with axios GET core/v1/tenants/:id/members when it exists
 }
 
-type AddMembershipInput = { tenantId: string; email: string; role: 'admin' | 'member' }
+type AddMembershipInput = { tenantId: string; email: string; role: TenantRole }
 
 export async function addMembership(input: AddMembershipInput): Promise<Membership> {
-    const { tenantId } = input
-    if (!isDevBypass())
-    // throw new Error('addMembership: no REST endpoint yet — enable NEXT_PUBLIC_DEV_BYPASS')
-    // ponytail: echo a shaped row so the client can render it; real POST returns the server row.
-    // Not persisted across requests in bypass mode — the client holds it in local state.
-    {
+    if (isDevBypass()) {
         return {
             id: crypto.randomUUID(),
             user_id: crypto.randomUUID(),
@@ -65,34 +76,64 @@ export async function addMembership(input: AddMembershipInput): Promise<Membersh
         }
     }
 
-    const res = await thunderCore.post<ThunderResponse<Membership>>(`/tenants/${tenantId}/members`)
-    return res.data.data
+    try {
+        const backendRole = mapRoleToBackend(input.role)
+        const res = await thunderCore.post<ThunderResponse<Membership>>(
+            `/tenants/${input.tenantId}/members`,
+            { email: input.email, role_code: backendRole, role: backendRole }
+        )
+        return res.data.data
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.data) {
+            const data = error.response.data as { message?: string; error?: string }
+            throw new Error(data.message || data.error || `Failed to add member (${error.response.status})`)
+        }
+        throw error
+    }
 }
 
-export async function removeMembership(_memberId: string, _tenantId: string): Promise<void> {
-    if (!isDevBypass()) {
-        const res = await thunderCore.delete<ThunderResponse<void>>(`/tenants/${_tenantId}/members/${_memberId}`)
-        if (!res.data.success) {
+export async function removeMembership(memberId: string, tenantId: string): Promise<void> {
+    if (isDevBypass()) {
+        return
+    }
+    try {
+        const res = await thunderCore.delete<ThunderResponse<void>>(`/tenants/${tenantId}/members/${memberId}`)
+        if (!res.data?.success && res.data?.success !== undefined) {
             throw new Error('Failed to remove membership')
         }
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.data) {
+            const data = error.response.data as { message?: string; error?: string }
+            throw new Error(data.message || data.error || `Failed to remove member (${error.response.status})`)
+        }
+        throw error
     }
-    // throw new Error('removeMembership: no REST endpoint yet — enable NEXT_PUBLIC_DEV_BYPASS')
-    // ponytail: no-op in bypass; client drops it from local state.
 }
 
 export async function updateMemberRole(
-    _memberId: string,
-    _tenantId: string,
-    _role: 'admin' | 'member'
+    memberId: string,
+    tenantId: string,
+    role: TenantRole
 ): Promise<void> {
-    if (!isDevBypass()) {
-        const res = await thunderCore.patch<ThunderResponse<void>>(`/tenants/${_tenantId}/members/${_memberId}`)
-        if (!res.data.success) {
+    if (isDevBypass()) {
+        return
+    }
+    try {
+        const backendRole = mapRoleToBackend(role)
+        const res = await thunderCore.patch<ThunderResponse<void>>(
+            `/tenants/${tenantId}/members/${memberId}`,
+            { role_code: backendRole, role: backendRole }
+        )
+        if (!res.data?.success && res.data?.success !== undefined) {
             throw new Error('Failed to update member role')
         }
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.data) {
+            const data = error.response.data as { message?: string; error?: string }
+            throw new Error(data.message || data.error || `Failed to update member role (${error.response.status})`)
+        }
+        throw error
     }
-    // throw new Error('updateMemberRole: no REST endpoint yet — enable NEXT_PUBLIC_DEV_BYPASS')
-    // ponytail: no-op in bypass; client holds the updated role in local state.
 }
 
 export async function getMemberDetails(memberId: string, tenantId: string): Promise<MemberDetails> {
@@ -122,5 +163,6 @@ type UpdateMemberProfileInput = { first_name: string; last_name: string }
 
 export async function updateMemberProfile(_userId: string, _data: UpdateMemberProfileInput): Promise<void> {
     if (!isDevBypass()) noEndpoint('updateMemberProfile')
+
     // ponytail: no-op in bypass; client holds the updated profile in local state.
 }

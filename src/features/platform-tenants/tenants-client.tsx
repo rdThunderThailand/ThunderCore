@@ -259,10 +259,10 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
     return (
-        <div className="w-full max-w-full overflow-hidden pb-24 lg:pb-0">
+        <div className="w-full max-w-full pb-24 lg:pb-12">
 
 
-            <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6 lg:space-y-8 animate-in fade-in duration-500">
+            <div className="max-w-7xl mx-auto p-4 lg:p-6 pb-8 lg:pb-12 space-y-6 lg:space-y-8 animate-in fade-in duration-500">
 
                 {/* Stat Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">

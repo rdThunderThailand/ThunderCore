@@ -78,8 +78,8 @@ export function ApplicationHomeClient() {
     }
 
     return (
-        <div className="w-full max-w-full overflow-hidden pb-24 lg:pb-0">
-            <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6 lg:space-y-8 animate-in fade-in duration-500 font-sans text-slate-900">
+        <div className="w-full max-w-full pb-24 lg:pb-12">
+            <div className="max-w-7xl mx-auto p-4 lg:p-6 pb-8 lg:pb-12 space-y-6 lg:space-y-8 animate-in fade-in duration-500 font-sans text-slate-900">
                 {/* Summary cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                     <StatCard label="Total Applications" value={apps.length} sub="All time" icon={LayoutGrid} tint="bg-blue-50 text-blue-600" />

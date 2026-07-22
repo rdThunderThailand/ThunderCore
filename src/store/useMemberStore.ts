@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Membership } from '@/types/members'
+import { Membership, TenantRole } from '@/types/members'
 import {
     getMemberships, addMembership,
     removeMembership, updateMemberRole
@@ -17,9 +17,9 @@ interface MemberStore {
     fetchMembers: (tenantId: string) => Promise<void>
     setSearchTerm: (term: string) => void
     setCurrentPage: (page: number) => void
-    inviteMember: (tenantId: string, email: string, role: 'admin' | 'member') => Promise<void>
+    inviteMember: (tenantId: string, email: string, role: TenantRole) => Promise<void>
     removeMember: (tenantId: string, memberId: string) => Promise<void>
-    changeRole: (tenantId: string, memberId: string, role: 'admin' | 'member') => Promise<void>
+    changeRole: (tenantId: string, memberId: string, role: TenantRole) => Promise<void>
 }
 
 export const useMemberStore = create<MemberStore>((set, get) => ({
@@ -53,7 +53,7 @@ export const useMemberStore = create<MemberStore>((set, get) => ({
         }
     },
 
-    inviteMember: async (tenantId: string, email: string, role: 'admin' | 'member') => {
+    inviteMember: async (tenantId: string, email: string, role: TenantRole) => {
         const newMember = await addMembership({
             tenantId: tenantId,
             email,
@@ -76,7 +76,7 @@ export const useMemberStore = create<MemberStore>((set, get) => ({
         await state.fetchMembers(tenantId)
     },
 
-    changeRole: async (tenantId: string, memberId: string, newRole: 'admin' | 'member') => {
+    changeRole: async (tenantId: string, memberId: string, newRole: TenantRole) => {
         await updateMemberRole(memberId, tenantId, newRole)
         set((state) => ({
             members: state.members.map(m => m.id === memberId ? { ...m, role: newRole } : m)

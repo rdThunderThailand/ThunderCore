@@ -2,7 +2,7 @@
 
 import { useTranslation } from '@/i18n/context'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Membership } from '@/types/members'
+import { Membership, TenantRole } from '@/types/members'
 import {
     AlertCircle,
     Crown, Loader2, Plus, Search, Shield, Users, X
@@ -42,7 +42,7 @@ export function TenantsManagementidMembersClient() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tenantId, currentPage, searchTerm])
 
-    const handleInviteSubmit = async (email: string, role: 'admin' | 'member') => {
+    const handleInviteSubmit = async (email: string, role: TenantRole) => {
         setIsSubmitting(true)
         setError(null)
 
@@ -77,7 +77,7 @@ export function TenantsManagementidMembersClient() {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const handleRoleChange = async (memberId: string, newRole: 'admin' | 'member') => {
+    const handleRoleChange = async (memberId: string, newRole: TenantRole) => {
         try {
             await changeRole(tenantId, memberId, newRole)
             setActiveDropdown(null)

@@ -1,15 +1,16 @@
 import { useTranslation } from '@/i18n/context';
+import { TenantRole } from '@/types/members';
 import { Loader2, UserPlus, X } from 'lucide-react';
 import { useState } from 'react';
 
 export function InviteModal({ onSubmit, onClose, isSubmitting }: {
-    onSubmit: (email: string, role: 'admin' | 'member') => void;
+    onSubmit: (email: string, role: TenantRole) => void;
     onClose: () => void;
     isSubmitting: boolean;
 }) {
     const { t } = useTranslation()
     const [email, setEmail] = useState('')
-    const [role, setRole] = useState<'admin' | 'member'>('member')
+    const [role, setRole] = useState<TenantRole>('Executive Viewer')
 
     const handleSubmit = () => {
         onSubmit(email, role)
@@ -41,11 +42,13 @@ export function InviteModal({ onSubmit, onClose, isSubmitting }: {
                         <label className="text-sm font-bold text-slate-700">{t('table.role')}</label>
                         <select
                             value={role}
-                            onChange={(e) => setRole(e.target.value as 'admin' | 'member')}
+                            onChange={(e) => setRole(e.target.value as TenantRole)}
                             className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all text-sm"
                         >
-                            <option value="member">Member</option>
-                            <option value="admin">Admin</option>
+                            <option value="Executive Viewer">Executive Viewer</option>
+                            <option value="Department Admin">Department Admin</option>
+                            <option value="Operator">Operator</option>
+                            <option value="Auditor">Auditor</option>
                         </select>
                     </div>
                 </div>

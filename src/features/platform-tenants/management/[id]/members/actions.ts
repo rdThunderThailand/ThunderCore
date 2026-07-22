@@ -3,7 +3,7 @@
 import * as memberApplications from '@/lib/member-applications'
 import * as members from '@/lib/members'
 import * as tenantApplications from '@/lib/tenant-applications'
-import { GetMembersOptions } from '@/types/members'
+import { GetMembersOptions, TenantRole } from '@/types/members'
 
 // Server Action boundary for the members surface — delegates to the src/lib seam.
 
@@ -11,7 +11,7 @@ export async function getMemberships(tenantId: string, options?: GetMembersOptio
     return members.getMemberships(tenantId, options)
 }
 
-export async function addMembership(input: { tenantId: string; email: string; role: 'admin' | 'member' }) {
+export async function addMembership(input: { tenantId: string; email: string; role: TenantRole }) {
     return members.addMembership(input)
 }
 
@@ -19,7 +19,7 @@ export async function removeMembership(memberId: string, tenantId: string) {
     return members.removeMembership(memberId, tenantId)
 }
 
-export async function updateMemberRole(memberId: string, tenantId: string, role: 'admin' | 'member') {
+export async function updateMemberRole(memberId: string, tenantId: string, role: TenantRole) {
     return members.updateMemberRole(memberId, tenantId, role)
 }
 

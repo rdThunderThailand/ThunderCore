@@ -1,4 +1,5 @@
-export type MemberRole = 'Admin' | 'Member' | 'Owner';
+export type TenantRole = 'Executive Viewer' | 'Department Admin' | 'Operator' | 'Auditor';
+export type MemberRole = TenantRole | 'Admin' | 'Member' | 'Owner';
 export type MemberStatus = 'Active' | 'Inactive' | 'Invited';
 
 export interface OrgMember {
@@ -15,7 +16,7 @@ export interface Membership {
     id: string;
     user_id: string;
     tenant_id: string;
-    role: 'owner' | 'admin' | 'member';
+    role: TenantRole | 'owner' | 'admin' | 'member';
     joined_at: string;
     user?: {
         id: string;
