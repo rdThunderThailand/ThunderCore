@@ -24,7 +24,7 @@ import {
     getSuperAdminNavigationItemsAtManagement,
     getCompanyAdminNavigationItems,
     defaultNavigationItems,
-    getSuperAdminNavigationItemsAtApplicationsManagement,
+    // getSuperAdminNavigationItemsAtApplicationsManagement,
     getCompanyAdminNavigationItemsAtApplicationsManagement
 } from './sidebar-nav';
 
@@ -72,9 +72,9 @@ export const SideBar = ({
             if (pathname.includes("/tenants/management/")) {
                 return getSuperAdminNavigationItemsAtManagement(managementId);
             }
-            if (pathname.includes("/applications/")) {
-                return getSuperAdminNavigationItemsAtApplicationsManagement(managementId);
-            }
+            // if (pathname.includes("/applications/")) {
+            //     return getSuperAdminNavigationItemsAtApplicationsManagement(managementId);
+            // }
             return superAdminNavigationItems;
         }
         if (user?.role === "company_admin") {

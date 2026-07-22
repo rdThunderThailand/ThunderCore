@@ -1,5 +1,4 @@
 import { LucideIcon } from 'lucide-react';
-import { UserRole } from './auth';
 
 export type StatItem = {
     name: string;
@@ -27,7 +26,8 @@ export interface Profile {
     email: string
     first_name: string
     last_name: string
-    role: UserRole
+    // ponytail: not a per-tenant UserRole — GET /users is global and returns 'super_admin' or the literal 'User'
+    role: string
     can_invite: boolean
     can_create_app: boolean
     can_view_logs: boolean

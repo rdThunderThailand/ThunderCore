@@ -21,13 +21,13 @@ export const getSuperAdminNavigationItemsAtManagement = (tenantId: string): NavI
     { label: "Tenant Settings", href: `/tenants/management/${tenantId}/settings`, icon: Settings },
 ];
 
-export const getSuperAdminNavigationItemsAtApplicationsManagement = (applicationId: string): NavItem[] => [
-    { label: "Dashboard", href: `/applications/management/${applicationId}`, icon: SquareKanban },
-    { label: "Scenario", href: `/applications/management/${applicationId}/scenario`, icon: Radar },
-    { label: "Applications", href: `/applications/management/${applicationId}/portal`, icon: AppWindow },
-    { label: "Members", href: `/applications/management/${applicationId}/members`, icon: UsersRound },
-    { label: "Settings", href: `/applications/management/${applicationId}/settings`, icon: Settings },
-];
+// export const getSuperAdminNavigationItemsAtApplicationsManagement = (applicationId: string): NavItem[] => [
+//     { label: "Dashboard", href: `/applications/management/${applicationId}`, icon: SquareKanban },
+//     // { label: "Scenario", href: `/applications/management/${applicationId}/scenario`, icon: Radar },
+//     { label: "Applications", href: `/applications/management/${applicationId}/portal`, icon: AppWindow },
+//     { label: "Members", href: `/applications/management/${applicationId}/members`, icon: UsersRound },
+//     { label: "Settings", href: `/applications/management/${applicationId}/settings`, icon: Settings },
+// ];
 
 
 export const getCompanyAdminNavigationItems = (tenantId: string): NavItem[] => [
@@ -40,7 +40,7 @@ export const getCompanyAdminNavigationItems = (tenantId: string): NavItem[] => [
 
 export const getCompanyAdminNavigationItemsAtApplicationsManagement = (applicationId: string): NavItem[] => [
     { label: "Dashboard", href: `/applications/management/${applicationId}`, icon: SquareKanban },
-    { label: "Scenario", href: `/applications/management/${applicationId}/scenario`, icon: Radar },
+    // { label: "Scenario", href: `/applications/management/${applicationId}/scenario`, icon: Radar },
     { label: "Applications", href: `/applications/management/${applicationId}/portal`, icon: AppWindow },
     { label: "Members", href: `/applications/management/${applicationId}/members`, icon: UsersRound },
     { label: "Settings", href: `/applications/management/${applicationId}/settings`, icon: Settings },

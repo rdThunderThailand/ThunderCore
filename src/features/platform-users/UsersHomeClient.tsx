@@ -1,6 +1,6 @@
 import { getDevRole } from '@/lib/dev'
 import { getUsers } from '@/lib/users'
-import { UsersClient } from './users-clients'
+import { UsersClient } from './users-client'
 
 export async function UsersHomeClient() {
     const users = await getUsers()

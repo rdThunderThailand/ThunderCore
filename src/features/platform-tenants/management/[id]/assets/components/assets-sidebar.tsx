@@ -261,6 +261,16 @@ export function AssetsSidebar({ setShowCreateFolder }: AssetsSidebarProps) {
                     </div>
                 </div>
 
+                {/* ── Create New Folder ────────────────────────────────── */}
+                <div className="px-3 pb-2 shrink-0">
+                    <button
+                        onClick={() => setShowCreateFolder({ isOpen: true, parentId: null })}
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border-2 border-dashed border-blue-200 text-blue-500 text-xs font-bold hover:bg-blue-50 hover:border-blue-300 transition-all"
+                    >
+                        <Plus className="w-3.5 h-3.5" /> Create New Folder
+                    </button>
+                </div>
+
                 {/* ── Asset / Folder Tree ──────────────────────────────── */}
                 <div className="flex-1 overflow-y-auto px-3 pb-2">
                     {/* "All Devices" row */}

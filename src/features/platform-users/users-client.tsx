@@ -5,7 +5,9 @@ import { ChevronLeft, ChevronRight, Plus, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { deleteUser } from './actions'
+import { deleteUser, updateUserRole } from './actions'
+import { getRoleDisplay, RoleCell, RoleValue } from './components/role-cell'
+import { RoleConfirmModal } from './components/role-confirm-modal'
 
 interface UsersClientProps {
     initialUsers: Profile[]
@@ -19,6 +21,8 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
     const [searchQuery, setSearchQuery] = useState('')
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
+    const [roleChangeTarget, setRoleChangeTarget] = useState<{ user: Profile; nextRole: RoleValue } | null>(null)
+    const [isRoleUpdating, setIsRoleUpdating] = useState(false)
 
     // Handle Search click
     const handleSearch = () => {
@@ -102,6 +106,35 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
         } catch (error) {
             const err = error as Error
             toast.error(err.message || 'Failed to delete users.')
+        }
+    }
+
+    // Role change request from the dropdown — opens the confirm modal, doesn't mutate yet
+    const handleRoleChangeRequest = (user: Profile, nextRole: RoleValue) => {
+        setRoleChangeTarget({ user, nextRole })
+    }
+
+    const handleRoleChangeCancel = () => {
+        if (isRoleUpdating) return
+        setRoleChangeTarget(null)
+    }
+
+    // Confirmed role change (fire-and-forget on the mock seam; rollback on error since we mutate optimistically)
+    const handleRoleChangeConfirm = async () => {
+        if (!roleChangeTarget) return
+        const { user, nextRole } = roleChangeTarget
+
+        setIsRoleUpdating(true)
+        try {
+            await updateUserRole(user.id, nextRole)
+            setUsers(users.map(u => u.id === user.id ? { ...u, role: nextRole as Profile['role'] } : u))
+            toast.success('User role updated successfully.')
+            setRoleChangeTarget(null)
+        } catch (error) {
+            const err = error as Error
+            toast.error(err.message || 'Failed to update user role.')
+        } finally {
+            setIsRoleUpdating(false)
         }
     }
 
@@ -196,13 +229,11 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                                         const isSelected = selectedUserIds.includes(user.id)
                                         const firstLetter = user.email ? user.email.charAt(0).toUpperCase() : ''
                                         const roleStr = (user.role as string) || ''
-                                        const isSuperAdminUser = roleStr === 'super_admin' || roleStr === 'company_admin'
-                                        const isAdminUser = roleStr === 'admin' || roleStr === 'Admin'
 
                                         return (
                                             <tr
                                                 key={user.id}
-                                                onClick={() => router.push(`/settings?user=${user.id}`)}
+                                                onClick={() => router.push(`/users/${user.id}/settings`)}
                                                 className={`group transition-colors cursor-pointer ${isSelected ? 'bg-blue-50/60 hover:bg-blue-50' : 'hover:bg-slate-50/50'}`}
                                             >
                                                 {/* Checkbox cell */}
@@ -231,19 +262,11 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
 
                                                 {/* ROLE cell */}
                                                 <td className="py-4 px-4">
-                                                    {isSuperAdminUser ? (
-                                                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-green-50 border border-green-200 text-green-700">
-                                                            Super Admin
-                                                        </span>
-                                                    ) : isAdminUser ? (
-                                                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-blue-50 border border-blue-200 text-blue-700">
-                                                            Admin
-                                                        </span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 border border-slate-200 text-slate-600">
-                                                            User
-                                                        </span>
-                                                    )}
+                                                    <RoleCell
+                                                        role={roleStr}
+                                                        disabled={isRoleUpdating && roleChangeTarget?.user.id === user.id}
+                                                        onRequestChange={(nextRole) => handleRoleChangeRequest(user, nextRole)}
+                                                    />
                                                 </td>
 
                                                 {/* STATUS cell */}
@@ -313,6 +336,16 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                     </div>
                 </div>
             </div>
+
+            <RoleConfirmModal
+                isOpen={roleChangeTarget !== null}
+                onClose={handleRoleChangeCancel}
+                onConfirm={handleRoleChangeConfirm}
+                isLoading={isRoleUpdating}
+                userName={roleChangeTarget ? ([roleChangeTarget.user.first_name, roleChangeTarget.user.last_name].filter(Boolean).join(' ') || roleChangeTarget.user.email) : undefined}
+                fromRoleLabel={roleChangeTarget ? getRoleDisplay(roleChangeTarget.user.role as string).label : undefined}
+                toRoleLabel={roleChangeTarget ? getRoleDisplay(roleChangeTarget.nextRole).label : undefined}
+            />
         </div>
     )
 }

@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE, accessCookieOptions } from '@/lib/auth-cookies'
 import { isAxiosError, loginRequest, registerRequest } from '@/lib/thunder-core'
 
 export type LoginState = {
@@ -45,15 +46,9 @@ export async function login(prevState: LoginState, formData: FormData): Promise<
   const cookieStore = await cookies()
   const isProd = process.env.NODE_ENV === 'production'
 
-  cookieStore.set('tc_access_token', session.access_token, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
-    path: '/',
-    expires: new Date(session.expires_at * 1000),
-  })
+  cookieStore.set(ACCESS_TOKEN_COOKIE, session.access_token, accessCookieOptions(session.expires_at))
 
-  cookieStore.set('tc_refresh_token', session.refresh_token, {
+  cookieStore.set(REFRESH_TOKEN_COOKIE, session.refresh_token, {
     httpOnly: true,
     secure: isProd,
     sameSite: 'lax',
@@ -67,8 +62,8 @@ export async function login(prevState: LoginState, formData: FormData): Promise<
 
 export async function logout() {
   const cookieStore = await cookies()
-  cookieStore.delete('tc_access_token')
-  cookieStore.delete('tc_refresh_token')
+  cookieStore.delete(ACCESS_TOKEN_COOKIE)
+  cookieStore.delete(REFRESH_TOKEN_COOKIE)
   redirect('/login')
 }
 

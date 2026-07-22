@@ -63,6 +63,7 @@ const baseAssetDefaults = {
     cctv_url: null,
     location_url: null,
     sync_media: false,
+    image_url: null,
 }
 
 export const MOCK_ASSETS: Asset[] = [

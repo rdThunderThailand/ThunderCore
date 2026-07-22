@@ -115,52 +115,52 @@ export function ApplicationHomeClient() {
                     </div>
 
                     <div className="flex-1 overflow-x-auto w-full max-w-full">
-                    {filtered.length === 0 ? (
-                        <div className="py-16 text-center text-slate-400 flex flex-col items-center gap-2">
-                            <AppWindow className="w-8 h-8" />
-                            No applications found.
-                        </div>
-                    ) : (
-                        <table className="w-full text-sm">
-                            <thead className="sticky top-0 bg-white">
-                                <tr className="text-left text-slate-400 border-b border-slate-100">
-                                    <th className="py-3 font-medium">Name</th>
-                                    <th className="py-3 font-medium">Owner</th>
-                                    <th className="py-3 font-medium">Environment</th>
-                                    <th className="py-3 font-medium">Status</th>
-                                    <th className="py-3 font-medium text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {pageItems.map((app) => (
-                                    <tr key={app.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                                        <td className="py-3">
-                                            <Link href={`/applications/management/${app.id}`} className="font-medium text-slate-900 hover:text-blue-600 flex items-center gap-2">
-                                                <Globe className="w-4 h-4 text-slate-300" /> {app.name}
-                                            </Link>
-                                        </td>
-                                        <td className="py-3 text-slate-500">{app.tenant_name ?? (app.is_shared ? 'System (shared)' : '—')}</td>
-                                        <td className="py-3 text-slate-500">{app.environment}</td>
-                                        <td className="py-3">
-                                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[app.status]}`}>{app.status}</span>
-                                        </td>
-                                        <td className="py-3 text-right">
-                                            {isSuperAdmin && (
-                                                <button onClick={() => handleDelete(app.id)} className="text-slate-400 hover:text-red-600 p-1.5" aria-label="Delete">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                        </td>
+                        {filtered.length === 0 ? (
+                            <div className="py-16 text-center text-slate-400 flex flex-col items-center gap-2">
+                                <AppWindow className="w-8 h-8" />
+                                No applications found.
+                            </div>
+                        ) : (
+                            <table className="w-full text-sm">
+                                <thead className="sticky top-0 bg-white">
+                                    <tr className="text-left text-slate-400 border-b border-slate-100">
+                                        <th className="py-3 font-medium">Name</th>
+                                        <th className="py-3 font-medium">Owner</th>
+                                        <th className="py-3 font-medium">Environment</th>
+                                        <th className="py-3 font-medium">Status</th>
+                                        <th className="py-3 font-medium text-right">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
-                </div>
+                                </thead>
+                                <tbody>
+                                    {pageItems.map((app) => (
+                                        <tr key={app.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                                            <td className="py-3">
+                                                <Link href={`/applications/${app.id}/settings`} className="font-medium text-slate-900 hover:text-blue-600 flex items-center gap-2">
+                                                    <Globe className="w-4 h-4 text-slate-300" /> {app.name}
+                                                </Link>
+                                            </td>
+                                            <td className="py-3 text-slate-500">{app.tenant_name ?? (app.is_shared ? 'System (shared)' : '—')}</td>
+                                            <td className="py-3 text-slate-500">{app.environment}</td>
+                                            <td className="py-3">
+                                                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[app.status]}`}>{app.status}</span>
+                                            </td>
+                                            <td className="py-3 text-right">
+                                                {isSuperAdmin && (
+                                                    <button onClick={() => handleDelete(app.id)} className="text-slate-400 hover:text-red-600 p-1.5" aria-label="Delete">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
 
-                <Pagination page={page} totalPages={pages} onChange={setPage} className="shrink-0 mt-2" />
+                    <Pagination page={page} totalPages={pages} onChange={setPage} className="shrink-0 mt-2" />
+                </div>
             </div>
-        </div>
 
             {isModalOpen && (
                 <CreateModal

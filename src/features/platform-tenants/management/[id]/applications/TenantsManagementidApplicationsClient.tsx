@@ -205,7 +205,7 @@ export function TenantsManagementidApplicationsClient() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-6 space-y-8 animate-in fade-in duration-500">
+        <div className="mx-auto w-full px-6 space-y-8 animate-in fade-in duration-500">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
