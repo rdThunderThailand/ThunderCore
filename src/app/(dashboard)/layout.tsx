@@ -1,11 +1,18 @@
-import Header from "@/components/layout/Header"
+'use client'
+
 import Sidebar from "@/components/layout/SideBar"
 import { DashboardMain } from "@/components/layout/DashboardMain"
 import { ToastProvider } from "@/components/toast"
 import { I18nProvider } from "@/i18n/context"
 import React, { Suspense } from "react"
+import Header from "@/components/layout/Header"
+import { usePathname } from "next/navigation"
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
+    const HIDDEN_HEADER_PATTERN = /^\/tenants\/management\/[^/]+\/assets$/
+    const pathname = usePathname()
+    const shouldHideHeader = HIDDEN_HEADER_PATTERN.test(pathname)
+
     return (
         <I18nProvider>
             <ToastProvider>
@@ -24,7 +31,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                         {/* Desktop Navbar: Sticky at top of content area - Hidden on Mobile */}
                         <div className="hidden lg:block">
                             <Suspense fallback={null}>
-                                <Header />
+                                {shouldHideHeader === false && <Header />}
                             </Suspense>
                         </div>
 

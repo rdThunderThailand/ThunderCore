@@ -3,43 +3,85 @@ export type AppStatus = 'Healthy' | 'Warning' | 'Error';
 export type AppLoad = 'Low' | 'Normal' | 'High';
 
 export interface AppData {
-    id: string;
-    name: string;
-    org: string;
-    users: string; // Keeps consistency with dashboard mock (e.g., '1.2k')
-    status: AppStatus;
-    load: AppLoad;
+  id: string;
+  name: string;
+  org: string;
+  users: string; // Keeps consistency with dashboard mock (e.g., '1.2k')
+  status: AppStatus;
+  load: AppLoad;
 }
 
-/**
- * Application entity from the database
- * Used throughout the dashboard for managing applications
- */
+
+// export type ScenarioLevel = 'normal' | 'watch' | 'crisis' | 'lockdown'
+
+// export interface ScenarioMetadata {
+//   message?: string
+//   affected_areas?: string[]
+//   instructions?: string
+//   [key: string]: unknown
+// }
+
 export interface Application {
-    id: string
-    name: string
-    description?: string | null
-    tenant_id: string | null
-    tenant_name?: string | null
-    status: 'active' | 'inactive' | 'maintenance'
-    environment: 'production' | 'staging' | 'development'
-    url?: string | null
-    created_at: string
-    updated_at: string
-    user_count?: number
-    is_shared?: boolean
-    custom_domain?: string | null
-    branding_color?: string
-    logo_url?: string | null
-    portal_title?: string | null
-    portal_description?: string | null
+  id: string
+  name: string
+  description?: string | null
+  tenant_id?: string | null
+  status?: 'active' | 'inactive' | 'maintenance'
+  environment?: 'production' | 'staging' | 'development'
+  url?: string | null
+  created_at: Date
+  updated_at: Date
+  api_key?: string | null
+  api_key_generated_at?: Date | null
+  custom_domain?: string | null
+  branding_color?: string
+  logo_url?: string | null
+  portal_title?: string | null
+  portal_description?: string | null
+  allow_self_registration?: boolean
 }
 
-/**
- * @deprecated Use Application instead
- * Alias for backwards compatibility
- */
-export type SystemApplication = Application
+export type UpdateApplicationDTO = {
+  name?: string
+  description?: string
+  status?: 'active' | 'inactive' | 'maintenance'
+  environment?: 'production' | 'staging' | 'development'
+  url?: string
+  custom_domain?: string | null
+  logo_url?: string | null
+  branding_color?: string
+  portal_title?: string | null
+  portal_description?: string | null
+}
+
+
+export interface ApplicationTenantsAccess {
+  id: string
+  tenant_id: string
+  tenant_name: string | null
+  role: string
+  status: string
+  started_at: string
+  created_at: string
+  ended_at: string | null
+}
+
+export interface ApplicationTenantAccess {
+  appId: string
+  tenantId: string
+  startsAt?: string
+  endsAt?: string
+}
+
+export interface AppMember {
+  id: string
+  name: string
+  email: string
+  role: 'Admin' | 'Developer' | 'Viewer'
+  status: 'Active' | 'Pending'
+  tenantName?: string
+}
+
 
 export interface IAppModule {
   id: string;

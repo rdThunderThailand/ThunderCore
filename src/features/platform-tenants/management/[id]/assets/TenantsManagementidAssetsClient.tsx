@@ -29,6 +29,7 @@ import { UnregisterModal } from './components/unregister-modal'
 
 import { useAssetStore } from '@/store/useAssetStore'
 import { useUIStore } from '@/store/useUIStore'
+import Header from '@/components/layout/Header'
 
 
 // =====================
@@ -104,7 +105,7 @@ export function TenantsManagementidAssetsClient() {
     // const getFolderPath = ... (removed unused helper)
 
     return (
-        <div className="flex h-screen bg-slate-50/50">
+        <div className="flex h-screen">
             {/* Local Sidebar (Middle Column) */}
             <AssetsSidebar
                 setShowCreateFolder={setShowCreateFolder}
@@ -114,28 +115,7 @@ export function TenantsManagementidAssetsClient() {
             <div className="flex-1 flex min-w-0 h-screen overflow-hidden">
                 <div className="flex-1 flex flex-col min-w-0 overflow-hidden h-screen">
                     {/* Top Header replacing global Navbar */}
-                    {/* <div className="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 w-full relative"> */}
-
-                    {/* Breadcrumbs / Title */}
-                    {/* <div className="flex items-center gap-2 text-sm font-black text-slate-800 capitalize">
-                            {activeTab === 'player' ? (
-                                <Monitor className="w-5 h-5 text-slate-400" />
-                            ) : (
-                                <XCircle className="w-5 h-5 text-slate-400" />
-                            )}
-                            <span>{activeTab === 'player' ? 'Assets' : 'Unregister'}</span>
-
-                            {selectedV2AssetId && (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-slate-300">/</span>
-                                    <span className="text-slate-500 font-bold">
-                                        {v2Assets.find(a => a.asset_id === selectedV2AssetId)?.asset_name || 'Select Asset'}
-                                    </span>
-                                </div>
-                            )}
-                        </div> */}
-
-                    {/* </div> */}
+                    <Header />
 
                     {/* Main Content Workspace */}
                     <div className="flex-1 p-6 overflow-y-auto">

@@ -1,7 +1,8 @@
 'use server'
 
 import * as applications from '@/lib/applications'
-import { ScenarioLevel, ScenarioMetadata } from '@/models/Application'
+import { ApplicationTenantAccess, UpdateApplicationDTO } from '@/types'
+// import { ScenarioLevel, ScenarioMetadata } from '@/models/Application'
 
 // Server Action boundary for the applications surface — delegates to the src/lib seam.
 
@@ -13,8 +14,8 @@ export async function getTenantsForSelect() {
     return applications.getTenantsForSelect()
 }
 
-export async function createApplication(name: string, tenantId: string | null) {
-    return applications.createApplication(name, tenantId)
+export async function createApplication(data: applications.CreateApplicationDTO) {
+    return applications.createApplication(data)
 }
 
 export async function deleteApplication(id: string) {
@@ -25,7 +26,7 @@ export async function getApplicationById(id: string) {
     return applications.getApplicationById(id)
 }
 
-export async function updateApplication(id: string, data: applications.UpdateApplicationInput) {
+export async function updateApplication(id: string, data: UpdateApplicationDTO) {
     return applications.updateApplication(id, data)
 }
 
@@ -33,13 +34,8 @@ export async function getApplicationTenants(appId: string) {
     return applications.getApplicationTenants(appId)
 }
 
-export async function addApplicationAuthorization(
-    appId: string,
-    tenantId: string,
-    startsAt?: string,
-    endsAt?: string
-) {
-    return applications.addApplicationAuthorization(appId, tenantId, startsAt, endsAt)
+export async function addApplicationAuthorization(data: ApplicationTenantAccess) {
+    return applications.addApplicationAuthorization(data)
 }
 
 export async function removeApplicationAuthorization(appId: string, tenantId: string) {
@@ -58,14 +54,14 @@ export async function regenerateApiKey(appId: string) {
     return applications.regenerateApiKey(appId)
 }
 
-export async function getApplicationScenario(appId: string) {
-    return applications.getApplicationScenario(appId)
-}
+// export async function getApplicationScenario(appId: string) {
+//     return applications.getApplicationScenario(appId)
+// }
 
-export async function updateApplicationScenario(
-    appId: string,
-    level: ScenarioLevel,
-    metadata?: ScenarioMetadata
-) {
-    return applications.updateApplicationScenario(appId, level, metadata)
-}
+// export async function updateApplicationScenario(
+//     appId: string,
+//     level: ScenarioLevel,
+//     metadata?: ScenarioMetadata
+// ) {
+//     return applications.updateApplicationScenario(appId, level, metadata)
+// }
