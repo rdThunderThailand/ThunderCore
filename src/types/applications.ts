@@ -39,6 +39,8 @@ export interface Application {
   portal_title?: string | null
   portal_description?: string | null
   allow_self_registration?: boolean
+  // tenant_name?: string | null
+  // is_shared?: boolean
 }
 
 export type UpdateApplicationDTO = {
@@ -46,7 +48,7 @@ export type UpdateApplicationDTO = {
   description?: string
   status?: 'active' | 'inactive' | 'maintenance'
   environment?: 'production' | 'staging' | 'development'
-  url?: string
+  url?: string | null
   custom_domain?: string | null
   logo_url?: string | null
   branding_color?: string

@@ -1,41 +1,52 @@
-'use client'
-
+import { redirect } from "next/navigation"
 import Sidebar from "@/components/layout/SideBar"
 import { DashboardMain } from "@/components/layout/DashboardMain"
 import { ToastProvider } from "@/components/toast"
 import { I18nProvider } from "@/i18n/context"
-import React, { Suspense } from "react"
 import Header from "@/components/layout/Header"
-import { usePathname } from "next/navigation"
+import { isDevBypass } from "@/lib/dev"
+import { getCurrentUser, isAxiosError } from "@/lib/thunder-core"
+import { mockUser, type UserProfile } from "@/store/useAuthStore"
+import React, { Suspense } from "react"
 
-function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const HIDDEN_HEADER_PATTERN = /^\/tenants\/management\/[^/]+\/assets$/
-    const pathname = usePathname()
-    const shouldHideHeader = HIDDEN_HEADER_PATTERN.test(pathname)
+async function resolveCurrentUser(): Promise<UserProfile> {
+    if (isDevBypass()) return mockUser
+
+    try {
+        const current = await getCurrentUser()
+        return {
+            name: current.display_name || [current.first_name, current.last_name].filter(Boolean).join(" ") || current.email,
+            role: current.role,
+            email: current.email,
+            avatar_url: current.avatar_url ?? "",
+        }
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.status === 401) redirect("/login")
+        throw error
+    }
+}
+
+async function DashboardLayout({ children }: { children: React.ReactNode }) {
+    const user = await resolveCurrentUser()
 
     return (
         <I18nProvider>
             <ToastProvider>
-                {/* <div className="flex h-screen bg-red-500 overflow-hidden"> */}
-                <div className="flex h-screen w-full bg-[radial-gradient(ellipse_at_top_left,rgba(219,234,254,0.6),rgb(248,250,252),rgb(255,255,255))] overflow-hidden">                   {/* Sidebar: Flexible width, full height - Hidden on Mobile */}
+                <div className="flex h-screen w-full bg-[radial-gradient(ellipse_at_top_left,rgba(219,234,254,0.6),rgb(248,250,252),rgb(255,255,255))] overflow-hidden">
                     <div className="hidden lg:flex shrink-0 relative z-50">
                         <Suspense fallback={<div className="w-64 h-full bg-white/0" />}>
                             <Sidebar />
                         </Suspense>
                     </div>
 
-                    {/* Main Content Area: Flex column for Navbar + Page Content */}
-                    {/* ponytail: no z-index here — a stacking context would trap fixed modals below the z-50 sidebar, leaving its column uncovered by the backdrop. */}
                     <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
 
-                        {/* Desktop Navbar: Sticky at top of content area - Hidden on Mobile */}
                         <div className="hidden lg:block">
                             <Suspense fallback={null}>
-                                {shouldHideHeader === false && <Header />}
+                                <Header user={user} />
                             </Suspense>
                         </div>
 
-                        {/* Scrollable Page Content with Auto Scroll Reset */}
                         <DashboardMain>
                             {children}
                         </DashboardMain>
@@ -45,4 +56,5 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
         </I18nProvider>
     )
 }
+
 export default DashboardLayout

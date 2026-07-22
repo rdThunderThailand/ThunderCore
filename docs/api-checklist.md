@@ -85,14 +85,14 @@ revoke เป็น soft flag ดูรายละเอียดใน [API_RE
 
 | Endpoint | ทำอะไร | BE | FE | E2E |
 |---|---|:--:|:--:|:--:|
-| `GET /applications` | แอปทั้งแพลตฟอร์ม (หน้า `/applications`) | ✅ | ✅ | ⬜ |
-| `POST /applications` | สร้างแอประดับแพลตฟอร์ม | ✅ | ✅ | ⬜ |
-| `GET /applications/:id` | รายละเอียดแอป + ฟิลด์ portal | ✅ | ✅ | ⬜ |
-| `PATCH /applications/:id` | แก้ข้อมูลทั่วไป + portal (domain, สี, โลโก้) | ✅ | ✅ | ⬜ |
-| `DELETE /applications/:id` | ลบแอป | ✅ | ✅ | ⬜ |
-| `GET /applications/:id/tenants` | tenant ที่ได้รับอนุญาตใช้แอปนี้ | ✅ | ✅ | ⬜ |
-| `POST /applications/:id/tenants` | เพิ่มสิทธิ์ให้ tenant | ✅ | ✅ | ⬜ |
-| `DELETE /applications/:id/tenants/:tenantId` | ถอนสิทธิ์ tenant | ✅ | ✅ | ⬜ |
+| `GET /applications` | แอปทั้งแพลตฟอร์ม (หน้า `/applications`) | ✅ | ✅ | ✅ |
+| `POST /applications` | สร้างแอประดับแพลตฟอร์ม | ✅ | ✅ | ✅ |
+| `GET /applications/:id` | รายละเอียดแอป + ฟิลด์ portal | ✅ | ✅ | ✅ |
+| `PATCH /applications/:id` | แก้ข้อมูลทั่วไป + portal (domain, สี, โลโก้) | ✅ | ✅ | ✅ |
+| `DELETE /applications/:id` | ลบแอป | ✅ | ✅ | ✅ |
+| `GET /applications/:id/tenants` | tenant ที่ได้รับอนุญาตใช้แอปนี้ | ✅ | ✅ | ✅ |
+| `POST /applications/:id/tenants` | เพิ่มสิทธิ์ให้ tenant | ✅ | ✅ | ✅ |
+| `DELETE /applications/:id/tenants/:tenantId` | ถอนสิทธิ์ tenant | ✅ | ✅ | ✅ |
 | `GET /applications/:id/members` | ผู้ใช้ทั้งหมดที่เข้าแอปนี้ได้ | ✅ | ✅ | ⬜ |
 | `GET /applications/:id/api-key` | ดู API key ของแอป | ✅ | ✅ | ⬜ |
 | `POST /applications/:id/api-key/regenerate` | ออก API key ใหม่ (ต้องเป็น super_admin) | ✅ | ✅ | ⬜ |

@@ -37,7 +37,7 @@ export type CreateApplicationDTO = {
 
 export async function createApplication(data: CreateApplicationDTO): Promise<Application> {
 
-    if (!isDevBypass()) {
+    if (isDevBypass()) {
         const now = new Date()
         const newApp: Application = {
             id: crypto.randomUUID(),
@@ -67,7 +67,7 @@ export async function deleteApplication(id: string): Promise<void> {
 
 
 export async function getApplicationById(id: string): Promise<Application | null> {
-    if (!isDevBypass()) {
+    if (isDevBypass()) {
         const app = MOCK_APPLICATIONS.find((a) => a.id === id)
         if (!app) return null
         // Portal fields persist on the mock app once saved (Object.assign in updateApplication).
@@ -88,7 +88,7 @@ export async function getApplicationById(id: string): Promise<Application | null
 
 
 export async function updateApplication(id: string, data: UpdateApplicationDTO): Promise<Application | undefined> {
-    if (!isDevBypass()) {
+    if (isDevBypass()) {
         const app = MOCK_APPLICATIONS.find((a) => a.id === id)
         if (app) Object.assign(app, data, { updated_at: new Date().toISOString() })
         return app
@@ -102,7 +102,7 @@ export async function updateApplication(id: string, data: UpdateApplicationDTO):
 
 
 export async function getApplicationTenants(appId: string): Promise<ApplicationTenantsAccess[]> {
-    if (!isDevBypass()) return MOCK_APP_TENANTS.get(appId) ?? []
+    if (isDevBypass()) return MOCK_APP_TENANTS.get(appId) ?? []
     const res = await thunderCore.get<ThunderResponse<ApplicationTenantsAccess[]>>(`/applications/${appId}/tenants`)
     return res.data.data
 }
@@ -115,24 +115,34 @@ export async function addApplicationAuthorization(data: ApplicationTenantAccess)
         if (!tenant) throw new Error('Tenant not found')
         const current = MOCK_APP_TENANTS.get(data.appId) ?? []
         if (current.some((t) => t.tenant_id === data.tenantId)) throw new Error('Tenant already has access')
-        const record: ApplicationTenantAccess = {
-            appId: data.appId,
-            tenantId: tenant.id,
-            startsAt: data.startsAt ?? new Date().toISOString(),
-        }
-        return record
+        const startsAt = data.startsAt ?? new Date().toISOString()
+        MOCK_APP_TENANTS.set(data.appId, [
+            ...current,
+            {
+                id: crypto.randomUUID(),
+                tenant_id: tenant.id,
+                tenant_name: tenant.name,
+                role: 'member',
+                status: 'active',
+                started_at: startsAt,
+                created_at: new Date().toISOString(),
+                ended_at: data.endsAt ?? null,
+            },
+        ])
+        return { appId: data.appId, tenantId: tenant.id, startsAt, endsAt: data.endsAt }
     }
 
+    // Backend's assignTenantSchema accepts tenant_id and started_at (defaults to now if omitted).
+    // ended_at isn't stored on insert yet, so it's not sent — would 400 against the strict schema.
     const res = await thunderCore.post<ThunderResponse<ApplicationTenantAccess>>(`/applications/${data.appId}/tenants`, {
         tenant_id: data.tenantId,
         started_at: data.startsAt,
-        ended_at: data.endsAt,
     })
     return res.data.data
 }
 
 export async function removeApplicationAuthorization(appId: string, tenantId: string): Promise<void> {
-    if (!isDevBypass()) {
+    if (isDevBypass()) {
         MOCK_APP_TENANTS.set(appId, (MOCK_APP_TENANTS.get(appId) ?? []).filter((t) => t.tenant_id !== tenantId))
         return
     }
@@ -146,12 +156,12 @@ const MOCK_APP_TENANTS = new Map<string, ApplicationTenantsAccess[]>(
         a.id,
         [{
             id: crypto.randomUUID(),
-            tenant_id: a.tenant_id,
-            tenant_name: a.tenant_name ?? a.tenant_id,
+            tenant_id: a.tenant_id as string,
+            tenant_name: MOCK_TENANTS.find((t) => t.id === a.tenant_id)?.name ?? (a.tenant_id as string),
             role: 'owner',
             status: 'active',
-            started_at: a.created_at,
-            created_at: a.created_at,
+            started_at: a.created_at.toISOString(),
+            created_at: a.created_at.toISOString(),
             ended_at: null,
         }],
     ])
@@ -160,7 +170,7 @@ const MOCK_APP_TENANTS = new Map<string, ApplicationTenantsAccess[]>(
 
 
 export async function getApplicationMembers(appId: string): Promise<AppMember[]> {
-    if (!isDevBypass()) {
+    if (isDevBypass()) {
         // members = everyone in the app's owner tenant + its authorized tenants
         const app = MOCK_APPLICATIONS.find((a) => a.id === appId)
         const tenantIds = new Set<string>([
@@ -214,7 +224,7 @@ export async function getApplicationMembers(appId: string): Promise<AppMember[]>
 // }
 
 export async function getApiKey(appId: string): Promise<{ api_key: string | null; api_key_generated_at: string | null }> {
-    if (!isDevBypass()) {
+    if (isDevBypass()) {
         return MOCK_API_KEYS.get(appId) ?? { api_key: null, api_key_generated_at: null }
     }
     const res = await thunderCore.get<ThunderResponse<{ api_key: string | null; api_key_generated_at: string | null }>>(`/applications/${appId}/api-key`)
@@ -224,7 +234,7 @@ export async function getApiKey(appId: string): Promise<{ api_key: string | null
 // ponytail: no super_admin gate here yet — reference enforces it via Supabase role;
 // add a server-side RBAC check when the seam grows a role/session context.
 export async function regenerateApiKey(appId: string): Promise<{ api_key: string; api_key_generated_at: string }> {
-    if (!isDevBypass()) {
+    if (isDevBypass()) {
         const record = { api_key: `tk_${crypto.randomUUID().replace(/-/g, '')}${crypto.randomUUID().replace(/-/g, '')}`, api_key_generated_at: new Date().toISOString() }
         MOCK_API_KEYS.set(appId, record)
         return record
