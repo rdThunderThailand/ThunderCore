@@ -31,7 +31,7 @@ async function getSessionUser(): Promise<SessionUser | null> {
 
     try {
         const user = await getCurrentUser()
-        console.log(user)
+        console.log("user", user)
         return { role: user.role, isSuperAdmin: user.is_super_admin }
     } catch (error) {
         if (isAxiosError(error) && error.response?.status === 401) return null
@@ -79,6 +79,7 @@ export async function requireTenantAccess(tenantId: string): Promise<void> {
  */
 export async function requireCompanyAdminAccess(tenantId: string): Promise<void> {
     const session = await getSessionUser()
+    console.log('session', session)
     if (!session) redirect('/login')
     if (session.role !== 'company_admin') redirect('/no-access')
     if (isDevBypass()) return // no per-tenant membership mock to check against
