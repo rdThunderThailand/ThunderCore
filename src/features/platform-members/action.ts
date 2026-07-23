@@ -1,6 +1,6 @@
 'use server'
 
-import { ApplicationDetails } from '@/models/Application'
+import { ApplicationDetails } from '@/types/applications'
 import { MOCK_APPLICATIONS } from '@/lib/mock/applications'
 
 export interface AppMember {
@@ -52,8 +52,8 @@ export async function getApplicationById(appId: string): Promise<ApplicationDeta
         tenant_name: 'Executive BEN Tenant',
         status: 'active',
         environment: 'production',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: new Date(),
+        updated_at: new Date(),
     }
 }
 

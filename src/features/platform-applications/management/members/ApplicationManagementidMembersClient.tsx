@@ -10,7 +10,7 @@ import { InviteMemberModal } from './components/InviteMemberModal'
 import { MembersListHeader } from './components/MembersListHeader'
 import { MembersTable } from './components/MembersTable'
 
-export function ApplicationManagementidMembersClient({ appId }: { appId: string }) {
+export function ApplicationManagementidMembersClient({ appId, basePath = '/applications' }: { appId: string; basePath?: string }) {
     const router = useRouter()
 
     const [appName, setAppName] = useState('')
@@ -30,7 +30,7 @@ export function ApplicationManagementidMembersClient({ appId }: { appId: string 
                     getApplicationMembers(appId),
                 ])
                 if (!app) {
-                    router.push('/applications')
+                    router.push(basePath)
                     return
                 }
                 setAppName(app.name)
@@ -42,7 +42,7 @@ export function ApplicationManagementidMembersClient({ appId }: { appId: string 
             }
         }
         load()
-    }, [appId, router])
+    }, [appId, router, basePath])
 
     // ponytail: invite/remove are local-only until POST/DELETE members endpoints exist.
     const handleInvite = () => {

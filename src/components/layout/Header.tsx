@@ -9,13 +9,6 @@ import { cn } from "../../utils/cn";
 import { mockUser, useAuthStore, type UserProfile } from '@/store/useAuthStore';
 import { superAdminNavigationItems, getCompanyAdminNavigationItems } from "./sidebar-nav";
 
-// Hides the header on the assets list route — that page renders its own header. Lived in
-// (dashboard)/layout.tsx before; moved here since this is the only place still needing
-// usePathname(), which let the layout become a server component and fetch the real user.
-const HIDDEN_HEADER_PATTERN = /^\/tenants\/management\/[^/]+\/assets$/;
-
-// Helper function to derive cleaner page titles from pathnames (fallback for routes
-// with no dedicated breadcrumb trail, e.g. /users)
 function getPageTitle(pathname: string, sectionLabel: string): string {
     const segments = pathname.split("/").filter(Boolean);
     if (segments.length <= 1) {
@@ -39,9 +32,6 @@ interface Crumb {
     href: string;
 }
 
-// Company-admin routes are tenant-rooted (/<tenantId>/<section>/...) instead of living under
-// /tenants/management/ — the counterpart to getManagementBreadcrumbs below, minus the leading
-// list crumb (company_admin has no /tenants list to link back to).
 const COMPANY_ADMIN_SECTION_LABELS: Record<string, string> = {
     dashboard: "Dashboard",
     assets: "Assets",
@@ -66,13 +56,6 @@ function getCompanyAdminBreadcrumbs(pathname: string): Crumb[] {
     return crumbs;
 }
 
-// Full breadcrumb trail for the tenants/management/[id]/... and applications/management/[id]/...
-// subtrees, one crumb per route depth — so a step-3 page shows step1/step2/step3, not step1/step3.
-// The leading "Tenants"/"Applications" list crumb is only reachable by super_admin, so it's
-// omitted entirely for other roles instead of linking somewhere they can't go.
-// The dashboard itself (the [id] root) only appears as a crumb on its own page (as the current,
-// non-clickable step) — subpages below it skip straight to their own section instead of
-// repeating "Tenant Dashboard" on every crumb trail.
 function getManagementBreadcrumbs(pathname: string, isSuperAdmin: boolean): Crumb[] {
     const segments = pathname.split("/").filter(Boolean);
 
@@ -152,8 +135,6 @@ function getManagementBreadcrumbs(pathname: string, isSuperAdmin: boolean): Crum
     return [];
 }
 
-// /settings?user=[id] is the user-detail settings page reached from /users — same
-// "leading list crumb only for super_admin" rule as the tenant/application trails above.
 function getUserSettingsBreadcrumbs(pathname: string, userId: string | null, isSuperAdmin: boolean): Crumb[] {
     if (pathname !== "/settings" || !userId) return [];
 
@@ -165,8 +146,6 @@ function getUserSettingsBreadcrumbs(pathname: string, userId: string | null, isS
 
 export interface HeaderProps {
     navigationText?: string;
-    // Seed from the server-fetched user (see (dashboard)/layout.tsx). Only needed once at
-    // the top of the tree — every other Header/SideBar instance reads useAuthStore instead.
     user?: UserProfile;
 }
 
@@ -202,13 +181,8 @@ export const Header = ({
         if (user) setStoreUser(user);
     }, [user, setStoreUser]);
 
-    if (HIDDEN_HEADER_PATTERN.test(pathname)) return null;
-
     const isSuperAdmin = defaultUser.role === "super_admin";
 
-    // Company-admin nav hrefs are tenant-rooted (/<tenantId>/...) — same UUID-shape check as
-    // getCompanyAdminBreadcrumbs below, so topLevelItem/SectionIcon resolve for those paths too
-    // instead of only ever matching superAdminNavigationItems.
     const companyTenantId = pathname.match(/^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i)?.[1] ?? "";
     const allNavItems = isSuperAdmin
         ? superAdminNavigationItems

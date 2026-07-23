@@ -2,6 +2,7 @@
 
 import { useTranslation } from '@/i18n/context'
 import { useApplicationStore } from '@/store/useApplicationStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { Application } from '@/types/applications'
 import {
     AlertCircle, AppWindow, Code, ExternalLink, Globe, Loader2, MoreVertical, Plus,
@@ -10,11 +11,14 @@ import {
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-export function TenantsManagementidApplicationsClient() {
+export function TenantsManagementidApplicationsClient({ basePath }: { basePath?: string } = {}) {
     const params = useParams()
     const router = useRouter()
     const tenantId = params.id as string
+    const base = basePath ?? '/applications/management'
     const { t } = useTranslation()
+    const role = useAuthStore((s) => s.role)
+    const isSuperAdmin = role === 'super_admin'
 
     const {
         applications, isLoading, searchTerm, setSearchTerm,
@@ -137,17 +141,6 @@ export function TenantsManagementidApplicationsClient() {
         }
     }
 
-    const openEditModal = (app: Application) => {
-        setEditingApp(app)
-        setFormData({
-            name: app.name,
-            description: app.description || '',
-            environment: app.environment,
-            url: app.url || ''
-        })
-        setShowCreateModal(true) // Re-use create modal for editing
-    }
-
     const openAccessModal = async (app: Application) => {
         setAccessApp(app)
         setActiveDropdown(null)
@@ -182,9 +175,9 @@ export function TenantsManagementidApplicationsClient() {
 
     const getEnvironmentIcon = (env: string) => {
         switch (env) {
-            case 'production': return <Globe className="w-4 h-4" />
-            case 'staging': return <Server className="w-4 h-4" />
-            default: return <Code className="w-4 h-4" />
+            case 'production': return <Globe className="w-3 h-3" />
+            case 'staging': return <Server className="w-3 h-3" />
+            default: return <Code className="w-3 h-3" />
         }
     }
 
@@ -254,7 +247,7 @@ export function TenantsManagementidApplicationsClient() {
                     <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
                 </div>
             ) : filteredApps.length === 0 ? (
-                <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm p-20 flex flex-col items-center justify-center text-center">
+                <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-20 flex flex-col items-center justify-center text-center">
                     <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mb-4">
                         <AppWindow className="w-10 h-10 text-slate-200" />
                     </div>
@@ -268,103 +261,97 @@ export function TenantsManagementidApplicationsClient() {
                     {filteredApps.map((app) => (
                         <div
                             key={app.id}
-                            onClick={() => router.push(`/applications/management/${app.id}`)}
-                            className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm space-y-6 group hover:shadow-xl transition-all border-b-4 border-b-transparent hover:border-b-violet-500 cursor-pointer"
+                            className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm space-y-4 hover:shadow-xl transition-all"
                         >
-                            <div className="flex justify-between items-start">
-                                <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center group-hover:bg-violet-50 transition-colors relative">
-                                    <AppWindow className="w-8 h-8 text-slate-400 group-hover:text-violet-600 transition-colors" />
-                                    <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${getStatusColor(app.status)} border-2 border-white`} />
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {app.url && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                handleLaunch(app)
-                                            }}
-                                            className="p-2 text-slate-300 hover:text-violet-600 transition-colors disabled:opacity-50"
-                                            title="Launch Application"
-                                        >
-                                            <ExternalLink className="w-5 h-5" />
-                                        </button>
-                                    )}
-                                    <div className="relative">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                setActiveDropdown(activeDropdown === app.id ? null : app.id)
-                                            }}
-                                            className="p-2 text-slate-300 hover:text-slate-900 transition-colors"
-                                        >
-                                            <MoreVertical className="w-5 h-5" />
-                                        </button>
-                                        {activeDropdown === app.id && (
-                                            <>
-                                                <div className="fixed inset-0 z-10" onClick={() => setActiveDropdown(null)} />
-                                                <div
-                                                    className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-2xl shadow-2xl z-20 py-2"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    <button
-                                                        onClick={() => {
-                                                            openEditModal(app)
-                                                            setActiveDropdown(null)
-                                                        }}
-                                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all"
-                                                    >
-                                                        <Settings className="w-4 h-4" />
-                                                        Edit Details
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openAccessModal(app)}
-                                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all"
-                                                    >
-                                                        <Users className="w-4 h-4" />
-                                                        Manage Access
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleStatusToggle(app)}
-                                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all"
-                                                    >
-                                                        <AppWindow className="w-4 h-4" />
-                                                        {app.status === 'active' ? 'Deactivate' : 'Activate'}
-                                                    </button>
-                                                    <div className="my-1 mx-2 border-t border-slate-100" />
-                                                    <button
-                                                        onClick={() => {
-                                                            setDeleteConfirm(app)
-                                                            setActiveDropdown(null)
-                                                        }}
-                                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition-all"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            </>
+                            <div className="flex items-start justify-between gap-3 w-full">
+                                <div className="flex items-start gap-4 min-w-0 w-full h-full">
+                                    <div className="w-40 h-40 bg-slate-50 rounded-2xl flex items-center justify-center relative overflow-hidden flex-shrink-0">
+                                        {app.logo_url ? (
+                                            <img src={app.logo_url} alt={app.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <AppWindow className="w-8 h-8 text-slate-400" />
                                         )}
+                                        <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${getStatusColor(app.status ?? 'inactive')} border-2 border-white`} />
                                     </div>
+                                    <div className="min-w-0 h-40 w-full flex flex-col justify-between py-1">
+                                        <h3 className="text-base font-black text-slate-900 truncate">{app.name}</h3>
+                                        {app.description && (
+                                            <p className="text-sm text-slate-500 mt-1 line-clamp-2">{app.description}</p>
+                                        )}
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className={`px-3 py-1 text-[9px] font-black uppercase rounded-full flex items-center gap-1 ${getEnvironmentColor(app.environment || 'production')}`}>
+                                                {getEnvironmentIcon(app.environment || 'production')}
+                                                {app.environment}
+                                            </span>
+                                        </div>
+
+                                        <div className="flex flex-col gap-2 w-full">
+                                            {!isSuperAdmin && (
+                                                <button
+                                                    onClick={() => router.push(`${base}/${app.id}`)}
+                                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 text-slate-900 text-xs font-black rounded-md hover:bg-slate-200 transition-all"
+                                                >
+                                                    <Settings className="w-4 h-4" />
+                                                    Edit Details
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => handleLaunch(app)}
+                                                disabled={!app.url}
+                                                title={app.url ? 'Open Application' : 'No URL configured'}
+                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-800 text-white text-xs font-black rounded-md hover:bg-blue-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                            >
+                                                <ExternalLink className="w-4 h-4" />
+                                                Open App
+                                            </button>
+                                        </div>
+                                    </div>
+
                                 </div>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-black text-slate-900">{app.name}</h3>
-                                {app.description && (
-                                    <p className="text-sm text-slate-500 mt-1 line-clamp-2">{app.description}</p>
-                                )}
-                                <div className="flex items-center gap-2 mt-3 flex-wrap">
-                                    <span className={`px-3 py-1 text-[10px] font-black uppercase rounded-full flex items-center gap-1 ${getEnvironmentColor(app.environment)}`}>
-                                        {getEnvironmentIcon(app.environment)}
-                                        {app.environment}
-                                    </span>
-                                    {app.is_shared && (
-                                        <span className="px-3 py-1 text-[10px] font-black uppercase rounded-full bg-indigo-100 text-indigo-700 flex items-center gap-1">
-                                            <Users className="w-3 h-3" />
-                                            Shared by {app.tenant_name}
-                                        </span>
+                                {/* <div className="relative flex-shrink-0">
+                                    <button
+                                        onClick={() => setActiveDropdown(activeDropdown === app.id ? null : app.id)}
+                                        className="p-2 text-slate-300 hover:text-slate-900 transition-colors"
+                                    >
+                                        <MoreVertical className="w-5 h-5" />
+                                    </button>
+                                    {activeDropdown === app.id && (
+                                        <>
+                                            <div className="fixed inset-0 z-10" onClick={() => setActiveDropdown(null)} />
+                                            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-2xl shadow-2xl z-20 py-2">
+                                                <button
+                                                    onClick={() => openAccessModal(app)}
+                                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all"
+                                                >
+                                                    <Users className="w-4 h-4" />
+                                                    Manage Access
+                                                </button>
+                                                <button
+                                                    onClick={() => handleStatusToggle(app)}
+                                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all"
+                                                >
+                                                    <AppWindow className="w-4 h-4" />
+                                                    {app.status === 'active' ? 'Deactivate' : 'Activate'}
+                                                </button>
+                                                <div className="my-1 mx-2 border-t border-slate-100" />
+                                                <button
+                                                    onClick={() => {
+                                                        setDeleteConfirm(app)
+                                                        setActiveDropdown(null)
+                                                    }}
+                                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition-all"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </>
                                     )}
-                                </div>
+                                </div> */}
                             </div>
+
+
+
                         </div>
                     ))}
                 </div>

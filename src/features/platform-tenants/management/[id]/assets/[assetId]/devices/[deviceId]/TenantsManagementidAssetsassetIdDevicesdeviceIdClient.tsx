@@ -7,8 +7,10 @@ import Link from "next/link"
 
 export async function TenantsManagementidAssetsassetIdDevicesdeviceIdClient(props: {
     params: Promise<{ id: string, assetId: string, deviceId: string }>
+    basePath?: string
 }) {
     const { id: tenantId, assetId, deviceId } = await props.params
+    const basePath = props.basePath ?? `/dashboard/tenants/management/${tenantId}`
 
     const device = await getDeviceById(tenantId, deviceId)
 
@@ -25,7 +27,7 @@ export async function TenantsManagementidAssetsassetIdDevicesdeviceIdClient(prop
         <div className="flex flex-col h-full gap-8">
             <div>
                 <Link
-                    href={`/dashboard/tenants/management/${tenantId}/assets/${assetId}`}
+                    href={`${basePath}/assets/${assetId}`}
                     className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-indigo-600 font-medium mb-6 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" />
@@ -41,7 +43,7 @@ export async function TenantsManagementidAssetsassetIdDevicesdeviceIdClient(prop
                     </div>
                 </div>
 
-                <DeviceConfigForm device={device} tenantId={tenantId} assetId={assetId} />
+                <DeviceConfigForm device={device} tenantId={tenantId} assetId={assetId} basePath={basePath} />
             </div>
         </div>
     )

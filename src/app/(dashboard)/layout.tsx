@@ -3,7 +3,7 @@ import Sidebar from "@/components/layout/SideBar"
 import { DashboardMain } from "@/components/layout/DashboardMain"
 import { ToastProvider } from "@/components/toast"
 import { I18nProvider } from "@/i18n/context"
-import Header from "@/components/layout/Header"
+import { AmbientHeader } from "@/components/layout/AmbientHeader"
 import { isDevBypass } from "@/lib/dev"
 import { getCurrentUser, isAxiosError } from "@/lib/thunder-core"
 import { mockUser, type UserProfile } from "@/store/useAuthStore"
@@ -35,7 +35,7 @@ async function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <div className="flex h-screen w-full bg-[radial-gradient(ellipse_at_top_left,rgba(219,234,254,0.6),rgb(248,250,252),rgb(255,255,255))] overflow-hidden">
                     <div className="hidden lg:flex shrink-0 relative z-50">
                         <Suspense fallback={<div className="w-64 h-full bg-white/0" />}>
-                            <Sidebar />
+                            <Sidebar user={user} />
                         </Suspense>
                     </div>
 
@@ -43,7 +43,7 @@ async function DashboardLayout({ children }: { children: React.ReactNode }) {
 
                         <div className="hidden lg:block">
                             <Suspense fallback={null}>
-                                <Header user={user} />
+                                <AmbientHeader user={user} />
                             </Suspense>
                         </div>
 

@@ -15,7 +15,7 @@ export const getSuperAdminNavigationItemsAtManagement = (tenantId: string): NavI
     { label: "Dashboard", href: `/tenants/management/${tenantId}`, icon: SquareKanban },
     { label: "Assets", href: `/tenants/management/${tenantId}/assets`, icon: MonitorCog },
     { label: "Applications", href: `/tenants/management/${tenantId}/applications`, icon: AppWindow },
-    { label: "Members", href: `/tenants/management/${tenantId}/members`, icon: UsersRound },
+    // { label: "Members", href: `/tenants/management/${tenantId}/members`, icon: UsersRound },
     { label: "Tenant Settings", href: `/tenants/management/${tenantId}/settings`, icon: Settings },
 ];
 
@@ -36,10 +36,9 @@ export const getCompanyAdminNavigationItems = (tenantId: string): NavItem[] => [
     { label: "Settings", href: `/${tenantId}/settings`, icon: Settings },
 ];
 
-// export const getCompanyAdminNavigationItemsAtApplicationsManagement = (applicationId: string): NavItem[] => [
-//     { label: "Dashboard", href: `/applications/management/${applicationId}`, icon: SquareKanban },
-//     // { label: "Scenario", href: `/applications/management/${applicationId}/scenario`, icon: Radar },
-//     { label: "Applications", href: `/applications/management/${applicationId}/portal`, icon: AppWindow },
-//     { label: "Members", href: `/applications/management/${applicationId}/members`, icon: UsersRound },
-//     { label: "Settings", href: `/applications/management/${applicationId}/settings`, icon: Settings },
-// ];
+export const getCompanyAdminNavigationItemsAtApplicationsManagement = (tenantId: string, applicationId: string): NavItem[] => [
+    { label: "Dashboard", href: `/${tenantId}/applications/${applicationId}`, icon: SquareKanban },
+    { label: "Applications", href: `/${tenantId}/applications/${applicationId}/portal`, icon: AppWindow },
+    { label: "Members", href: `/${tenantId}/applications/${applicationId}/members`, icon: UsersRound },
+    { label: "Settings", href: `/${tenantId}/applications/${applicationId}/settings`, icon: Settings },
+];

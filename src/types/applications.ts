@@ -12,20 +12,13 @@ export interface AppData {
 }
 
 
-// export type ScenarioLevel = 'normal' | 'watch' | 'crisis' | 'lockdown'
-
-// export interface ScenarioMetadata {
-//   message?: string
-//   affected_areas?: string[]
-//   instructions?: string
-//   [key: string]: unknown
-// }
-
 export interface Application {
   id: string
   name: string
   description?: string | null
   tenant_id?: string | null
+  tenant_name?: string | null
+  // is_shared?: boolean
   status?: 'active' | 'inactive' | 'maintenance'
   environment?: 'production' | 'staging' | 'development'
   url?: string | null
@@ -39,9 +32,9 @@ export interface Application {
   portal_title?: string | null
   portal_description?: string | null
   allow_self_registration?: boolean
-  // tenant_name?: string | null
-  // is_shared?: boolean
 }
+
+export type ApplicationDetails = Application
 
 export type UpdateApplicationDTO = {
   name?: string

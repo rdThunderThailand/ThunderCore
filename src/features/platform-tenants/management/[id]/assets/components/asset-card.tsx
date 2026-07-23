@@ -52,6 +52,8 @@ interface AssetCardProps {
     setShowCredentials: (asset: Asset) => void
     setShowActivation: (asset: Asset) => void
     onSelect?: (asset: Asset) => void
+    /** Route prefix for the asset detail link, e.g. `/tenants/management/${tenantId}`. Defaults to the super-admin path. */
+    basePath?: string
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -62,6 +64,7 @@ export function AssetCard({
     setShowCredentials,
     setShowActivation,
     onSelect,
+    basePath,
 }: AssetCardProps) {
     const { activeTab, fetchData } = useAssetStore()
     const router = useRouter()
@@ -116,7 +119,7 @@ export function AssetCard({
         <div
             onClick={() => {
                 if (onSelect) onSelect(asset)
-                else if (activeTab === 'player') router.push(`/dashboard/tenants/management/${tenantId}/assets/${asset.id}`)
+                else if (activeTab === 'player') router.push(`${basePath ?? `/dashboard/tenants/management/${tenantId}`}/assets/${asset.id}`)
             }}
             className={`group flex flex-col bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden select-none w-[260px] h-fit shrink-0 ${activeTab === 'player' ? 'cursor-pointer' : ''}`}
         >

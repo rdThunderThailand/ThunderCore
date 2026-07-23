@@ -11,7 +11,7 @@ export default async function RedirectPage() {
         const role = getDevRole()
         if (role === 'super_admin') redirect('/tenants')
         // ponytail: dev-bypass has no real membership data — stand in with the first mock tenant.
-        if (role === 'company_admin') redirect(`/tenants/management/${MOCK_TENANTS[0].id}`)
+        if (role === 'company_admin') redirect(`/${MOCK_TENANTS[0].id}/dashboard`)
         redirect('/dashboard')
     }
 
@@ -31,7 +31,7 @@ export default async function RedirectPage() {
         const tenantId =
             user.default_tenant_id ??
             memberships.find((m) => m.membership_roles.some((r) => r.roles.role_type === 'company_admin'))?.tenant_id
-        if (tenantId) redirect(`/tenants/management/${tenantId}`)
+        if (tenantId) redirect(`/${tenantId}/dashboard`)
     }
 
     redirect('/dashboard')

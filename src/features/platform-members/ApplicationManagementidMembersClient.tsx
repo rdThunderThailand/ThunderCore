@@ -1,6 +1,6 @@
 'use client'
 
-import { ApplicationDetails } from '@/models/Application'
+import { ApplicationDetails } from '@/types/applications'
 import { AlertCircle, CheckCircle2, ChevronLeft, Loader2, X } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'

@@ -71,3 +71,21 @@ export async function requireTenantAccess(tenantId: string): Promise<void> {
     )
     if (!isTenantCompanyAdmin) redirect('/no-access')
 }
+
+/**
+ * Strict company-admin gate for the (company-admin)/[id]/... tree. Unlike
+ * requireTenantAccess, super_admin does NOT pass — this tree is company_admin-exclusive,
+ * platform admins use the separate (super-admin)/tenants/management/[id]/... tree instead.
+ */
+export async function requireCompanyAdminAccess(tenantId: string): Promise<void> {
+    const session = await getSessionUser()
+    if (!session) redirect('/login')
+    if (session.role !== 'company_admin') redirect('/no-access')
+    if (isDevBypass()) return // no per-tenant membership mock to check against
+
+    const memberships = await getMyMemberships()
+    const isTenantCompanyAdmin = memberships.some(
+        (m) => m.tenant_id === tenantId && m.membership_roles.some((r) => r.roles.role_type === 'company_admin')
+    )
+    if (!isTenantCompanyAdmin) redirect('/no-access')
+}
