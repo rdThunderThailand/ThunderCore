@@ -17,7 +17,7 @@ import {
 import logo from "../../../public/logo.png";
 import logoFull from "../../../public/logo-full.png";
 
-import { mockUser, type UserProfile } from '@/store/useAuthStore';
+import { mockUser, useAuthStore } from '@/store/useAuthStore';
 import Image from 'next/image';
 import {
     superAdminNavigationItems,
@@ -51,7 +51,6 @@ export interface SidebarProps {
     brandFullLogo?: React.ReactNode;
 
     navigationItems?: NavItem[];
-    user?: UserProfile;
     onLogout?: () => void;
 
     customStyles?: SidebarStyleOverrides;
@@ -61,14 +60,15 @@ export const SideBar = ({
     brandLogo = <Image src={logo} alt="brand-logo" className="w-full h-full object-contain" />,
     brandFullLogo = <Image src={logoFull} alt="brand-logo" className="w-full h-full object-contain" />,
     navigationItems,
-    user = mockUser,
     onLogout,
     customStyles = {}
 }: SidebarProps) => {
     const pathname = usePathname();
+    const storeUser = useAuthStore((s) => s.user);
+    const resolvedUser = storeUser ?? mockUser;
     const managementId = pathname.match(/\/(?:tenants|applications)\/management\/([^/]+)/)?.[1] ?? '';
     const resolvedNavigationItems = navigationItems ?? (() => {
-        if (user?.role === "super_admin") {
+        if (resolvedUser?.role === "super_admin") {
             if (pathname.includes("/tenants/management/")) {
                 return getSuperAdminNavigationItemsAtManagement(managementId);
             }
@@ -77,7 +77,7 @@ export const SideBar = ({
             // }
             return superAdminNavigationItems;
         }
-        if (user?.role === "company_admin") {
+        if (resolvedUser?.role === "company_admin") {
             if (pathname.includes("/tenants/management/")) {
                 return getCompanyAdminNavigationItems(managementId);
             }

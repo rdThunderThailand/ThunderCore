@@ -6,8 +6,13 @@ import Link from "next/link";
 import { Bell, ChevronDown, Settings, Info, LogOut, Languages, ChevronLeft } from "lucide-react";
 import { useTranslation } from "@/i18n/context";
 import { cn } from "../../utils/cn";
-import { mockUser, type UserProfile } from '@/store/useAuthStore';
+import { mockUser, useAuthStore, type UserProfile } from '@/store/useAuthStore';
 import { superAdminNavigationItems } from "./sidebar-nav";
+
+// Hides the header on the assets list route — that page renders its own header. Lived in
+// (dashboard)/layout.tsx before; moved here since this is the only place still needing
+// usePathname(), which let the layout become a server component and fetch the real user.
+const HIDDEN_HEADER_PATTERN = /^\/tenants\/management\/[^/]+\/assets$/;
 
 // Helper function to derive cleaner page titles from pathnames (fallback for routes
 // with no dedicated breadcrumb trail, e.g. /users)
@@ -133,6 +138,8 @@ function getUserSettingsBreadcrumbs(pathname: string, userId: string | null, isS
 
 export interface HeaderProps {
     navigationText?: string;
+    // Seed from the server-fetched user (see (dashboard)/layout.tsx). Only needed once at
+    // the top of the tree — every other Header/SideBar instance reads useAuthStore instead.
     user?: UserProfile;
 }
 
@@ -144,7 +151,9 @@ export const Header = ({
     const searchParams = useSearchParams();
     const router = useRouter();
     const { locale, setLocale, t } = useTranslation();
-    const defaultUser = user ?? mockUser;
+    const storeUser = useAuthStore((s) => s.user);
+    const setStoreUser = useAuthStore((s) => s.setUser);
+    const defaultUser = user ?? storeUser ?? mockUser;
 
     const toggleLanguage = () => setLocale(locale === 'en' ? 'th' : 'en');
 
@@ -162,6 +171,11 @@ export const Header = ({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        if (user) setStoreUser(user);
+    }, [user, setStoreUser]);
+
+    if (HIDDEN_HEADER_PATTERN.test(pathname)) return null;
 
     const isSuperAdmin = defaultUser.role === "super_admin";
 
@@ -258,7 +272,7 @@ export const Header = ({
                         className="flex gap-3 items-center cursor-pointer"
                     >
                         <img
-                            src={defaultUser.avatar_url}
+                            src={defaultUser?.avatar_url || "https://ichef.bbci.co.uk/ace/standard/609/cpsprodpb/a0d9/live/211e77d0-7cd1-11f1-926f-c90d1bcfbc84.jpg"}
                             alt="userprofile"
                             className="w-11 h-11 rounded-full object-cover shrink-0 bg-gray-200"
                         />

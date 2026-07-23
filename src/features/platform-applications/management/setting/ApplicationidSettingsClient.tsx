@@ -1,7 +1,6 @@
 'use client'
 
 import { Pagination, Table, TableColumn, calcTotalPages, paginate } from '@/components/ui'
-import { ApplicationDetails } from '@/models/Application'
 import { Loader2, Plus, Save, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
@@ -13,8 +12,9 @@ import {
     removeApplicationAuthorization,
     updateApplication,
 } from '../../actions'
+import { Application, ApplicationTenantsAccess } from '@/types'
 
-type TenantAccess = { id: string; name: string; starts_at: string | null; ends_at: string | null }
+type TenantAccess = ApplicationTenantsAccess
 type AccessStatus = 'Active' | 'Scheduled' | 'Expired'
 
 const inputClass = 'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500'
@@ -30,15 +30,15 @@ const STATUS_STYLES: Record<AccessStatus, string> = {
 // Access status is derived from the authorization window, not the tenant's own account status.
 const getAccessStatus = (t: TenantAccess): AccessStatus => {
     const now = Date.now()
-    if (t.ends_at && new Date(t.ends_at).getTime() < now) return 'Expired'
-    if (t.starts_at && new Date(t.starts_at).getTime() > now) return 'Scheduled'
+    if (t.ended_at && new Date(t.ended_at).getTime() < now) return 'Expired'
+    if (new Date(t.started_at).getTime() > now) return 'Scheduled'
     return 'Active'
 }
 
 const stripScheme = (url: string) => url.replace(/^https?:\/\//, '')
 
 export function ApplicationidSettingsClient({ appId }: { appId: string }) {
-    const [app, setApp] = useState<ApplicationDetails | null>(null)
+    const [app, setApp] = useState<Application | null>(null)
     const [tenants, setTenants] = useState<TenantAccess[]>([])
     const [form, setForm] = useState({ name: '', url: '', logo_url: '' })
     const [isLoading, setIsLoading] = useState(true)
@@ -75,7 +75,7 @@ export function ApplicationidSettingsClient({ appId }: { appId: string }) {
         if (!form.name.trim()) return toast.error('Application name is required')
         setIsSaving(true)
         try {
-            await updateApplication(appId, { name: form.name.trim(), url: form.url, logo_url: form.logo_url || null })
+            await updateApplication(appId, { name: form.name.trim(), url: form.url || null, logo_url: form.logo_url || null })
             toast.success('Settings saved')
         } catch (err) {
             toast.error((err as Error).message)
@@ -85,9 +85,9 @@ export function ApplicationidSettingsClient({ appId }: { appId: string }) {
     }
 
     const handleRemove = async (tenant: TenantAccess) => {
-        if (!window.confirm(`Remove ${tenant.name}'s access to this application?`)) return
+        if (!window.confirm(`Remove ${tenant.tenant_name ?? tenant.tenant_id}'s access to this application?`)) return
         try {
-            await removeApplicationAuthorization(appId, tenant.id)
+            await removeApplicationAuthorization(appId, tenant.tenant_id)
             setTenants(await getApplicationTenants(appId))
             setSelectedIds((prev) => {
                 const next = new Set(prev)
@@ -114,11 +114,11 @@ export function ApplicationidSettingsClient({ appId }: { appId: string }) {
                 case 'status':
                     return getAccessStatus(a).localeCompare(getAccessStatus(b))
                 case 'starts_at':
-                    return (a.starts_at ?? '').localeCompare(b.starts_at ?? '')
+                    return a.started_at.localeCompare(b.started_at)
                 case 'ends_at':
-                    return (a.ends_at ?? '').localeCompare(b.ends_at ?? '')
+                    return (a.ended_at ?? '').localeCompare(b.ended_at ?? '')
                 default:
-                    return a.name.localeCompare(b.name)
+                    return (a.tenant_name ?? '').localeCompare(b.tenant_name ?? '')
             }
         }
         const sorted = [...tenants].sort(compare)
@@ -130,8 +130,8 @@ export function ApplicationidSettingsClient({ appId }: { appId: string }) {
     const pageItems = paginate(sortedTenants, currentPage, PAGE_SIZE)
 
     const columns: TableColumn<TenantAccess>[] = [
-        { key: 'avatar', header: 'Image', width: '64px', render: (t) => <TenantAvatar name={t.name} /> },
-        { key: 'name', header: 'Organization', sortable: true },
+        { key: 'avatar', header: 'Image', width: '64px', render: (t) => <TenantAvatar name={t.tenant_name ?? t.tenant_id} /> },
+        { key: 'name', header: 'Tenant', sortable: true, render: (t) => t.tenant_name ?? t.tenant_id },
         {
             key: 'status',
             header: 'Status',
@@ -145,20 +145,20 @@ export function ApplicationidSettingsClient({ appId }: { appId: string }) {
             key: 'starts_at',
             header: 'Started At',
             sortable: true,
-            render: (t) => (t.starts_at ? new Date(t.starts_at).toLocaleDateString() : '—'),
+            render: (t) => new Date(t.started_at).toLocaleDateString(),
         },
         {
             key: 'ends_at',
             header: 'Expired At',
             sortable: true,
-            render: (t) => (t.ends_at ? new Date(t.ends_at).toLocaleDateString() : '—'),
+            render: (t) => (t.ended_at ? new Date(t.ended_at).toLocaleDateString() : '—'),
         },
         {
             key: 'action',
             header: '',
             align: 'right',
             render: (t) => (
-                <button onClick={() => handleRemove(t)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50" aria-label={`Remove ${t.name}`}>
+                <button onClick={() => handleRemove(t)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50" aria-label={`Remove ${t.tenant_name ?? t.tenant_id}`}>
                     <Trash2 className="h-4 w-4" />
                 </button>
             ),
@@ -192,12 +192,6 @@ export function ApplicationidSettingsClient({ appId }: { appId: string }) {
                             )}
                         </div>
                         <span className="text-center text-xs text-slate-400">Recommended: 400x400px</span>
-                        <input
-                            className="w-32 rounded-lg border border-slate-200 px-2 py-1 text-center text-xs outline-none focus:border-blue-500"
-                            placeholder="Logo URL"
-                            value={form.logo_url}
-                            onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
-                        />
                     </div>
 
                     <div className="grid flex-1 gap-4 sm:grid-cols-2">
@@ -219,6 +213,10 @@ export function ApplicationidSettingsClient({ appId }: { appId: string }) {
                                 />
                             </div>
                         </label>
+                        <label className="text-sm">
+                            <span className="mb-1 block text-slate-600">Logo URL</span>
+                            <input className={inputClass} placeholder='Logo URL' value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} />
+                        </label>
                     </div>
                 </div>
 
@@ -237,14 +235,14 @@ export function ApplicationidSettingsClient({ appId }: { appId: string }) {
             <section className={cardClass}>
                 <div className="mb-4 flex items-center justify-between">
                     <div>
-                        <h2 className="text-lg font-semibold">Organizations</h2>
-                        <p className="text-sm text-slate-500">A list of organizations using this application</p>
+                        <h2 className="text-lg font-semibold">Tenants</h2>
+                        <p className="text-sm text-slate-500">A list of Tenants using this application</p>
                     </div>
                     <button
                         onClick={() => setIsAddOpen(true)}
                         className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
                     >
-                        <Plus className="h-4 w-4" /> Add Organization
+                        <Plus className="h-4 w-4" /> Add Tenant
                     </button>
                 </div>
 
@@ -267,7 +265,7 @@ export function ApplicationidSettingsClient({ appId }: { appId: string }) {
             {isAddOpen && (
                 <AddTenantModal
                     appId={appId}
-                    existingIds={tenants.map((t) => t.id)}
+                    existingIds={tenants.map((t) => t.tenant_id)}
                     onClose={() => setIsAddOpen(false)}
                     onAdded={async () => {
                         setIsAddOpen(false)
@@ -318,13 +316,13 @@ function AddTenantModal({
         if (!tenantId) return
         setIsSaving(true)
         try {
-            await addApplicationAuthorization(
+            await addApplicationAuthorization({
                 appId,
                 tenantId,
-                range.start ? new Date(range.start).toISOString() : undefined,
-                range.end ? new Date(range.end).toISOString() : undefined
-            )
-            toast.success('Organization added')
+                startsAt: range.start ? new Date(range.start).toISOString() : undefined,
+                endsAt: range.end ? new Date(range.end).toISOString() : undefined,
+            })
+            toast.success('Tenant added')
             onAdded()
         } catch (err) {
             toast.error((err as Error).message)
@@ -336,11 +334,11 @@ function AddTenantModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" onClick={onClose}>
             <div className={`${cardClass} w-full max-w-md`} onClick={(e) => e.stopPropagation()}>
-                <h3 className="mb-4 text-lg font-semibold">Add organization access</h3>
+                <h3 className="mb-4 text-lg font-semibold">Add Tenant access</h3>
                 <label className="text-sm">
-                    <span className="mb-1 block text-slate-600">Organization</span>
+                    <span className="mb-1 block text-slate-600">Tenant</span>
                     <select className={inputClass} value={tenantId} onChange={(e) => setTenantId(e.target.value)}>
-                        {options.length === 0 && <option value="">No organizations available</option>}
+                        {options.length === 0 && <option value="">No Tenants available</option>}
                         {options.map((o) => (
                             <option key={o.id} value={o.id}>{o.name}</option>
                         ))}

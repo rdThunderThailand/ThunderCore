@@ -24,6 +24,7 @@ interface AuthStore {
     isLoading: boolean
     userOrgId: string | null
     setRole: (role: UserRole) => void
+    setUser: (user: UserProfile | null) => void
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
@@ -32,4 +33,5 @@ export const useAuthStore = create<AuthStore>((set) => ({
     isLoading: true,
     userOrgId: null,
     setRole: (role) => set({ role }),
+    setUser: (user) => set({ user, role: user?.role ?? getDevRole(), isLoading: false }),
 }))

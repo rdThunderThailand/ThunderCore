@@ -8,7 +8,7 @@
 | **FE** | `thundercore/src/lib/<domain>.ts` เรียก axios จริงแล้ว (ไม่ใช่ `throw`) |
 | **E2E** | เปิดเบราว์เซอร์ใช้จริงโดยปิด `NEXT_PUBLIC_DEV_BYPASS` แล้วผ่าน |
 
-**สถานะรวม: BE 23/65 · FE 13/65 · E2E 6/65** (2026-07-20)
+**สถานะรวม: BE 21/65 · FE 11/65 · E2E 4/65** (2026-07-20)
 
 > ⚠️ BE ผ่านไม่ได้แปลว่าใช้งานได้จริง — ทุกเส้นที่ E2E ยังไม่ติ๊ก ยังไม่เคยมีคนเปิดหน้าเว็บดู
 
@@ -85,19 +85,17 @@ revoke เป็น soft flag ดูรายละเอียดใน [API_RE
 
 | Endpoint | ทำอะไร | BE | FE | E2E |
 |---|---|:--:|:--:|:--:|
-| `GET /applications` | แอปทั้งแพลตฟอร์ม (หน้า `/applications`) | ✅ | ⬜ | ⬜ |
-| `POST /applications` | สร้างแอประดับแพลตฟอร์ม | ✅ | ⬜ | ⬜ |
-| `GET /applications/:id` | รายละเอียดแอป + ฟิลด์ portal | ✅ | ⬜ | ⬜ |
-| `PATCH /applications/:id` | แก้ข้อมูลทั่วไป + portal (domain, สี, โลโก้) | ✅ | ⬜ | ⬜ |
-| `DELETE /applications/:id` | ลบแอป | ✅ | ⬜ | ⬜ |
-| `GET /applications/:id/tenants` | tenant ที่ได้รับอนุญาตใช้แอปนี้ | ✅ | ⬜ | ⬜ |
-| `POST /applications/:id/tenants` | เพิ่มสิทธิ์ให้ tenant | ✅ | ⬜ | ⬜ |
-| `DELETE /applications/:id/tenants/:tenantId` | ถอนสิทธิ์ tenant | ✅ | ⬜ | ⬜ |
-| `GET /applications/:id/members` | ผู้ใช้ทั้งหมดที่เข้าแอปนี้ได้ | ✅ | ⬜ | ⬜ |
-| `GET /applications/:id/scenario` | ระดับสถานการณ์ปัจจุบัน | ⬜ | ⬜ | ⬜ |
-| `PUT /applications/:id/scenario` | เปลี่ยนระดับ (normal/watch/crisis/lockdown) | ⬜ | ⬜ | ⬜ |
-| `GET /applications/:id/api-key` | ดู API key ของแอป | ⬜ | ⬜ | ⬜ |
-| `POST /applications/:id/api-key/regenerate` | ออก API key ใหม่ (ต้องเป็น super_admin) | ⬜ | ⬜ | ⬜ |
+| `GET /applications` | แอปทั้งแพลตฟอร์ม (หน้า `/applications`) | ✅ | ✅ | ✅ |
+| `POST /applications` | สร้างแอประดับแพลตฟอร์ม | ✅ | ✅ | ✅ |
+| `GET /applications/:id` | รายละเอียดแอป + ฟิลด์ portal | ✅ | ✅ | ✅ |
+| `PATCH /applications/:id` | แก้ข้อมูลทั่วไป + portal (domain, สี, โลโก้) | ✅ | ✅ | ✅ |
+| `DELETE /applications/:id` | ลบแอป | ✅ | ✅ | ✅ |
+| `GET /applications/:id/tenants` | tenant ที่ได้รับอนุญาตใช้แอปนี้ | ✅ | ✅ | ✅ |
+| `POST /applications/:id/tenants` | เพิ่มสิทธิ์ให้ tenant | ✅ | ✅ | ✅ |
+| `DELETE /applications/:id/tenants/:tenantId` | ถอนสิทธิ์ tenant | ✅ | ✅ | ✅ |
+| `GET /applications/:id/members` | ผู้ใช้ทั้งหมดที่เข้าแอปนี้ได้ | ✅ | ✅ | ⬜ |
+| `GET /applications/:id/api-key` | ดู API key ของแอป | ✅ | ✅ | ⬜ |
+| `POST /applications/:id/api-key/regenerate` | ออก API key ใหม่ (ต้องเป็น super_admin) | ✅ | ✅ | ⬜ |
 
 **มีอยู่แล้วใน core/v1 ทับกับหมวดนี้:** `POST /tenants/:id/apps/enable` และ `disable` ทำงานเดียวกับ
 `POST/DELETE /applications/:id/tenants` แต่เป็น soft-disable (`ended_at`) ซึ่งดีกว่า — ตอนทำอย่าสร้างซ้ำ
@@ -142,11 +140,8 @@ super_admin gate ต้อง enforce ที่ backend
 
 | Endpoint | ทำอะไร | BE | FE | E2E |
 |---|---|:--:|:--:|:--:|
-| `GET /users` | ผู้ใช้ทั้งระบบ (หน้า `/users`, `/settings`) | ✅ | ✅ | ✅ |
-| `DELETE /users/:id` | ลบผู้ใช้ | ✅ | ✅ | ✅ |
-
-> BE verify ด้วย `tests/api/users-core-v1.test.mjs` รันจริงกับ Thunder_Core บน `localhost:3001` — 10/10 ผ่าน (2026-07-20).
-> E2E verify ด้วยมือในเบราว์เซอร์จริง (`NEXT_PUBLIC_DEV_BYPASS=false`, login เป็น super_admin จริง): `/users` ดึงข้อมูลจาก Supabase จริง (เช็คโดย query DB ตรงเทียบ id), คลิกแถว → `/settings?user=...` โหลด user ถูกคน, **Save** เขียนจริง (ทดสอบบน `benyapa.thon@gmail.com`, เห็น `updated_at` เปลี่ยนใน DB), **Delete** ลบจริงแบบ soft-delete (ทดสอบบน disposable test user ที่สร้าง+ลบเองเพื่อไม่แตะข้อมูลจริง) แล้ว redirect กลับ `/users` list ถูกต้อง (2026-07-20). ไม่ใช่ scripted E2E — เป็น manual browser verification.
+| `GET /users` | ผู้ใช้ทั้งระบบ (หน้า `/users`, `/settings`) | ⬜ | ⬜ | ⬜ |
+| `DELETE /users/:id` | ลบผู้ใช้ | ⬜ | ⬜ | ⬜ |
 
 ---
 
@@ -182,3 +177,13 @@ node --env-file=.env tests/api/auth-refresh.test.mjs      # 12 assert
 node --env-file=.env tests/api/tenants-core-v1.test.mjs   # 39 assert
 node --env-file=.env tests/api/members-core-v1.test.mjs   # 45 assert
 ```
+
+
+
+
+
+
+-----------------------------------
+
+| `GET /applications/:id/scenario` | ระดับสถานการณ์ปัจจุบัน | ⬜ | ⬜ | ⬜ |
+| `PUT /applications/:id/scenario` | เปลี่ยนระดับ (normal/watch/crisis/lockdown) | ⬜ | ⬜ | ⬜ |
