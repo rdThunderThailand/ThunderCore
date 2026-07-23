@@ -1,4 +1,8 @@
-// ponytail: stub, no guard/logic yet — company-admin route split is WIP.
-export default function CompanyAdminSettingsPage() {
-    return <div>Coming soon</div>
+import { TenantsManagementidSettingsClient } from '@/features/platform-tenants/management/[id]/settings/TenantsManagementidSettingsClient'
+
+export const dynamic = 'force-dynamic'
+
+export default async function CompanyAdminSettingsPage(props: { params: Promise<{ id: string }> }) {
+
+    return <TenantsManagementidSettingsClient {...props} />
 }
