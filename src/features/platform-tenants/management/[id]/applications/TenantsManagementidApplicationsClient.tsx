@@ -2,6 +2,7 @@
 
 import { useTranslation } from '@/i18n/context'
 import { useApplicationStore } from '@/store/useApplicationStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { Application } from '@/types/applications'
 import {
     AlertCircle, AppWindow, Code, ExternalLink, Globe, Loader2, MoreVertical, Plus,
@@ -16,6 +17,8 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
     const tenantId = params.id as string
     const base = basePath ?? '/applications/management'
     const { t } = useTranslation()
+    const role = useAuthStore((s) => s.role)
+    const isSuperAdmin = role === 'super_admin'
 
     const {
         applications, isLoading, searchTerm, setSearchTerm,
@@ -283,13 +286,15 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
                                         </div>
 
                                         <div className="flex flex-col gap-2 w-full">
-                                            <button
-                                                onClick={() => router.push(`${base}/${app.id}`)}
-                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 text-slate-900 text-xs font-black rounded-md hover:bg-slate-200 transition-all"
-                                            >
-                                                <Settings className="w-4 h-4" />
-                                                Edit Details
-                                            </button>
+                                            {!isSuperAdmin && (
+                                                <button
+                                                    onClick={() => router.push(`${base}/${app.id}`)}
+                                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 text-slate-900 text-xs font-black rounded-md hover:bg-slate-200 transition-all"
+                                                >
+                                                    <Settings className="w-4 h-4" />
+                                                    Edit Details
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => handleLaunch(app)}
                                                 disabled={!app.url}

@@ -1,4 +1,4 @@
-import { requireTenantAccess } from '@/lib/rbac'
+import { requireCompanyAdminAccess } from '@/lib/rbac'
 
 export default async function CompanyAdminTenantLayout({
     children,
@@ -8,6 +8,6 @@ export default async function CompanyAdminTenantLayout({
     params: Promise<{ id: string }>
 }) {
     const { id } = await params
-    await requireTenantAccess(id)
+    await requireCompanyAdminAccess(id)
     return <>{children}</>
 }

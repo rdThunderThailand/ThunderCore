@@ -15,7 +15,7 @@ export const getSuperAdminNavigationItemsAtManagement = (tenantId: string): NavI
     { label: "Dashboard", href: `/tenants/management/${tenantId}`, icon: SquareKanban },
     { label: "Assets", href: `/tenants/management/${tenantId}/assets`, icon: MonitorCog },
     { label: "Applications", href: `/tenants/management/${tenantId}/applications`, icon: AppWindow },
-    { label: "Members", href: `/tenants/management/${tenantId}/members`, icon: UsersRound },
+    // { label: "Members", href: `/tenants/management/${tenantId}/members`, icon: UsersRound },
     { label: "Tenant Settings", href: `/tenants/management/${tenantId}/settings`, icon: Settings },
 ];
 

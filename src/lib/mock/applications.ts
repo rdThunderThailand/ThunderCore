@@ -20,6 +20,7 @@ export const MOCK_APPLICATIONS: Application[] = [
         tenant_id: 'e316bbcf-2eb6-48ae-b5d9-74d631dec359',
         status: 'maintenance',
         environment: 'staging',
+        url: 'https://youtube.com',
         created_at: new Date('2026-07-10T08:30:00.000Z'),
         updated_at: new Date('2026-07-12T08:30:00.000Z'),
     },
