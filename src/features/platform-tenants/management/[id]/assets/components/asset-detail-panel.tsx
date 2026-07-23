@@ -7,7 +7,7 @@ import {
     MapPin, Wrench, Monitor,
     Plus, Server, Smartphone, Laptop,
     Radio, Cpu, Wifi, FileText, Activity, Package, MoreHorizontal,
-    ChevronsRight
+    ChevronsLeft
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
@@ -208,7 +208,7 @@ export function AssetDetailPanel({ asset, tenantId, onClose }: AssetDetailPanelP
                                     onClick={onClose}
                                     className="p-1 -ml-2 text-slate-300 hover:text-slate-500 transition-colors"
                                 >
-                                    <ChevronsRight className="w-5 h-5 rotate-180" />
+                                    <ChevronsLeft className="w-5 h-5 rotate-180" />
                                 </button>
                                 <div className="flex items-center gap-2">
                                     <div className="px-2 py-1 bg-white border border-slate-200 rounded-md shadow-sm">
@@ -229,9 +229,8 @@ export function AssetDetailPanel({ asset, tenantId, onClose }: AssetDetailPanelP
                                     {[1, 2, 3, 4, 5].map((i) => (
                                         <div
                                             key={i}
-                                            className={`w-3.5 h-1.5 rounded-[1px] ${
-                                                i <= 4 ? (asset.connection_status === 'online' ? 'bg-emerald-500' : 'bg-red-400') : 'bg-slate-100'
-                                            }`}
+                                            className={`w-3.5 h-1.5 rounded-[1px] ${i <= 4 ? (asset.connection_status === 'online' ? 'bg-emerald-500' : 'bg-red-400') : 'bg-slate-100'
+                                                }`}
                                         />
                                     ))}
                                 </div>
@@ -272,11 +271,10 @@ export function AssetDetailPanel({ asset, tenantId, onClose }: AssetDetailPanelP
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-3 text-[11px] font-bold transition-colors border-b-2 whitespace-nowrap ${
-                                    activeTab === tab
+                                className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-3 text-[11px] font-bold transition-colors border-b-2 whitespace-nowrap ${activeTab === tab
                                         ? 'text-blue-600 border-blue-600'
                                         : 'text-slate-400 border-transparent hover:text-slate-600'
-                                }`}
+                                    }`}
                             >
                                 {tab === 'Overview' && <Activity className="w-3 h-3" />}
                                 {tab === 'Devices' && <Monitor className="w-3 h-3" />}

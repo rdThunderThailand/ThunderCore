@@ -2,14 +2,14 @@
 
 import { calcTotalPages, paginate, Pagination } from '@/components/ui'
 import { getDevRole } from '@/lib/dev'
-import { SystemApplication } from '@/models/Application'
+import { Application } from '@/types'
 import { AppWindow, Globe, LayoutGrid, Loader2, Plus, Search, Trash2, X } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { createApplication, deleteApplication, getAllApplications, getTenantsForSelect } from './actions'
 
-const STATUS_STYLES: Record<SystemApplication['status'], string> = {
+const STATUS_STYLES: Record<NonNullable<Application['status']>, string> = {
     active: 'bg-green-50 text-green-600',
     maintenance: 'bg-amber-50 text-amber-600',
     inactive: 'bg-slate-100 text-slate-500',
@@ -18,9 +18,9 @@ const STATUS_STYLES: Record<SystemApplication['status'], string> = {
 const PAGE_SIZE = 6
 
 export function ApplicationHomeClient() {
-    const isSuperAdmin = getDevRole() === 'super_admin' || 'company_admin'
+    const isSuperAdmin = getDevRole() === 'super_admin' || getDevRole() === 'company_admin'
 
-    const [apps, setApps] = useState<SystemApplication[]>([])
+    const [apps, setApps] = useState<Application[]>([])
     const [tenants, setTenants] = useState<Array<{ id: string; name: string }>>([])
     const [isLoading, setIsLoading] = useState(true)
     const [search, setSearch] = useState('')
@@ -139,10 +139,12 @@ export function ApplicationHomeClient() {
                                                     <Globe className="w-4 h-4 text-slate-300" /> {app.name}
                                                 </Link>
                                             </td>
-                                            <td className="py-3 text-slate-500">{app.tenant_name ?? (app.is_shared ? 'System (shared)' : '—')}</td>
+                                            <td className="py-3 text-slate-500">
+                                                {app.tenant_id ? (tenants.find((t) => t.id === app.tenant_id)?.name ?? app.tenant_id) : '—'}
+                                            </td>
                                             <td className="py-3 text-slate-500">{app.environment}</td>
                                             <td className="py-3">
-                                                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[app.status]}`}>{app.status}</span>
+                                                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[app.status ?? 'inactive']}`}>{app.status ?? 'inactive'}</span>
                                             </td>
                                             <td className="py-3 text-right">
                                                 {isSuperAdmin && (
@@ -198,7 +200,7 @@ function CreateModal({
 }: {
     tenants: Array<{ id: string; name: string }>
     onClose: () => void
-    onCreated: (app: SystemApplication) => void
+    onCreated: (app: Application) => void
 }) {
     const [name, setName] = useState('')
     const [tenantId, setTenantId] = useState<string>('') // '' = system app
@@ -208,7 +210,7 @@ function CreateModal({
         if (!name.trim()) return
         setIsSubmitting(true)
         try {
-            const app = await createApplication(name.trim(), tenantId || null)
+            const app = await createApplication({ name: name.trim(), tenant_id: tenantId || null })
             toast.success('Application created')
             onCreated(app)
         } catch (err) {
