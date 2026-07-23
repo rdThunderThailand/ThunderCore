@@ -36,9 +36,10 @@ import Header from '@/components/layout/Header'
 // MAIN PAGE
 // =====================
 
-export function TenantsManagementidAssetsClient() {
+export function TenantsManagementidAssetsClient({ basePath }: { basePath?: string } = {}) {
     const params = useParams()
     const tenantId = params.id as string
+    const base = basePath ?? `/dashboard/tenants/management/${tenantId}`
     const {
         assets, totalCount, quota, isLoading,
         activeTab,
@@ -106,6 +107,7 @@ export function TenantsManagementidAssetsClient() {
 
     return (
         <div className="flex h-screen">
+
             {/* Local Sidebar (Middle Column) */}
             <AssetsSidebar
                 setShowCreateFolder={setShowCreateFolder}
@@ -166,6 +168,7 @@ export function TenantsManagementidAssetsClient() {
                                                     setShowCredentials={setShowCredentials}
                                                     setShowActivation={setShowActivation}
                                                     onSelect={(a) => setSelectedAsset(prev => prev?.id === a.id ? null : a)}
+                                                    basePath={base}
                                                 />
                                             ))}
                                         </div>
@@ -274,6 +277,7 @@ export function TenantsManagementidAssetsClient() {
                     asset={selectedAsset}
                     tenantId={tenantId}
                     onClose={() => setSelectedAsset(null)}
+                    basePath={base}
                 />
             </div>
         </div>

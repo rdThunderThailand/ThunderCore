@@ -1,4 +1,5 @@
 import { useAssetStore } from '@/store/useAssetStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { Search, ChevronDown, Plus } from 'lucide-react'
 import { AssetRegistryStatus } from '@/types/assets'
 import { useState } from 'react'
@@ -33,6 +34,8 @@ export function AssetsActionBar({
         sortBy, setSortBy,
         availableTags, selectedTags, toggleTagFilter, clearTagFilters
     } = useAssetStore()
+    const role = useAuthStore((s) => s.role)
+    const isSuperAdmin = role === 'super_admin'
 
     const currentFilterConfig = activeTab === 'player'
         ? connectionConfig
@@ -158,12 +161,14 @@ export function AssetsActionBar({
                     <Plus className="w-4 h-4" /> Add All Register
                 </button>
 
-                <button
-                    onClick={() => setShowRegister(true)}
-                    className="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-all text-sm flex items-center gap-2 whitespace-nowrap"
-                >
-                    <Plus className="w-4 h-4" /> Add Device
-                </button>
+                {isSuperAdmin && (
+                    <button
+                        onClick={() => setShowRegister(true)}
+                        className="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-all text-sm flex items-center gap-2 whitespace-nowrap"
+                    >
+                        <Plus className="w-4 h-4" /> Add Device
+                    </button>
+                )}
             </div>
         </div>
     )

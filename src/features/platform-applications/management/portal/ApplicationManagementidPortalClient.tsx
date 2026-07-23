@@ -1,6 +1,6 @@
 'use client'
 
-import { ApplicationDetails } from '@/models/Application'
+import { ApplicationDetails } from '@/types/applications'
 import { launchApplication } from '@/features/platform-tenants/management/[id]/applications/actions'
 import { AlertCircle, ChevronLeft, ExternalLink, Globe, Layout, Loader2, Settings } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -10,7 +10,7 @@ import { getApplicationById } from '../../actions'
 
 const cardClass = 'rounded-2xl border border-slate-200 bg-white p-6'
 
-export function ApplicationManagementidPortalClient({ appId }: { appId: string }) {
+export function ApplicationManagementidPortalClient({ appId, basePath = '/applications' }: { appId: string; basePath?: string }) {
     const router = useRouter()
     const [app, setApp] = useState<ApplicationDetails | null>(null)
     const [isLoading, setIsLoading] = useState(true)
@@ -21,7 +21,7 @@ export function ApplicationManagementidPortalClient({ appId }: { appId: string }
             try {
                 const data = await getApplicationById(appId)
                 if (!data) {
-                    router.push('/applications')
+                    router.push(basePath)
                     return
                 }
                 setApp(data)
@@ -32,10 +32,10 @@ export function ApplicationManagementidPortalClient({ appId }: { appId: string }
             }
         }
         load()
-    }, [appId, router])
+    }, [appId, router, basePath])
 
     const handleLaunch = async () => {
-        if (!app) return
+        if (!app || !app.tenant_id) return
         if (app.custom_domain) {
             window.open(`https://${app.custom_domain}`, '_blank')
             return
@@ -110,7 +110,7 @@ export function ApplicationManagementidPortalClient({ appId }: { appId: string }
                 {/* Configuration options */}
                 <div className="space-y-6">
                     <button
-                        onClick={() => router.push(`/applications/management/${appId}/portal/domains`)}
+                        onClick={() => router.push(`${basePath}/${appId}/portal/domains`)}
                         className={`${cardClass} block w-full text-left transition-shadow hover:shadow-md`}
                     >
                         <div className="mb-2 flex items-center gap-3">
@@ -123,7 +123,7 @@ export function ApplicationManagementidPortalClient({ appId }: { appId: string }
                     </button>
 
                     <button
-                        onClick={() => router.push(`/applications/management/${appId}/portal/customization`)}
+                        onClick={() => router.push(`${basePath}/${appId}/portal/customization`)}
                         className={`${cardClass} block w-full text-left transition-shadow hover:shadow-md`}
                     >
                         <div className="mb-2 flex items-center gap-3">

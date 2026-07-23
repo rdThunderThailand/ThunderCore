@@ -14,6 +14,7 @@ interface UIStore {
     // Theme / Language (Optional extension)
     language: string
     setLanguage: (lang: string) => void
+
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -30,4 +31,5 @@ export const useUIStore = create<UIStore>((set) => ({
     // Language
     language: 'en',
     setLanguage: (language) => set({ language }),
+
 }))

@@ -44,13 +44,15 @@ function DeviceRow({
     tenantId,
     assetId,
     index,
-    onNavigate
+    onNavigate,
+    basePath
 }: {
     device: Device
     tenantId: string
     assetId: string
     index: number
     onNavigate: () => void
+    basePath?: string
 }) {
     const router = useRouter()
     const [isAddingTag, setIsAddingTag] = useState(false)
@@ -71,7 +73,7 @@ function DeviceRow({
     return (
         <div
             className="group relative flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer mb-3 mx-4"
-            onClick={() => router.push(`/dashboard/tenants/management/${tenantId}/assets/${assetId}/devices/${device.id}`)}
+            onClick={() => router.push(`${basePath ?? `/dashboard/tenants/management/${tenantId}`}/assets/${assetId}/devices/${device.id}`)}
         >
             {/* Dark Placeholder Image */}
             <div className="w-[100px] h-[64px] bg-slate-900 rounded-lg flex items-center justify-center shrink-0 overflow-hidden relative">
@@ -131,9 +133,11 @@ interface AssetDetailPanelProps {
     asset: Asset | null
     tenantId: string
     onClose: () => void
+    /** Route prefix for the device link, e.g. `/tenants/management/${tenantId}`. Defaults to the super-admin path. */
+    basePath?: string
 }
 
-export function AssetDetailPanel({ asset, tenantId, onClose }: AssetDetailPanelProps) {
+export function AssetDetailPanel({ asset, tenantId, onClose, basePath }: AssetDetailPanelProps) {
     const [activeTab, setActiveTab] = useState<Tab>('Devices')
     const [devices, setDevices] = useState<Device[]>([])
     const [isLoadingDevices, setIsLoadingDevices] = useState(false)
@@ -308,6 +312,7 @@ export function AssetDetailPanel({ asset, tenantId, onClose }: AssetDetailPanelP
                                             assetId={asset.id}
                                             index={idx}
                                             onNavigate={onClose}
+                                            basePath={basePath}
                                         />
                                     ))
                                 )}

@@ -14,7 +14,7 @@ interface DeviceMetadata {
     ip_address?: string
 }
 
-export function DeviceConfigForm({ device, tenantId, assetId }: { device: Device, tenantId: string, assetId: string }) {
+export function DeviceConfigForm({ device, tenantId, assetId, basePath }: { device: Device, tenantId: string, assetId: string, basePath?: string }) {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
     const metadata = device.metadata as DeviceMetadata
@@ -46,7 +46,7 @@ export function DeviceConfigForm({ device, tenantId, assetId }: { device: Device
         <div className="flex flex-col flex-1 h-full w-full space-y-8 max-w-3xl">
             <div className="flex justify-end gap-3 mb-6">
                 <button
-                    onClick={() => router.push(`/dashboard/tenants/management/${tenantId}/assets/${assetId}`)}
+                    onClick={() => router.push(`${basePath ?? `/dashboard/tenants/management/${tenantId}`}/assets/${assetId}`)}
                     className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                 >
                     Cancel

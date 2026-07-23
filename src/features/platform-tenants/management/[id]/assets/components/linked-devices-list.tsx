@@ -14,7 +14,7 @@ export interface LinkedDevice {
 }
 
 // Ensure this component receives an array of devices
-export function LinkedDevicesList({ devices, tenantId, assetId }: { devices: LinkedDevice[], tenantId: string, assetId: string }) {
+export function LinkedDevicesList({ devices, tenantId, assetId, basePath }: { devices: LinkedDevice[], tenantId: string, assetId: string, basePath?: string }) {
     const router = useRouter()
 
     if (!devices || devices.length === 0) {
@@ -54,7 +54,7 @@ export function LinkedDevicesList({ devices, tenantId, assetId }: { devices: Lin
 
                     <div className="flex justify-end pt-2 border-t border-slate-100">
                         <button
-                            onClick={() => router.push(`/dashboard/tenants/management/${tenantId}/assets/${assetId}/devices/${device.id}`)}
+                            onClick={() => router.push(`${basePath ?? `/dashboard/tenants/management/${tenantId}`}/assets/${assetId}/devices/${device.id}`)}
                             className="text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
                         >
                             <Settings className="w-3.5 h-3.5" />

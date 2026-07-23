@@ -7,8 +7,10 @@ import { LinkedDevicesList } from "../components/linked-devices-list"
 
 export async function TenantsManagementidAssetsassetIdClient(props: {
     params: Promise<{ id: string, assetId: string }>
+    basePath?: string
 }) {
     const { id: tenantId, assetId } = await props.params
+    const basePath = props.basePath
 
     const asset = await getAsset(tenantId, assetId)
 
@@ -28,7 +30,7 @@ export async function TenantsManagementidAssetsassetIdClient(props: {
 
             <div className="pt-6 border-t border-slate-100/60 max-w-3xl">
                 <h2 className="text-xl font-bold text-slate-800 mb-8 pb-4">Linked Devices</h2>
-                <LinkedDevicesList devices={linkedDevices} tenantId={tenantId} assetId={assetId} />
+                <LinkedDevicesList devices={linkedDevices} tenantId={tenantId} assetId={assetId} basePath={basePath} />
             </div>
 
             <div className="pt-6 border-t border-slate-100/60 max-w-3xl">

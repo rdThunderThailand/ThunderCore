@@ -6,9 +6,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '../../utils/cn';
 import {
-    Settings,
-    Info,
-    LogOut,
     ChevronLeft,
     ChevronRight,
     Menu,
@@ -17,7 +14,7 @@ import {
 import logo from "../../../public/logo.png";
 import logoFull from "../../../public/logo-full.png";
 
-import { mockUser, useAuthStore } from '@/store/useAuthStore';
+import { mockUser, useAuthStore, type UserProfile } from '@/store/useAuthStore';
 import Image from 'next/image';
 import {
     superAdminNavigationItems,
@@ -25,7 +22,7 @@ import {
     getCompanyAdminNavigationItems,
     defaultNavigationItems,
     // getSuperAdminNavigationItemsAtApplicationsManagement,
-    // getCompanyAdminNavigationItemsAtApplicationsManagement
+    getCompanyAdminNavigationItemsAtApplicationsManagement
 } from './sidebar-nav';
 
 export interface NavItem {
@@ -54,21 +51,26 @@ export interface SidebarProps {
     onLogout?: () => void;
 
     customStyles?: SidebarStyleOverrides;
+
+    // Seed from the server-fetched user (see (dashboard)/layout.tsx) — avoids a render
+    // where the store hasn't been seeded by Header's effect yet and nav briefly falls
+    // back to mockUser's role.
+    user?: UserProfile;
 }
 
 export const SideBar = ({
     brandLogo = <Image src={logo} alt="brand-logo" className="w-full h-full object-contain" />,
     brandFullLogo = <Image src={logoFull} alt="brand-logo" className="w-full h-full object-contain" />,
     navigationItems,
-    onLogout,
-    customStyles = {}
+    customStyles = {},
+    user,
 }: SidebarProps) => {
     const pathname = usePathname();
     const storeUser = useAuthStore((s) => s.user);
-    const resolvedUser = storeUser ?? mockUser;
+    const resolvedUser = user ?? storeUser ?? mockUser;
     const managementId = pathname.match(/\/(?:tenants|applications)\/management\/([^/]+)/)?.[1] ?? '';
     const companyId = pathname.match(/^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i)?.[1] ?? '';
-
+    const appId = pathname.match(/^\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/applications\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i)?.[1] ?? '';
 
     const resolvedNavigationItems = navigationItems ?? (() => {
         if (resolvedUser?.role === "super_admin") {
@@ -78,6 +80,9 @@ export const SideBar = ({
             return superAdminNavigationItems;
         }
         if (resolvedUser?.role === "company_admin") {
+            if (appId) {
+                return getCompanyAdminNavigationItemsAtApplicationsManagement(companyId, appId);
+            }
             if (companyId) {
                 return getCompanyAdminNavigationItems(companyId);
             }
@@ -216,53 +221,6 @@ export const SideBar = ({
                     </nav>
                 </div>
 
-                {/* Footer Section: Settings, Information, Logout (fixed, single-language) */}
-                {/* <div className={cn(
-                    "flex flex-col gap-1.5 min-w-0 transition-all duration-300",
-                    isCollapsed ? "items-center" : ""
-                )}>
-
-                    <div className="mb-12">
-                        <button
-                            onClick={() => console.log("Settings clicked")}
-                            className={cn(
-                                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm w-full text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 shrink-0 cursor-pointer",
-                                isCollapsed ? "w-9 h-9 justify-center" : ""
-                            )}
-                            title="ตั้งค่า"
-                            aria-label="Settings"
-                        >
-                            <Settings className="w-5 h-5" />
-                            {!isCollapsed && <p>ตั้งค่า</p>}
-                        </button>
-
-                        <button
-                            onClick={() => console.log("Information clicked")}
-                            className={cn(
-                                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm w-full text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 shrink-0 cursor-pointer",
-                                isCollapsed ? "w-9 h-9 justify-center" : ""
-                            )}
-                            title="ข้อมูล"
-                            aria-label="Information"
-                        >
-                            <Info className="w-5 h-5" />
-                            {!isCollapsed && <p>ข้อมูล</p>}
-                        </button>
-
-                        <button
-                            onClick={onLogout}
-                            className={cn(
-                                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm w-full text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all duration-200 shrink-0 cursor-pointer",
-                                isCollapsed ? "w-9 h-9 justify-center" : ""
-                            )}
-                            title="ออกจากระบบ"
-                            aria-label="Logout"
-                        >
-                            <LogOut className="w-5 h-5" />
-                            {!isCollapsed && <p>ออกจากระบบ</p>}
-                        </button>
-                    </div>
-                </div> */}
             </aside>
         </>
     );

@@ -13,10 +13,10 @@ interface AppManagementHeaderProps {
         status: string
         url?: string
     }
-    onUpdateIdentity: () => void
+    // onUpdateIdentity: () => void
 }
 
-export function AppManagementHeader({ app, onUpdateIdentity }: AppManagementHeaderProps) {
+export function AppManagementHeader({ app }: AppManagementHeaderProps) {
     const [isLaunching, setIsLaunching] = useState(false)
 
     const handleLaunch = async () => {
@@ -66,12 +66,12 @@ export function AppManagementHeader({ app, onUpdateIdentity }: AppManagementHead
                     )}
                 </div>
             </div>
-            <button
+            {/* <button
                 onClick={onUpdateIdentity}
                 className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
             >
                 Update Identity
-            </button>
+            </button> */}
         </div>
     )
 }

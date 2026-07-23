@@ -9,7 +9,7 @@ import { getApplicationById, updateApplication } from '../../../actions'
 const cardClass = 'rounded-2xl border border-slate-200 bg-white p-6'
 const inputClass = 'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500'
 
-export function ApplicationManagementidPortalCustomizationClient({ appId }: { appId: string }) {
+export function ApplicationManagementidPortalCustomizationClient({ appId, basePath = '/applications' }: { appId: string; basePath?: string }) {
     const router = useRouter()
     const [appName, setAppName] = useState('')
     const [isLoading, setIsLoading] = useState(true)
@@ -26,7 +26,7 @@ export function ApplicationManagementidPortalCustomizationClient({ appId }: { ap
             try {
                 const data = await getApplicationById(appId)
                 if (!data) {
-                    router.push('/applications')
+                    router.push(basePath)
                     return
                 }
                 setAppName(data.name)
@@ -43,7 +43,7 @@ export function ApplicationManagementidPortalCustomizationClient({ appId }: { ap
             }
         }
         load()
-    }, [appId, router])
+    }, [appId, router, basePath])
 
     const handleSave = async () => {
         setIsSaving(true)

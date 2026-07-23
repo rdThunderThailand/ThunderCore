@@ -1,18 +1,20 @@
 'use client'
 
-import { ApplicationDetails } from '@/models/Application'
-import { Loader2, Plus, Trash2 } from 'lucide-react'
+import { ApplicationDetails } from '@/types/applications'
+import { AlertTriangle, Loader2, Plus, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import {
     addApplicationAuthorization,
+    deleteApplication,
     getApplicationById,
     getApplicationTenants,
     getTenantsForSelect,
     removeApplicationAuthorization,
     updateApplication,
 } from '../../actions'
-import { ApiKeySection } from './components/ApiKeySection'
+// import { ApiKeySection } from './components/ApiKeySection'
 
 type TenantAccess = { id: string; name: string; starts_at: string | null; ends_at: string | null }
 
@@ -21,12 +23,15 @@ const cardClass = 'rounded-2xl border border-slate-200 bg-white p-6'
 
 export function ApplicationManagementidSettingsClient({ appId }: { appId: string }) {
     // console.log(appId)
+    const router = useRouter()
     const [app, setApp] = useState<ApplicationDetails | null>(null)
     const [tenants, setTenants] = useState<TenantAccess[]>([])
     const [form, setForm] = useState({ name: '', url: '', logo_url: '' })
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
     const [isAddOpen, setIsAddOpen] = useState(false)
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     useEffect(() => {
         const load = async () => {
@@ -60,6 +65,18 @@ export function ApplicationManagementidSettingsClient({ appId }: { appId: string
             toast.error((err as Error).message)
         } finally {
             setIsSaving(false)
+        }
+    }
+
+    const handleDeleteApplication = async () => {
+        setIsDeleting(true)
+        try {
+            await deleteApplication(appId)
+            toast.success('Application deleted')
+            router.push('/applications')
+        } catch (err) {
+            toast.error((err as Error).message)
+            setIsDeleting(false)
         }
     }
 
@@ -112,7 +129,7 @@ export function ApplicationManagementidSettingsClient({ appId }: { appId: string
                 </button>
             </section>
 
-            <ApiKeySection appId={appId} />
+            {/* <ApiKeySection appId={appId} /> */}
 
             <section className={cardClass}>
                 <div className="mb-4 flex items-center justify-between">
@@ -151,6 +168,19 @@ export function ApplicationManagementidSettingsClient({ appId }: { appId: string
                 </table>
             </section>
 
+            <section className="rounded-2xl border border-red-200 bg-red-50/50 p-6">
+                <h2 className="mb-1 text-lg font-semibold text-red-700">Danger zone</h2>
+                <p className="mb-4 text-sm text-red-600/80">
+                    Deleting this application is permanent and cannot be undone. All tenant access to it will be removed.
+                </p>
+                <button
+                    onClick={() => setIsDeleteOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                >
+                    <Trash2 className="h-4 w-4" /> Delete application
+                </button>
+            </section>
+
             {isAddOpen && (
                 <AddTenantModal
                     appId={appId}
@@ -161,6 +191,39 @@ export function ApplicationManagementidSettingsClient({ appId }: { appId: string
                         setTenants(await getApplicationTenants(appId))
                     }}
                 />
+            )}
+
+            {isDeleteOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" onClick={() => !isDeleting && setIsDeleteOpen(false)}>
+                    <div className={`${cardClass} w-full max-w-md`} onClick={(e) => e.stopPropagation()}>
+                        <div className="mb-4 flex items-center gap-3">
+                            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
+                                <AlertTriangle className="h-5 w-5 text-red-600" />
+                            </div>
+                            <h3 className="text-lg font-semibold">Delete &quot;{app.name}&quot;?</h3>
+                        </div>
+                        <p className="text-sm text-slate-500">
+                            This will permanently delete the application and revoke all tenant access to it. This action cannot be undone.
+                        </p>
+                        <div className="mt-6 flex justify-end gap-2">
+                            <button
+                                onClick={() => setIsDeleteOpen(false)}
+                                disabled={isDeleting}
+                                className="rounded-lg px-4 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDeleteApplication}
+                                disabled={isDeleting}
+                                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                            >
+                                {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
+                                Delete application
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     )

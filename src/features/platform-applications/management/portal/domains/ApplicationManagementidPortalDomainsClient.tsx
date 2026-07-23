@@ -9,7 +9,7 @@ import { getApplicationById, updateApplication } from '../../../actions'
 const cardClass = 'rounded-2xl border border-slate-200 bg-white p-6'
 const inputClass = 'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500'
 
-export function ApplicationManagementidPortalDomainsClient({ appId }: { appId: string }) {
+export function ApplicationManagementidPortalDomainsClient({ appId, basePath = '/applications' }: { appId: string; basePath?: string }) {
     const router = useRouter()
     const [domain, setDomain] = useState('')
     const [isLoading, setIsLoading] = useState(true)
@@ -20,7 +20,7 @@ export function ApplicationManagementidPortalDomainsClient({ appId }: { appId: s
             try {
                 const data = await getApplicationById(appId)
                 if (!data) {
-                    router.push('/applications')
+                    router.push(basePath)
                     return
                 }
                 setDomain(data.custom_domain ?? '')
@@ -31,7 +31,7 @@ export function ApplicationManagementidPortalDomainsClient({ appId }: { appId: s
             }
         }
         load()
-    }, [appId, router])
+    }, [appId, router, basePath])
 
     const handleSave = async () => {
         // Normalize: strip protocol + trailing slash, lowercase.
