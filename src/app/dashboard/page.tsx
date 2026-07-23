@@ -119,7 +119,7 @@ export default async function DashboardPage() {
         </section>
 
         <section>
-          <Link href="/e316bbcf-2eb6-48ae-b5d9-74d631dec359/assets">
+          <Link href="/22222222-2222-2222-2222-222222222222/assets">
             <button
               type="submit"
               className="h-9 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
