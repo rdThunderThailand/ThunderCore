@@ -3,12 +3,13 @@ import { isDevBypass } from './dev'
 import { MOCK_MEMBERS } from './mock/members'
 import { isAxiosError, thunderCore } from './thunder-core'
 
-function mapRoleToBackend(role: string): string {
+export function mapRoleToBackend(role: string): string {
     switch (role) {
-        case 'Executive Viewer':
+        case '≈':
             return 'executive_viewer'
         case 'Department Admin':
-        case 'company_admin':
+            return 'department_admin'
+        case 'Company Admin':
             return 'company_admin'
         case 'Operator':
             return 'operator'
@@ -115,18 +116,14 @@ export async function updateMemberRole(
     tenantId: string,
     role: TenantRole
 ): Promise<void> {
-    if (isDevBypass()) {
-        return
-    }
+    if (isDevBypass()) return
+
     try {
         const backendRole = mapRoleToBackend(role)
-        const res = await thunderCore.patch<ThunderResponse<void>>(
-            `/tenants/${tenantId}/members/${memberId}`,
-            { role_code: backendRole, role: backendRole }
-        )
-        if (!res.data?.success && res.data?.success !== undefined) {
-            throw new Error('Failed to update member role')
-        }
+        await thunderCore.patch(`/tenants/${tenantId}/members/${memberId}/role`, {
+            role_code: backendRole,
+            role: backendRole
+        })
     } catch (error) {
         if (isAxiosError(error) && error.response?.data) {
             const data = error.response.data as { message?: string; error?: string }
@@ -138,8 +135,7 @@ export async function updateMemberRole(
 
 export async function getMemberDetails(memberId: string, tenantId: string): Promise<MemberDetails> {
     if (isDevBypass()) {
-        const member = MOCK_MEMBERS.find((m) => m.id === memberId && m.tenant_id === tenantId)
-        if (!member) throw new Error('getMemberDetails: member not found')
+        const member = MOCK_MEMBERS.find((m) => m.id === memberId || m.user_id === memberId) || MOCK_MEMBERS[0]
 
         const fullName = member.user?.full_name ?? ''
         const [firstName, ...rest] = fullName.split(' ')
@@ -153,16 +149,40 @@ export async function getMemberDetails(memberId: string, tenantId: string): Prom
             },
         }
     }
-    const res = await thunderCore.get<ThunderResponse<MemberDetails>>(`/tenants/${tenantId}/members/${memberId}`)
 
-    return res.data.data
-    // return noEndpoint('getMemberDetails')
+    const res = await thunderCore.get<ThunderResponse<any>>(`/tenants/${tenantId}/members/${memberId}`)
+    const data = res.data.data
+
+    const fullName = data?.user?.full_name || data?.profiles?.full_name || data?.full_name || ''
+    const [firstName, ...rest] = fullName.split(' ')
+    const rawRole = data?.role || data?.role_code || data?.role_type || ''
+
+    return {
+        ...data,
+        role: rawRole,
+        profiles: {
+            first_name: data?.profiles?.first_name || firstName || '',
+            last_name: data?.profiles?.last_name || rest.join(' ') || '',
+            email: data?.profiles?.email || data?.user?.email || data?.email || '',
+        },
+    }
 }
 
 type UpdateMemberProfileInput = { first_name: string; last_name: string }
 
-export async function updateMemberProfile(_userId: string, _data: UpdateMemberProfileInput): Promise<void> {
-    if (!isDevBypass()) noEndpoint('updateMemberProfile')
+export async function updateMemberProfile(userId: string, data: UpdateMemberProfileInput): Promise<void> {
+    if (isDevBypass()) return
 
-    // ponytail: no-op in bypass; client holds the updated profile in local state.
+    try {
+        await thunderCore.patch(`/users/${userId}`, {
+            first_name: data.first_name,
+            last_name: data.last_name
+        })
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.data) {
+            const resData = error.response.data as { message?: string; error?: string }
+            throw new Error(resData.message || resData.error || `Failed to update profile (${error.response.status})`)
+        }
+        throw error
+    }
 }

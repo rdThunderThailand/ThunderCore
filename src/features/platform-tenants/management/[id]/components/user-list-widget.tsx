@@ -8,6 +8,8 @@ interface UserListWidgetProps {
 }
 
 export function UserListWidget({ members }: UserListWidgetProps) {
+
+
     if (!members || members.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-[300px] text-slate-500 text-sm">
@@ -15,7 +17,7 @@ export function UserListWidget({ members }: UserListWidgetProps) {
             </div>
         )
     }
-
+    console.log('UserListWidget members:', members)
     return (
         <div className="flex flex-col h-[300px] overflow-y-auto pr-2 custom-scrollbar space-y-4">
             {members.map((member) => {
@@ -38,16 +40,26 @@ export function UserListWidget({ members }: UserListWidgetProps) {
                                         : member.role.charAt(0)}
                                 </div>
                             )}
+
+
                             <div>
-                                <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate w-32">
-                                    {member.profile?.first_name
-                                        ? `${member.profile.first_name} ${member.profile.last_name || ''}`
-                                        : 'Unknown User'}
-                                </p>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate max-w-[110px]">
+                                        {member.profile?.first_name
+                                            ? `${member.profile.first_name} ${member.profile.last_name || ''}`
+                                            : 'Unknown User'}
+                                    </p>
+                                    {member.role && (
+                                        <span className="px-1.5 py-0.5 rounded border border-indigo-200 bg-indigo-50 text-indigo-700 text-[9px] font-bold uppercase tracking-wider">
+                                            {member.role}
+                                        </span>
+                                    )}
+                                </div>
                                 <p className="text-[10px] font-bold text-slate-400">
                                     {member.created_at ? format(new Date(member.created_at), 'dd MMMM yyyy') : 'Unknown Date'}
                                 </p>
                             </div>
+
                         </div>
                         <span className={`text-xs font-bold ${isOnline ? 'text-emerald-500' : 'text-red-500'}`}>
                             {isOnline ? 'Online' : 'Offline'}

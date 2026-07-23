@@ -1,4 +1,4 @@
-export type TenantRole = 'Executive Viewer' | 'Department Admin' | 'Operator' | 'Auditor';
+export type TenantRole = 'Executive Viewer' | 'Department Admin' | 'Company Admin' | 'Operator' | 'Auditor';
 export type MemberRole = TenantRole | 'Admin' | 'Member' | 'Owner';
 export type MemberStatus = 'Active' | 'Inactive' | 'Invited';
 

@@ -10,10 +10,38 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Application } from '@/types/applications'
-import { MemberDetails } from '@/types/members'
+import { MemberDetails, TenantRole } from '@/types/members'
+import { useMemberStore } from '@/store/useMemberStore'
 import {
-    assignApplicationToMember, getMemberApplications, getMemberDetails, getTenantApplications, removeApplicationFromMember, updateMemberProfile
+    assignApplicationToMember, getMemberApplications, getMemberDetails, getTenantApplications, removeApplicationFromMember, updateMemberProfile, updateMemberRole
 } from '../../actions'
+
+const ROLE_MAP: Record<string, string> = {
+    'owner': 'Owner',
+    'admin': 'Admin',
+    'super_admin': 'Super Admin',
+    'department_admin': 'Department Admin',
+    'company_admin': 'Company Admin',
+    'executive_viewer': 'Executive Viewer',
+    'operator': 'Operator',
+    'viewer_auditor': 'Auditor',
+    'auditor': 'Auditor',
+}
+
+const formatRoleFromMemberDetails = (rawRole?: string): TenantRole => {
+    if (!rawRole) return 'Operator'
+    const key = rawRole.toLowerCase().trim()
+    const mapped = ROLE_MAP[key]
+    if (mapped) {
+        return mapped as TenantRole
+    }
+    if (rawRole === 'Executive Viewer' || rawRole === 'Department Admin' || rawRole === 'Company Admin' || rawRole === 'Operator' || rawRole === 'Auditor') {
+        return rawRole as TenantRole
+    }
+    return 'Operator'
+}
+
+
 
 export function TenantsManagementidMembersmemberIdSettingsClient() {
     const params = useParams()
@@ -21,6 +49,10 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
     const router = useRouter()
     const tenantId = params.id as string
     const memberId = params.memberId as string
+
+    const { members } = useMemberStore()
+    const storeMember = members.find((m) => m.id === memberId || m.user_id === memberId)
+    const initialRole = storeMember ? formatRoleFromMemberDetails(storeMember.role) : 'Operator'
 
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
@@ -38,6 +70,7 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
     const [firstName, setFirstName] = useState('')
     const [lastName, setLastName] = useState('')
     const [email, setEmail] = useState('')
+    const [role, setRole] = useState<TenantRole>(initialRole)
     const [successMsg, setSuccessMsg] = useState<string | null>(null)
     const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
@@ -46,8 +79,8 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
             setIsLoading(true)
             const [memberData, appsData, orgAppsData] = await Promise.all([
                 getMemberDetails(memberId, tenantId),
-                getMemberApplications(tenantId, memberId),
-                getTenantApplications(tenantId)
+                getMemberApplications(tenantId, memberId).catch(() => []),
+                getTenantApplications(tenantId).catch(() => [])
             ])
 
             setMember(memberData)
@@ -55,9 +88,10 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
             setOrgApps(orgAppsData)
 
             // Init form
-            setFirstName(memberData.profiles.first_name)
-            setLastName(memberData.profiles.last_name)
-            setEmail(memberData.profiles.email)
+            setFirstName(memberData.profiles?.first_name ?? '')
+            setLastName(memberData.profiles?.last_name ?? '')
+            setEmail(memberData.profiles?.email ?? '')
+            setRole(formatRoleFromMemberDetails(memberData.role))
 
         } catch (err) {
             console.error('Error loading member settings:', err)
@@ -72,24 +106,62 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [memberId, tenantId])
 
+    const handleRoleChange = async (newRole: TenantRole) => {
+        setRole(newRole)
+        try {
+            setErrorMsg(null)
+            await updateMemberRole(memberId, tenantId, newRole)
+            setSuccessMsg('Member role updated successfully')
+            setTimeout(() => setSuccessMsg(null), 3000)
+        } catch (err) {
+            console.error('Error updating role:', err)
+            const error = err as Error
+            setErrorMsg(error.message || 'Failed to update member role')
+        }
+    }
+
     const handleSaveProfile = async () => {
-        if (!member?.user_id) return
+        const targetUserId = member?.user_id || member?.user?.id || member?.id
+        if (!targetUserId) {
+            setErrorMsg('User ID not found')
+            return
+        }
 
         try {
             setIsSaving(true)
             setErrorMsg(null)
             setSuccessMsg(null)
 
-            await updateMemberProfile(member.user_id, {
-                first_name: firstName,
-                last_name: lastName
-            })
+            const results = await Promise.allSettled([
+                updateMemberProfile(targetUserId, {
+                    first_name: firstName,
+                    last_name: lastName
+                }),
+                updateMemberRole(memberId, tenantId, role)
+            ])
 
-            setSuccessMsg('Profile updated successfully')
+            const profileResult = results[0]
+            const roleResult = results[1]
+
+            if (profileResult.status === 'rejected' && roleResult.status === 'rejected') {
+                const profileErr = (profileResult as PromiseRejectedResult).reason
+                const roleErr = (roleResult as PromiseRejectedResult).reason
+                throw new Error(profileErr?.message || roleErr?.message || 'Failed to update profile')
+            }
+
+            if (profileResult.status === 'rejected') {
+                console.warn('Profile update failed:', (profileResult as PromiseRejectedResult).reason)
+            }
+            if (roleResult.status === 'rejected') {
+                console.warn('Role update failed:', (roleResult as PromiseRejectedResult).reason)
+            }
+
+            setSuccessMsg('Saved successfully!')
             setTimeout(() => setSuccessMsg(null), 3000)
         } catch (err) {
             console.error('Error updating profile:', err)
-            setErrorMsg('Failed to update profile')
+            const error = err as Error
+            setErrorMsg(error.message || 'Failed to update profile')
         } finally {
             setIsSaving(false)
         }
@@ -151,13 +223,13 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
     }
 
     return (
-        <div className="p-8 space-y-8 min-h-screen font-sans text-slate-900">
+        <div className="p-8 space-y-8 min-h-screen font-sans text-slate-900 bg-[#F8F9FC]">
             {/* Note: Header is handled in Navbar based on route */}
 
             {/* Profile Settings Card */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="p-8 border-b border-slate-50">
-                    <h2 className="text-xl font-bold text-slate-900">Profile Settings</h2>
+                    <h2 className="text-xl font-bold text-slate-900">Member Profile Settings</h2>
                     <p className="text-slate-500 mt-1">Update your profile details and information.</p>
                 </div>
 
@@ -197,14 +269,33 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700">Email Address</label>
-                            <input
-                                type="email"
-                                value={email}
-                                readOnly // Read-only as per typical requirements unless we add email change flow
-                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 outline-none cursor-not-allowed text-sm font-medium"
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-700">Email Address</label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    readOnly
+                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 outline-none cursor-not-allowed text-sm font-medium"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-700">Role</label>
+                                <div className="relative">
+                                    <select
+                                        value={role}
+                                        onChange={(e) => handleRoleChange(e.target.value as TenantRole)}
+                                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all text-sm font-medium appearance-none cursor-pointer pr-10 text-slate-800"
+                                    >
+                                        <option value="Executive Viewer">Executive Viewer</option>
+                                        <option value="Department Admin">Department Admin</option>
+                                        <option value="Company Admin">Company Admin</option>
+                                        <option value="Operator">Operator</option>
+                                        <option value="Auditor">Auditor</option>
+                                    </select>
+                                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                </div>
+                            </div>
                         </div>
 
                         <div className="pt-4 flex justify-end">

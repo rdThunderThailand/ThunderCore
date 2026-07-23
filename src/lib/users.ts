@@ -6,7 +6,7 @@ import { thunderCore } from './thunder-core'
 // Living endpoint catalog — each signature is the future REST contract.
 export async function getUsers(): Promise<Profile[]> {
     if (isDevBypass()) return MOCK_USERS as unknown as Profile[]
-    
+
     // ponytail: Supabase shim removed — uses GET /users
     const res = await thunderCore.get<{ success: boolean; data: Profile[] }>('/users')
     return res.data.data

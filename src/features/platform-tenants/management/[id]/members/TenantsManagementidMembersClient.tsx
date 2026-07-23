@@ -4,8 +4,7 @@ import { useTranslation } from '@/i18n/context'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Membership, TenantRole } from '@/types/members'
 import {
-    AlertCircle,
-    Crown, Loader2, Plus, Search, Shield, Users, X
+    AlertCircle, Crown, Loader2, Plus, Search, Shield, Users, X
 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, usePathname } from 'next/navigation'
@@ -13,6 +12,19 @@ import { useEffect, useState } from 'react'
 import { DeleteConfirmModal } from './components/delete-confirm-modal'
 import { InviteModal } from './components/invite-modal'
 import { useMemberStore } from '@/store/useMemberStore'
+
+const ROLE_MAP: Record<string, string> = {
+    'owner': 'Owner',
+    'admin': 'Admin',
+    'super_admin': 'Super Admin',
+    'department_admin': 'Department Admin',
+    'company_admin': 'Company Admin',
+    'executive_viewer': 'Executive Viewer',
+    'operator': 'Operator',
+    'viewer_auditor': 'Auditor',
+    'auditor': 'Auditor',
+}
+//ใส่ดักไว้ก่อนให้มันผ่าน เดียวมาแก้ เดียวแก้ตาม role ใน database
 
 export function TenantsManagementidMembersClient() {
     const params = useParams()
@@ -88,21 +100,19 @@ export function TenantsManagementidMembersClient() {
             setError(error.message)
         }
     }
-
     const filteredMembers = members
-
     const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage))
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const getRoleBadge = (role: string) => {
-        switch (role) {
-            case 'owner':
-                return <span className="px-3 py-1 bg-violet-100 text-violet-700 text-[10px] font-black uppercase rounded-full flex items-center gap-1"><Crown className="w-3 h-3" /> Owner</span>
-            case 'admin':
-                return <span className="px-3 py-1 bg-blue-100 text-blue-700 text-[10px] font-black uppercase rounded-full flex items-center gap-1"><Shield className="w-3 h-3" /> Admin</span>
-            default:
-                return <span className="px-3 py-1 bg-slate-100 text-slate-600 text-[10px] font-black uppercase rounded-full">Member</span>
-        }
+    const getMemberRole = (member: Membership) => {
+        const rawRole = (
+            member.role ||
+            (member as any).role_code ||
+            (member as any).role_type ||
+            (member as any).role_name ||
+            ''
+        ).toLowerCase().trim()
+
+        return ROLE_MAP[rawRole] || (rawRole ? rawRole.toUpperCase() : 'Member')
     }
 
     return (
@@ -214,11 +224,8 @@ export function TenantsManagementidMembersClient() {
                                             <span className="text-sm text-slate-600">{member.user?.email || 'No email'}</span>
                                         </td>
                                         <td className="px-4 py-4 text-center">
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${member.role === 'admin' || member.role === 'owner'
-                                                ? 'bg-amber-100 text-amber-700'
-                                                : 'bg-slate-100 text-slate-600'
-                                                }`}>
-                                                {member.role}
+                                            <span className="text-sm font-medium text-slate-700">
+                                                {getMemberRole(member)}
                                             </span>
                                         </td>
                                         <td className="px-4 py-4">
