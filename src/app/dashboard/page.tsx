@@ -8,6 +8,7 @@ import {
   type CurrentUser,
   type Membership,
 } from '@/lib/thunder-core'
+import Link from 'next/link'
 
 export default async function DashboardPage() {
   let user: CurrentUser
@@ -105,6 +106,29 @@ export default async function DashboardPage() {
             </ul>
           )}
         </section>
+
+        <section>
+          <Link href="/tenants">
+            <button
+              type="submit"
+              className="h-9 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+            >
+              Go to tenants page (for super_admin only)
+            </button>
+          </Link>
+        </section>
+
+        <section>
+          <Link href="/e316bbcf-2eb6-48ae-b5d9-74d631dec359/assets">
+            <button
+              type="submit"
+              className="h-9 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+            >
+              Go to assets page (for company_admin only)
+            </button>
+          </Link>
+        </section>
+
       </div>
     </div>
   )

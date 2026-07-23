@@ -7,7 +7,7 @@ import { Bell, ChevronDown, Settings, Info, LogOut, Languages, ChevronLeft } fro
 import { useTranslation } from "@/i18n/context";
 import { cn } from "../../utils/cn";
 import { mockUser, useAuthStore, type UserProfile } from '@/store/useAuthStore';
-import { superAdminNavigationItems } from "./sidebar-nav";
+import { superAdminNavigationItems, getCompanyAdminNavigationItems } from "./sidebar-nav";
 
 // Hides the header on the assets list route — that page renders its own header. Lived in
 // (dashboard)/layout.tsx before; moved here since this is the only place still needing
@@ -37,6 +37,33 @@ function getPageTitle(pathname: string, sectionLabel: string): string {
 interface Crumb {
     label: string;
     href: string;
+}
+
+// Company-admin routes are tenant-rooted (/<tenantId>/<section>/...) instead of living under
+// /tenants/management/ — the counterpart to getManagementBreadcrumbs below, minus the leading
+// list crumb (company_admin has no /tenants list to link back to).
+const COMPANY_ADMIN_SECTION_LABELS: Record<string, string> = {
+    dashboard: "Dashboard",
+    assets: "Assets",
+    applications: "Applications",
+    members: "Members",
+    settings: "Settings",
+};
+
+function getCompanyAdminBreadcrumbs(pathname: string): Crumb[] {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const segments = pathname.split("/").filter(Boolean);
+    const [tenantId, section, ...rest] = segments;
+    if (!uuidRegex.test(tenantId ?? "") || !section || !(section in COMPANY_ADMIN_SECTION_LABELS)) return [];
+
+    const base = `/${tenantId}`;
+    const crumbs: Crumb[] = [{ label: COMPANY_ADMIN_SECTION_LABELS[section], href: `${base}/${section}` }];
+
+    if (section === "members" && rest[0] && rest[1] === "settings") {
+        crumbs.push({ label: "Member Settings", href: pathname });
+    }
+
+    return crumbs;
 }
 
 // Full breadcrumb trail for the tenants/management/[id]/... and applications/management/[id]/...
@@ -179,7 +206,15 @@ export const Header = ({
 
     const isSuperAdmin = defaultUser.role === "super_admin";
 
-    const allNavItems = superAdminNavigationItems;
+    // Company-admin nav hrefs are tenant-rooted (/<tenantId>/...) — same UUID-shape check as
+    // getCompanyAdminBreadcrumbs below, so topLevelItem/SectionIcon resolve for those paths too
+    // instead of only ever matching superAdminNavigationItems.
+    const companyTenantId = pathname.match(/^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i)?.[1] ?? "";
+    const allNavItems = isSuperAdmin
+        ? superAdminNavigationItems
+        : companyTenantId
+            ? getCompanyAdminNavigationItems(companyTenantId)
+            : superAdminNavigationItems;
 
     const topLevelItem = allNavItems.find((item) =>
         pathname === item.href || pathname.startsWith(item.href + "/")
@@ -192,8 +227,13 @@ export const Header = ({
 
     const isManagementPath = /^\/(tenants|applications)\/management\//.test(pathname);
     const managementTrail = getManagementBreadcrumbs(pathname, isSuperAdmin);
+    const companyAdminTrail = getCompanyAdminBreadcrumbs(pathname);
     const userSettingsTrail = getUserSettingsBreadcrumbs(pathname, searchParams.get("user"), isSuperAdmin);
-    const breadcrumbTrail = managementTrail.length > 0 ? managementTrail : userSettingsTrail;
+    const breadcrumbTrail = managementTrail.length > 0
+        ? managementTrail
+        : companyAdminTrail.length > 0
+            ? companyAdminTrail
+            : userSettingsTrail;
     const hasBreadcrumbTrail = breadcrumbTrail.length > 0;
 
     const derivedPageTitle =
@@ -212,6 +252,9 @@ export const Header = ({
                                 return (
                                     <span key={crumb.href} className="flex items-center gap-2">
                                         {index > 0 && <span className="text-slate-300">/</span>}
+                                        {index === 0 && !isSuperAdmin && SectionIcon && (
+                                            <SectionIcon className="w-3.5 h-3.5 shrink-0 text-slate-500" />
+                                        )}
                                         {isLast ? (
                                             <span className="text-slate-500 font-medium">{crumb.label}</span>
                                         ) : (

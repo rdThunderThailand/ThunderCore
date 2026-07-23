@@ -25,7 +25,7 @@ import {
     getCompanyAdminNavigationItems,
     defaultNavigationItems,
     // getSuperAdminNavigationItemsAtApplicationsManagement,
-    getCompanyAdminNavigationItemsAtApplicationsManagement
+    // getCompanyAdminNavigationItemsAtApplicationsManagement
 } from './sidebar-nav';
 
 export interface NavItem {
@@ -67,22 +67,19 @@ export const SideBar = ({
     const storeUser = useAuthStore((s) => s.user);
     const resolvedUser = storeUser ?? mockUser;
     const managementId = pathname.match(/\/(?:tenants|applications)\/management\/([^/]+)/)?.[1] ?? '';
+    const companyId = pathname.match(/^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i)?.[1] ?? '';
+
+
     const resolvedNavigationItems = navigationItems ?? (() => {
         if (resolvedUser?.role === "super_admin") {
             if (pathname.includes("/tenants/management/")) {
                 return getSuperAdminNavigationItemsAtManagement(managementId);
             }
-            // if (pathname.includes("/applications/")) {
-            //     return getSuperAdminNavigationItemsAtApplicationsManagement(managementId);
-            // }
             return superAdminNavigationItems;
         }
         if (resolvedUser?.role === "company_admin") {
-            if (pathname.includes("/tenants/management/")) {
-                return getCompanyAdminNavigationItems(managementId);
-            }
-            if (pathname.includes("/applications/")) {
-                return getCompanyAdminNavigationItemsAtApplicationsManagement(managementId);
+            if (companyId) {
+                return getCompanyAdminNavigationItems(companyId);
             }
         }
         return defaultNavigationItems;
