@@ -127,7 +127,8 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
         setIsRoleUpdating(true)
         try {
             await updateUserRole(user.id, nextRole)
-            setUsers(users.map(u => u.id === user.id ? { ...u, role: nextRole as Profile['role'] } : u))
+            const resolved = nextRole === 'guest' ? null : nextRole
+            setUsers(users.map(u => u.id === user.id ? { ...u, role_code: resolved, role_type: resolved } : u))
             toast.success('User role updated successfully.')
             setRoleChangeTarget(null)
         } catch (error) {
@@ -228,7 +229,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                                         const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.email || 'Anonymous User'
                                         const isSelected = selectedUserIds.includes(user.id)
                                         const firstLetter = user.email ? user.email.charAt(0).toUpperCase() : ''
-                                        const roleStr = (user.role as string) || ''
+                                        const roleStr = user.role_type || ''
 
                                         return (
                                             <tr
@@ -343,7 +344,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                 onConfirm={handleRoleChangeConfirm}
                 isLoading={isRoleUpdating}
                 userName={roleChangeTarget ? ([roleChangeTarget.user.first_name, roleChangeTarget.user.last_name].filter(Boolean).join(' ') || roleChangeTarget.user.email) : undefined}
-                fromRoleLabel={roleChangeTarget ? getRoleDisplay(roleChangeTarget.user.role as string).label : undefined}
+                fromRoleLabel={roleChangeTarget ? getRoleDisplay(roleChangeTarget.user.role_type || '').label : undefined}
                 toRoleLabel={roleChangeTarget ? getRoleDisplay(roleChangeTarget.nextRole).label : undefined}
             />
         </div>

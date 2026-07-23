@@ -25,7 +25,7 @@ export default async function RedirectPage() {
         throw error
     }
 
-    if (user.is_super_admin) redirect('/tenants')
+    if (user.role === 'super_admin') redirect('/tenants')
 
     if (user.role === 'company_admin') {
         const tenantId =

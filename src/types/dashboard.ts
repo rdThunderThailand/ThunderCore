@@ -26,8 +26,10 @@ export interface Profile {
     email: string
     first_name: string
     last_name: string
-    // ponytail: not a per-tenant UserRole — GET /users is global and returns 'super_admin' or the literal 'User'
-    role: string
+    // ponytail: not a per-tenant UserRole — GET /users is global; role is resolved across every
+    // membership the user holds, so role_code/role_type are null when they hold no role anywhere.
+    role_code: string | null
+    role_type: string | null
     can_invite: boolean
     can_create_app: boolean
     can_view_logs: boolean

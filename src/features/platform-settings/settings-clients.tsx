@@ -23,7 +23,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     const [firstName, setFirstName] = useState(user.first_name || '')
     const [lastName, setLastName] = useState(user.last_name || '')
     const [email, setEmail] = useState(user.email || '')
-    const [role, setRole] = useState<string>(getNormalizedRole((user.role as string) || 'User'))
+    const [role, setRole] = useState<string>(getNormalizedRole(user.role_type || 'User'))
     const [mfaEnabled, _setMfaEnabled] = useState(false)
     const [isActive, _setIsActive] = useState(user.is_active)
     const [emailNotifications, setEmailNotifications] = useState(true)

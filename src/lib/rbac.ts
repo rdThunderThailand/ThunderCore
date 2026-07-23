@@ -62,7 +62,7 @@ export async function requireTenantAccess(tenantId: string): Promise<void> {
     if (!session) redirect('/login')
     // Either signal is enough: the column is platform-level, the tier may come from a
     // super_admin membership. Requiring both would deny a legitimate super admin.
-    if (session.isSuperAdmin || session.role === 'super_admin') return
+    if (session.role === 'super_admin') return
     if (session.role !== 'company_admin') redirect('/no-access')
 
     const memberships = await getMyMemberships()
