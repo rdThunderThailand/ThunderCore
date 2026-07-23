@@ -8,6 +8,7 @@ import { useTranslation } from "@/i18n/context";
 import { cn } from "../../utils/cn";
 import { mockUser, useAuthStore, type UserProfile } from '@/store/useAuthStore';
 import { superAdminNavigationItems, getCompanyAdminNavigationItems } from "./sidebar-nav";
+import { logout } from "@/features/auth/actions";
 
 function getPageTitle(pathname: string, sectionLabel: string): string {
     const segments = pathname.split("/").filter(Boolean);
@@ -333,7 +334,7 @@ export const Header = ({
                             </button>
 
                             <button
-                                onClick={() => console.log("Logout clicked")}
+                                onClick={logout}
                                 className="flex items-center gap-3 px-3 py-2 w-full text-sm text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all duration-200 cursor-pointer"
                             >
                                 <LogOut className="w-4 h-4" />
