@@ -32,24 +32,21 @@ export async function deleteApplication(applicationId: string, tenantId: string)
     return tenantApplications.deleteApplication(applicationId, tenantId)
 }
 
-export async function getMemberAppAccess(tenantId: string, applicationId: string) {
-    return tenantApplications.getMemberAppAccess(tenantId, applicationId)
-}
-
-export async function grantMemberAppAccess(
-    tenantId: string,
-    applicationId: string,
-    memberId: string
-) {
-    return tenantApplications.grantMemberAppAccess(tenantId, applicationId, memberId)
-}
-
 export async function revokeMemberAppAccess(
     tenantId: string,
     applicationId: string,
-    memberId: string
+    accessId: string
 ) {
-    return tenantApplications.revokeMemberAppAccess(tenantId, applicationId, memberId)
+    return tenantApplications.revokeMemberAppAccess(tenantId, applicationId, accessId)
+}
+
+export async function inviteMember(
+    tenantId: string,
+    applicationId: string,
+    memberId: string,
+    role: 'Admin' | 'Developer' | 'Viewer'
+) {
+    return tenantApplications.inviteMember(tenantId, applicationId, memberId, role)
 }
 
 export async function launchApplication(

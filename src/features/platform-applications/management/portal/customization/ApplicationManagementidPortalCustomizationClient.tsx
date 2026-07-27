@@ -1,18 +1,17 @@
 'use client'
 
+import { useApplicationStore } from '@/store/useApplicationStore'
 import { ChevronLeft, Globe, Image as ImageIcon, Loader2, Palette, Save } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { getApplicationById, updateApplication } from '../../../actions'
 
 const cardClass = 'rounded-2xl border border-slate-200 bg-white p-6'
 const inputClass = 'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500'
 
 export function ApplicationManagementidPortalCustomizationClient({ appId, basePath = '/applications' }: { appId: string; basePath?: string }) {
     const router = useRouter()
-    const [appName, setAppName] = useState('')
-    const [isLoading, setIsLoading] = useState(true)
+    const { currentApp, isAppLoading: isLoading, fetchApplicationById, updateApplicationDetail } = useApplicationStore()
     const [isSaving, setIsSaving] = useState(false)
     const [form, setForm] = useState({
         branding_color: '#0F53FF',
@@ -20,16 +19,16 @@ export function ApplicationManagementidPortalCustomizationClient({ appId, basePa
         portal_title: '',
         portal_description: '',
     })
+    const appName = currentApp?.name ?? ''
 
     useEffect(() => {
         const load = async () => {
             try {
-                const data = await getApplicationById(appId)
+                const data = await fetchApplicationById(appId)
                 if (!data) {
                     router.push(basePath)
                     return
                 }
-                setAppName(data.name)
                 setForm({
                     branding_color: data.branding_color || '#0F53FF',
                     logo_url: data.logo_url || '',
@@ -38,17 +37,15 @@ export function ApplicationManagementidPortalCustomizationClient({ appId, basePa
                 })
             } catch {
                 toast.error('Failed to load application')
-            } finally {
-                setIsLoading(false)
             }
         }
         load()
-    }, [appId, router, basePath])
+    }, [appId, router, basePath, fetchApplicationById])
 
     const handleSave = async () => {
         setIsSaving(true)
         try {
-            await updateApplication(appId, { ...form })
+            await updateApplicationDetail(appId, { ...form })
             toast.success('Portal settings updated')
         } catch (err) {
             toast.error((err as Error).message)

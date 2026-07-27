@@ -1,17 +1,17 @@
 'use client'
 
+import { useApplicationStore } from '@/store/useApplicationStore'
 import { KeyRound, Copy, RefreshCw, Eye, EyeOff, CheckCheck, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
-import { getApiKey, regenerateApiKey } from '../../../actions'
 
 interface ApiKeySectionProps {
     appId: string
 }
 
 export function ApiKeySection({ appId }: ApiKeySectionProps) {
-    const [apiKey, setApiKey] = useState<string | null>(null)
-    const [generatedAt, setGeneratedAt] = useState<string | null>(null)
-    const [isLoading, setIsLoading] = useState(false)
+    const { apiKey: apiKeyRecord, isApiKeyLoading: isLoading, fetchApiKey, regenerateApplicationApiKey } = useApplicationStore()
+    const apiKey = apiKeyRecord?.api_key ?? null
+    const generatedAt = apiKeyRecord?.api_key_generated_at ?? null
     const [isVisible, setIsVisible] = useState(false)
     const [isCopied, setIsCopied] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -23,18 +23,13 @@ export function ApiKeySection({ appId }: ApiKeySectionProps) {
             setIsVisible(!isVisible)
             return
         }
-        setIsLoading(true)
         setError(null)
         try {
-            const result = await getApiKey(appId)
-            setApiKey(result.api_key)
-            setGeneratedAt(result.api_key_generated_at)
+            await fetchApiKey(appId)
             setIsKeyLoaded(true)
             setIsVisible(true)
         } catch (e) {
             setError((e as Error).message)
-        } finally {
-            setIsLoading(false)
         }
     }
 
@@ -43,19 +38,14 @@ export function ApiKeySection({ appId }: ApiKeySectionProps) {
             setConfirmRegenerate(true)
             return
         }
-        setIsLoading(true)
         setError(null)
         setConfirmRegenerate(false)
         try {
-            const result = await regenerateApiKey(appId)
-            setApiKey(result.api_key)
-            setGeneratedAt(result.api_key_generated_at)
+            await regenerateApplicationApiKey(appId)
             setIsKeyLoaded(true)
             setIsVisible(true)
         } catch (e) {
             setError((e as Error).message)
-        } finally {
-            setIsLoading(false)
         }
     }
 

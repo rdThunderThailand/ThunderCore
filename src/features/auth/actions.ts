@@ -57,7 +57,7 @@ export async function login(prevState: LoginState, formData: FormData): Promise<
     ...(isRemember ? { maxAge: 60 * 60 * 24 * 30 } : {}),
   })
 
-  redirect('/dashboard')
+  redirect('/redirect')
 }
 
 export async function logout() {

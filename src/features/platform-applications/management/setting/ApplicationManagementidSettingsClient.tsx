@@ -1,19 +1,10 @@
 'use client'
 
-import { ApplicationDetails } from '@/types/applications'
+import { useApplicationStore } from '@/store/useApplicationStore'
 import { AlertTriangle, Loader2, Plus, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import {
-    addApplicationAuthorization,
-    deleteApplication,
-    getApplicationById,
-    getApplicationTenants,
-    getTenantsForSelect,
-    removeApplicationAuthorization,
-    updateApplication,
-} from '../../actions'
 // import { ApiKeySection } from './components/ApiKeySection'
 
 type TenantAccess = { id: string; name: string; starts_at: string | null; ends_at: string | null }
@@ -22,12 +13,17 @@ const inputClass = 'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm 
 const cardClass = 'rounded-2xl border border-slate-200 bg-white p-6'
 
 export function ApplicationManagementidSettingsClient({ appId }: { appId: string }) {
-    // console.log(appId)
     const router = useRouter()
-    const [app, setApp] = useState<ApplicationDetails | null>(null)
-    const [tenants, setTenants] = useState<TenantAccess[]>([])
+    const {
+        currentApp: app, applicationTenants, isAppLoading, isTenantsLoading,
+        fetchApplicationById, fetchApplicationTenants, updateApplicationDetail,
+        deleteApplicationById, removeTenantAuthorization,
+    } = useApplicationStore()
+    const isLoading = isAppLoading || isTenantsLoading
+    const tenants: TenantAccess[] = applicationTenants.map((t) => ({
+        id: t.tenant_id, name: t.tenant_name ?? t.tenant_id, starts_at: t.started_at, ends_at: t.ended_at,
+    }))
     const [form, setForm] = useState({ name: '', url: '', logo_url: '' })
-    const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
     const [isAddOpen, setIsAddOpen] = useState(false)
     const [isDeleteOpen, setIsDeleteOpen] = useState(false)
@@ -35,31 +31,24 @@ export function ApplicationManagementidSettingsClient({ appId }: { appId: string
 
     useEffect(() => {
         const load = async () => {
-            setIsLoading(true)
             try {
-                const [appData, access] = await Promise.all([
-                    getApplicationById(appId),
-                    getApplicationTenants(appId),
-                ])
+                const appData = await fetchApplicationById(appId)
+                await fetchApplicationTenants(appId)
                 if (appData) {
-                    setApp(appData)
                     setForm({ name: appData.name, url: appData.url ?? '', logo_url: appData.logo_url ?? '' })
                 }
-                setTenants(access)
             } catch {
                 toast.error('Failed to load application settings')
-            } finally {
-                setIsLoading(false)
             }
         }
         load()
-    }, [appId])
+    }, [appId, fetchApplicationById, fetchApplicationTenants])
 
     const handleSave = async () => {
         if (!form.name.trim()) return toast.error('Application name is required')
         setIsSaving(true)
         try {
-            await updateApplication(appId, { name: form.name.trim(), url: form.url, logo_url: form.logo_url || null })
+            await updateApplicationDetail(appId, { name: form.name.trim(), url: form.url, logo_url: form.logo_url || null })
             toast.success('Settings saved')
         } catch (err) {
             toast.error((err as Error).message)
@@ -71,7 +60,7 @@ export function ApplicationManagementidSettingsClient({ appId }: { appId: string
     const handleDeleteApplication = async () => {
         setIsDeleting(true)
         try {
-            await deleteApplication(appId)
+            await deleteApplicationById(appId)
             toast.success('Application deleted')
             router.push('/applications')
         } catch (err) {
@@ -83,8 +72,7 @@ export function ApplicationManagementidSettingsClient({ appId }: { appId: string
     const handleRemove = async (tenant: TenantAccess) => {
         if (!window.confirm(`Remove ${tenant.name}'s access to this application?`)) return
         try {
-            await removeApplicationAuthorization(appId, tenant.id)
-            setTenants(await getApplicationTenants(appId))
+            await removeTenantAuthorization(appId, tenant.id)
             toast.success('Access removed')
         } catch (err) {
             toast.error((err as Error).message)
@@ -105,28 +93,43 @@ export function ApplicationManagementidSettingsClient({ appId }: { appId: string
         <div className="space-y-6 p-8">
             <section className={cardClass}>
                 <h2 className="mb-4 text-lg font-semibold">General</h2>
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="text-sm">
-                        <span className="mb-1 block text-slate-600">Name</span>
-                        <input className={inputClass} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-                    </label>
-                    <label className="text-sm">
-                        <span className="mb-1 block text-slate-600">URL</span>
-                        <input className={inputClass} type="url" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} />
-                    </label>
-                    <label className="text-sm sm:col-span-2">
-                        <span className="mb-1 block text-slate-600">Logo URL</span>
-                        <input className={inputClass} type="url" value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} />
-                    </label>
+                <div className="flex gap-5 w-full">
+                    <div className="flex shrink-0 flex-col items-center gap-2">
+                        <div className="flex h-30 w-30 items-center justify-center overflow-hidden rounded-full bg-slate-100">
+                            {form.logo_url ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={form.logo_url} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                                <span className="text-2xl font-semibold text-slate-400">{form.name.charAt(0).toUpperCase() || '?'}</span>
+                            )}
+                        </div>
+                        <span className="text-center text-xs text-slate-400">Recommended: 400x400px</span>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2 w-full">
+                        <label className="text-sm">
+                            <span className="mb-1 block text-slate-600">Name</span>
+                            <input className={inputClass} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                        </label>
+                        <label className="text-sm">
+                            <span className="mb-1 block text-slate-600">URL</span>
+                            <input className={inputClass} type="url" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} />
+                        </label>
+                        <label className="text-sm sm:col-span-2">
+                            <span className="mb-1 block text-slate-600">Logo URL</span>
+                            <input className={inputClass} type="url" value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} />
+                        </label>
+                    </div>
                 </div>
-                <button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                >
-                    {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Save changes
-                </button>
+                <div className="flex items-end justify-end">
+                    <button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                    >
+                        {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+                        Save changes
+                    </button>
+                </div>
             </section>
 
             {/* <ApiKeySection appId={appId} /> */}
@@ -188,7 +191,7 @@ export function ApplicationManagementidSettingsClient({ appId }: { appId: string
                     onClose={() => setIsAddOpen(false)}
                     onAdded={async () => {
                         setIsAddOpen(false)
-                        setTenants(await getApplicationTenants(appId))
+                        await fetchApplicationTenants(appId)
                     }}
                 />
             )}
@@ -246,32 +249,32 @@ function AddTenantModal({
     onClose: () => void
     onAdded: () => void
 }) {
-    const [options, setOptions] = useState<Array<{ id: string; name: string }>>([])
+    const { tenantOptions, fetchTenantsForSelect, addTenantAuthorization } = useApplicationStore()
     const [tenantId, setTenantId] = useState('')
     const [range, setRange] = useState({ start: '', end: '' })
     const [isSaving, setIsSaving] = useState(false)
+    const options = tenantOptions.filter((o) => !existingIds.includes(o.id))
 
     useEffect(() => {
-        getTenantsForSelect()
-            .then((all) => {
-                const available = all.filter((o) => !existingIds.includes(o.id))
-                setOptions(available)
-                setTenantId(available[0]?.id ?? '')
-            })
-            .catch(() => toast.error('Failed to load tenants'))
+        fetchTenantsForSelect().catch(() => toast.error('Failed to load tenants'))
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
+
+    useEffect(() => {
+        setTenantId((current) => (current && options.some((o) => o.id === current)) ? current : (options[0]?.id ?? ''))
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tenantOptions])
 
     const handleSave = async () => {
         if (!tenantId) return
         setIsSaving(true)
         try {
-            await addApplicationAuthorization(
+            await addTenantAuthorization({
                 appId,
                 tenantId,
-                range.start ? new Date(range.start).toISOString() : undefined,
-                range.end ? new Date(range.end).toISOString() : undefined
-            )
+                startsAt: range.start ? new Date(range.start).toISOString() : undefined,
+                endsAt: range.end ? new Date(range.end).toISOString() : undefined,
+            })
             toast.success('Tenant added')
             onAdded()
         } catch (err) {

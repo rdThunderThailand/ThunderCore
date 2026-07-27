@@ -1,38 +1,31 @@
 'use client'
 
-import { ApplicationDetails } from '@/types/applications'
-import { launchApplication } from '@/features/platform-tenants/management/[id]/applications/actions'
+import { useApplicationStore } from '@/store/useApplicationStore'
 import { AlertCircle, ChevronLeft, ExternalLink, Globe, Layout, Loader2, Settings } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { getApplicationById } from '../../actions'
 
 const cardClass = 'rounded-2xl border border-slate-200 bg-white p-6'
 
 export function ApplicationManagementidPortalClient({ appId, basePath = '/applications' }: { appId: string; basePath?: string }) {
     const router = useRouter()
-    const [app, setApp] = useState<ApplicationDetails | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
+    const { currentApp: app, isAppLoading: isLoading, fetchApplicationById, getLaunchUrl } = useApplicationStore()
     const [isLaunching, setIsLaunching] = useState(false)
 
     useEffect(() => {
         const load = async () => {
             try {
-                const data = await getApplicationById(appId)
+                const data = await fetchApplicationById(appId)
                 if (!data) {
                     router.push(basePath)
-                    return
                 }
-                setApp(data)
             } catch {
                 toast.error('Failed to load portal configuration')
-            } finally {
-                setIsLoading(false)
             }
         }
         load()
-    }, [appId, router, basePath])
+    }, [appId, router, basePath, fetchApplicationById])
 
     const handleLaunch = async () => {
         if (!app || !app.tenant_id) return
@@ -42,7 +35,7 @@ export function ApplicationManagementidPortalClient({ appId, basePath = '/applic
         }
         setIsLaunching(true)
         try {
-            const launchUrl = await launchApplication(app.tenant_id, app.id)
+            const launchUrl = await getLaunchUrl(app.tenant_id, app.id)
             window.open(launchUrl, '_blank')
         } catch {
             toast.error('Failed to launch portal')
@@ -70,12 +63,12 @@ export function ApplicationManagementidPortalClient({ appId, basePath = '/applic
                     <h1 className="text-lg font-semibold text-slate-900">Portal Configuration</h1>
                     <p className="text-sm text-slate-500">Manage the public-facing portal for {app.name}</p>
                 </div>
-                <button
+                {/* <button
                     onClick={() => router.back()}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
                 >
                     <ChevronLeft className="h-4 w-4" /> Back
-                </button>
+                </button> */}
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">

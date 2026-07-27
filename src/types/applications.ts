@@ -70,11 +70,23 @@ export interface ApplicationTenantAccess {
 
 export interface AppMember {
   id: string
+  // memberships.id — the tenant membership this access row grants, used to dedupe against the invite picker.
+  membershipId: string
   name: string
   email: string
   role: 'Admin' | 'Developer' | 'Viewer'
   status: 'Active' | 'Pending'
   tenantName?: string
+}
+
+// Mirrors the `member_app_access` table: membership_id -> memberships.id, application_id -> applications.id.
+export interface MemberAppAccessRow {
+  id: string
+  membership_id: string
+  application_id: string
+  role: string
+  is_active: boolean
+  created_at: string
 }
 
 

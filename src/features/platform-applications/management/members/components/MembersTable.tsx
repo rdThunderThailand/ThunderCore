@@ -1,7 +1,7 @@
 'use client'
 
 import { calcTotalPages, paginate, Pagination } from '@/components/ui'
-import { AppMember } from '@/lib/applications'
+import { AppMember } from '@/types/applications'
 import { MoreVertical, Search, Shield, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -13,7 +13,7 @@ interface MembersTableProps {
     setSearchTerm: (term: string) => void
     activeDropdown: string | null
     setActiveDropdown: (id: string | null) => void
-    onRemoveMember: (id: string) => void
+    onRemoveMember: (id: string, membershipId: string) => void
 }
 
 export function MembersTable({
@@ -97,7 +97,7 @@ export function MembersTable({
                                                         </button>
                                                         <div className="my-1 border-t border-slate-100" />
                                                         <button
-                                                            onClick={() => onRemoveMember(member.id)}
+                                                            onClick={() => onRemoveMember(member.id, member.membershipId)}
                                                             className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                                                         >
                                                             <Trash2 className="h-4 w-4" />

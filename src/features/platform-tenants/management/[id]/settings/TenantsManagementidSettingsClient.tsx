@@ -6,7 +6,7 @@ export async function TenantsManagementidSettingsClient({ params }: { params: Pr
 
     const { id } = await params
     const tenant = MOCK_TENANTS.find((t) => t.id === id) ?? MOCK_TENANTS[0]
-    console.log('tenant', tenant)
+    // console.log('tenant', tenant)
 
     return <OrgSettingsClient initialTenant={tenant} userRole={mockUser.role} />
 }

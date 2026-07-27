@@ -23,7 +23,7 @@ export function OrgSettingsClient({ initialTenant, userRole }: OrgSettingsClient
     const isSuperAdmin = userRole === 'super_admin'
     const canEdit = isSuperAdmin || userRole === 'company_admin'
 
-    console.log(userRole)
+    // console.log(userRole)
 
     const [formData, setFormData] = useState({
         name: initialTenant.name,

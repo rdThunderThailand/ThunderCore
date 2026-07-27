@@ -1,78 +1,80 @@
 'use client'
 
-import { AppMember } from '@/lib/applications'
+import { useApplicationStore } from '@/store/useApplicationStore'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { getApplicationById, getApplicationMembers } from '../../actions'
 import { InviteMemberModal } from './components/InviteMemberModal'
 import { MembersListHeader } from './components/MembersListHeader'
 import { MembersTable } from './components/MembersTable'
 
-export function ApplicationManagementidMembersClient({ appId, basePath = '/applications' }: { appId: string; basePath?: string }) {
+export function ApplicationManagementidMembersClient({
+    appId,
+    tenantId,
+    basePath = '/applications',
+}: {
+    appId: string
+    tenantId: string
+    basePath?: string
+}) {
     const router = useRouter()
-
-    const [appName, setAppName] = useState('')
-    const [members, setMembers] = useState<AppMember[]>([])
-    const [isLoading, setIsLoading] = useState(true)
+    const {
+        currentApp, applicationMembers, isAppLoading, isMembersLoading,
+        fetchApplicationById, fetchApplicationMembers, revokeAccess, inviteAppMember,
+    } = useApplicationStore()
+    const isLoading = isAppLoading || isMembersLoading
     const [searchTerm, setSearchTerm] = useState('')
     const [showInviteModal, setShowInviteModal] = useState(false)
+    const [isInviting, setIsInviting] = useState(false)
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
-    const [inviteForm, setInviteForm] = useState({ email: '', role: 'Viewer' })
 
     useEffect(() => {
         const load = async () => {
-            setIsLoading(true)
             try {
-                const [app, membersData] = await Promise.all([
-                    getApplicationById(appId),
-                    getApplicationMembers(appId),
+                const [app] = await Promise.all([
+                    fetchApplicationById(appId),
+                    fetchApplicationMembers(appId),
                 ])
                 if (!app) {
                     router.push(basePath)
-                    return
                 }
-                setAppName(app.name)
-                setMembers(membersData)
             } catch {
                 toast.error('Failed to load members')
-            } finally {
-                setIsLoading(false)
             }
         }
         load()
-    }, [appId, router, basePath])
+    }, [appId, router, basePath, fetchApplicationById, fetchApplicationMembers])
 
-    // ponytail: invite/remove are local-only until POST/DELETE members endpoints exist.
-    const handleInvite = () => {
-        if (!inviteForm.email.trim()) {
-            toast.error('Email is required')
-            return
+    const appName = currentApp?.name ?? ''
+
+    const handleInvite = async (memberId: string, role: 'Admin' | 'Developer' | 'Viewer') => {
+        setIsInviting(true)
+        try {
+            await inviteAppMember(tenantId, appId, memberId, role)
+            setShowInviteModal(false)
+            toast.success('Member invited')
+        } catch {
+            toast.error('Failed to invite member')
+        } finally {
+            setIsInviting(false)
         }
-        const newMember: AppMember = {
-            id: Date.now().toString(),
-            name: inviteForm.email.split('@')[0],
-            email: inviteForm.email,
-            role: inviteForm.role as AppMember['role'],
-            status: 'Pending',
-        }
-        setMembers((prev) => [...prev, newMember])
-        setShowInviteModal(false)
-        setInviteForm({ email: '', role: 'Viewer' })
-        toast.success('Invitation sent!')
     }
 
-    const handleRemove = (memberId: string) => {
-        setMembers((prev) => prev.filter((m) => m.id !== memberId))
+    const handleRemove = async (accessId: string, membershipId: string) => {
         setActiveDropdown(null)
-        toast.success('Member removed')
+        try {
+            await revokeAccess(tenantId, appId, accessId, membershipId)
+            toast.success('Member removed')
+        } catch {
+            toast.error('Failed to remove member')
+        }
     }
 
     const filteredMembers = useMemo(() => {
         const q = searchTerm.toLowerCase()
-        return members.filter((m) => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q))
-    }, [members, searchTerm])
+        return applicationMembers.filter((m) => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q))
+    }, [applicationMembers, searchTerm])
 
     if (isLoading) {
         return (
@@ -97,13 +99,15 @@ export function ApplicationManagementidMembersClient({ appId, basePath = '/appli
                 />
             </section>
 
-            <InviteMemberModal
-                isOpen={showInviteModal}
-                onClose={() => setShowInviteModal(false)}
-                inviteForm={inviteForm}
-                setInviteForm={setInviteForm}
-                onInvite={handleInvite}
-            />
+            {showInviteModal && (
+                <InviteMemberModal
+                    tenantId={tenantId}
+                    existingMemberIds={applicationMembers.map((m) => m.membershipId)}
+                    isSubmitting={isInviting}
+                    onClose={() => setShowInviteModal(false)}
+                    onInvite={handleInvite}
+                />
+            )}
         </div>
     )
 }
