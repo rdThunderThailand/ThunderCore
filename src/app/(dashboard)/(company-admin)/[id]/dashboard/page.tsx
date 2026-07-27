@@ -33,7 +33,7 @@ export default async function CompanyAdminDashboardPage() {
     const recipientName = user.first_name + ' ' + user.last_name
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-8 space-y-6">
+        <div className="min-h-screen p-6 lg:p-8 space-y-6">
             {/* Greeting Header */}
             <CardGreetingDemo recipient={recipientName} avatarSrc={user.avatar_url ?? undefined} />
 

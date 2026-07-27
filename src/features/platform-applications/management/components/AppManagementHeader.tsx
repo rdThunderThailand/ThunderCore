@@ -12,6 +12,7 @@ interface AppManagementHeaderProps {
         name: string
         status: string
         url?: string
+        logo_url?: string
     }
     // onUpdateIdentity: () => void
 }
@@ -41,8 +42,8 @@ export function AppManagementHeader({ app }: AppManagementHeaderProps) {
     return (
         <div className="flex flex-col items-start justify-between gap-6 rounded-2xl border border-slate-200 bg-white p-6 md:flex-row md:items-center">
             <div className="flex items-center gap-5">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600">
-                    <AppWindow className="h-8 w-8 text-white" />
+                <div className="flex h-20 w-20 items-center justify-center rounded-md bg-blue-600 overflow-clip">
+                    {app.logo_url ? <img src={app.logo_url} alt={app.name} className="h-full w-full object-cover" /> : <AppWindow className="h-8 w-8 text-white" />}
                 </div>
                 <div>
                     <div className="flex items-center gap-3">

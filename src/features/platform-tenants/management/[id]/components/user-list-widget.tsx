@@ -17,7 +17,7 @@ export function UserListWidget({ members }: UserListWidgetProps) {
             </div>
         )
     }
-    console.log('UserListWidget members:', members)
+    // console.log('UserListWidget members:', members)
     return (
         <div className="flex flex-col h-[300px] overflow-y-auto pr-2 custom-scrollbar space-y-4">
             {members.map((member) => {

@@ -1,11 +1,10 @@
 'use client'
 
-import { ApplicationDetails } from '@/types/applications'
+import { useApplicationStore } from '@/store/useApplicationStore'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { getApplicationById, updateApplication } from '../actions'
 import { AppActivityLogs } from './components/AppActivityLogs'
 import { AppManagementHeader } from './components/AppManagementHeader'
 import { AppStatsGrid } from './components/AppStatsGrid'
@@ -24,8 +23,7 @@ const RECENT_LOGS = [
 
 export function ApplicationManagementidClient({ appId, basePath = '/applications' }: { appId: string; basePath?: string }) {
     const router = useRouter()
-    const [app, setApp] = useState<ApplicationDetails | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
+    const { currentApp: app, isAppLoading: isLoading, fetchApplicationById, updateApplicationDetail } = useApplicationStore()
     const [isSaving, setIsSaving] = useState(false)
     // const [showUpdateModal, setShowUpdateModal] = useState(false)
     const [formData, setFormData] = useState({ name: '', url: '' })
@@ -33,28 +31,24 @@ export function ApplicationManagementidClient({ appId, basePath = '/applications
     useEffect(() => {
         const load = async () => {
             try {
-                const data = await getApplicationById(appId)
+                const data = await fetchApplicationById(appId)
                 if (!data) {
                     router.push(basePath)
                     return
                 }
-                setApp(data)
                 setFormData({ name: data.name, url: data.url || '' })
             } catch {
                 toast.error('Failed to load application')
-            } finally {
-                setIsLoading(false)
             }
         }
         load()
-    }, [appId, router, basePath])
+    }, [appId, router, basePath, fetchApplicationById])
 
     const handleUpdate = async () => {
         if (!formData.name.trim()) return
         setIsSaving(true)
         try {
-            await updateApplication(appId, formData)
-            setApp((prev) => (prev ? { ...prev, ...formData } : null))
+            await updateApplicationDetail(appId, formData)
             // setShowUpdateModal(false)
             toast.success('Application updated!')
         } catch {
@@ -77,7 +71,7 @@ export function ApplicationManagementidClient({ appId, basePath = '/applications
     return (
         <div className="space-y-6 p-8">
             <AppManagementHeader
-                app={{ id: app.id, tenant_id: app.tenant_id ?? '', name: app.name, status: app.status ?? 'inactive', url: app.url ?? undefined }}
+                app={{ id: app.id, tenant_id: app.tenant_id ?? '', name: app.name, status: app.status ?? 'inactive', url: app.url ?? undefined, logo_url: app.logo_url ?? undefined }}
             // onUpdateIdentity={() => setShowUpdateModal(true)}
             />
 

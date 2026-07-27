@@ -1,35 +1,47 @@
 import { create } from 'zustand'
-import { Application } from '@/types/applications'
 import {
-    getTenantApplications, createApplication,
-    updateApplication, deleteApplication,
-    getMemberAppAccess, grantMemberAppAccess,
-    revokeMemberAppAccess, launchApplication
+    Application, ApplicationDetails, AppMember,
+    ApplicationTenantAccess, ApplicationTenantsAccess, UpdateApplicationDTO,
+} from '@/types/applications'
+import {
+    getTenantApplications, createApplication as createTenantApplication,
+    updateApplication as updateTenantApplication, deleteApplication as deleteTenantApplication,
+    revokeMemberAppAccess, inviteMember as inviteTenantAppMember, launchApplication
 } from '@/features/platform-tenants/management/[id]/applications/actions'
+import {
+    getApplicationById, getApplicationMembers, getApplicationTenants,
+    addApplicationAuthorization, removeApplicationAuthorization,
+    getApiKey, regenerateApiKey, getTenantsForSelect,
+    updateApplication as updateApplicationDetail,
+    deleteApplication as deleteApplicationDetail,
+} from '@/features/platform-applications/actions'
 
-interface MemberAccess {
-    id: string
-    user_id: string
-    tenant_id: string
-    role: string
-    user: {
-        id: string
-        email: string
-        full_name: string
-    }
-    has_access: boolean
-}
+type ApiKeyRecord = { api_key: string | null; api_key_generated_at: string | null }
 
 interface ApplicationStore {
     applications: Application[]
     isLoading: boolean
     searchTerm: string
 
-    // Access management
-    memberAccess: MemberAccess[]
-    isAccessLoading: boolean
+    // Single-application detail (app-management surface: dashboard/portal/settings/members)
+    currentApp: ApplicationDetails | null
+    isAppLoading: boolean
 
-    // Actions
+    // Members with access to currentApp
+    applicationMembers: AppMember[]
+    isMembersLoading: boolean
+
+    // Tenants authorized on currentApp
+    applicationTenants: ApplicationTenantsAccess[]
+    isTenantsLoading: boolean
+
+    apiKey: ApiKeyRecord | null
+    isApiKeyLoading: boolean
+
+    // Owner picker for the create-application modal
+    tenantOptions: Array<{ id: string; name: string }>
+
+    // Tenant-scoped application list actions
     fetchApplications: (tenantId: string) => Promise<void>
     setSearchTerm: (term: string) => void
     createApp: (data: {
@@ -47,21 +59,48 @@ interface ApplicationStore {
         url?: string
     }) => Promise<Application>
     deleteApp: (appId: string, tenantId: string) => Promise<void>
-
-    // Access Actions
-    fetchMemberAccess: (tenantId: string, appId: string) => Promise<void>
-    grantAccess: (tenantId: string, appId: string, memberId: string) => Promise<void>
-    revokeAccess: (tenantId: string, appId: string, memberId: string) => Promise<void>
     getLaunchUrl: (tenantId: string, appId: string) => Promise<string>
+
+    // Single-application detail actions
+    fetchApplicationById: (appId: string) => Promise<ApplicationDetails | null>
+    updateApplicationDetail: (appId: string, data: UpdateApplicationDTO) => Promise<Application | undefined>
+    deleteApplicationById: (appId: string) => Promise<void>
+
+    // Application members (who has access), see docs/api-checklist.md §4/§5
+    fetchApplicationMembers: (appId: string) => Promise<void>
+    revokeAccess: (tenantId: string, appId: string, accessId: string, membershipId: string) => Promise<void>
+    inviteAppMember: (tenantId: string, appId: string, memberId: string, role: AppMember['role']) => Promise<void>
+
+    // Tenant authorization on a single application
+    fetchApplicationTenants: (appId: string) => Promise<void>
+    addTenantAuthorization: (data: ApplicationTenantAccess) => Promise<void>
+    removeTenantAuthorization: (appId: string, tenantId: string) => Promise<void>
+
+    // API key
+    fetchApiKey: (appId: string) => Promise<void>
+    regenerateApplicationApiKey: (appId: string) => Promise<void>
+
+    fetchTenantsForSelect: () => Promise<void>
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const useApplicationStore = create<ApplicationStore>((set, get) => ({
     applications: [],
     isLoading: false,
     searchTerm: '',
-    memberAccess: [],
-    isAccessLoading: false,
+
+    currentApp: null,
+    isAppLoading: false,
+
+    applicationMembers: [],
+    isMembersLoading: false,
+
+    applicationTenants: [],
+    isTenantsLoading: false,
+
+    apiKey: null,
+    isApiKeyLoading: false,
+
+    tenantOptions: [],
 
     setSearchTerm: (searchTerm) => set({ searchTerm }),
 
@@ -77,13 +116,13 @@ export const useApplicationStore = create<ApplicationStore>((set, get) => ({
     },
 
     createApp: async (data) => {
-        const newApp = await createApplication(data)
+        const newApp = await createTenantApplication(data)
         set((state) => ({ applications: [newApp, ...state.applications] }))
         return newApp
     },
 
     updateApp: async (appId, data) => {
-        const updatedApp = await updateApplication(appId, data)
+        const updatedApp = await updateTenantApplication(appId, data)
         set((state) => ({
             applications: state.applications.map(app => app.id === appId ? updatedApp : app)
         }))
@@ -91,42 +130,113 @@ export const useApplicationStore = create<ApplicationStore>((set, get) => ({
     },
 
     deleteApp: async (appId, tenantId) => {
-        await deleteApplication(appId, tenantId)
+        await deleteTenantApplication(appId, tenantId)
         set((state) => ({
             applications: state.applications.filter(app => app.id !== appId)
         }))
     },
 
-    fetchMemberAccess: async (tenantId, appId) => {
+    getLaunchUrl: async (tenantId, appId) => {
+        return await launchApplication(tenantId, appId)
+    },
+
+    fetchApplicationById: async (appId) => {
         try {
-            set({ isAccessLoading: true, memberAccess: [] })
-            const access = await getMemberAppAccess(tenantId, appId)
-            set({ memberAccess: access as MemberAccess[], isAccessLoading: false })
+            set({ isAppLoading: true })
+            const app = await getApplicationById(appId)
+            set({ currentApp: app, isAppLoading: false })
+            return app
         } catch (error) {
-            console.error('Error fetching member access:', error)
-            set({ isAccessLoading: false })
+            console.error('Error fetching application:', error)
+            set({ isAppLoading: false })
+            throw error
         }
     },
 
-    grantAccess: async (tenantId, appId, memberId) => {
-        await grantMemberAppAccess(tenantId, appId, memberId)
+    updateApplicationDetail: async (appId, data) => {
+        const updatedApp = await updateApplicationDetail(appId, data)
         set((state) => ({
-            memberAccess: state.memberAccess.map(m =>
-                m.id === memberId ? { ...m, has_access: true } : m
-            )
+            currentApp: state.currentApp?.id === appId ? { ...state.currentApp, ...updatedApp } : state.currentApp
+        }))
+        return updatedApp
+    },
+
+    deleteApplicationById: async (appId) => {
+        await deleteApplicationDetail(appId)
+        set((state) => ({ currentApp: state.currentApp?.id === appId ? null : state.currentApp }))
+    },
+
+    fetchApplicationMembers: async (appId) => {
+        try {
+            set({ isMembersLoading: true })
+            const members = await getApplicationMembers(appId)
+            set({ applicationMembers: members, isMembersLoading: false })
+        } catch (error) {
+            console.error('Error fetching application members:', error)
+            set({ isMembersLoading: false })
+        }
+    },
+
+    revokeAccess: async (tenantId, appId, accessId, membershipId) => {
+        await revokeMemberAppAccess(tenantId, appId, membershipId)
+        set((state) => ({
+            applicationMembers: state.applicationMembers.filter(m => m.id !== accessId)
         }))
     },
 
-    revokeAccess: async (tenantId, appId, memberId) => {
-        await revokeMemberAppAccess(tenantId, appId, memberId)
+    inviteAppMember: async (tenantId, appId, memberId, role) => {
+        await inviteTenantAppMember(tenantId, appId, memberId, role)
+        await get().fetchApplicationMembers(appId)
+    },
+
+    fetchApplicationTenants: async (appId) => {
+        try {
+            set({ isTenantsLoading: true })
+            const tenants = await getApplicationTenants(appId)
+            set({ applicationTenants: tenants, isTenantsLoading: false })
+        } catch (error) {
+            console.error('Error fetching application tenants:', error)
+            set({ isTenantsLoading: false })
+        }
+    },
+
+    addTenantAuthorization: async (data) => {
+        await addApplicationAuthorization(data)
+        const tenants = await getApplicationTenants(data.appId)
+        set({ applicationTenants: tenants })
+    },
+
+    removeTenantAuthorization: async (appId, tenantId) => {
+        await removeApplicationAuthorization(appId, tenantId)
         set((state) => ({
-            memberAccess: state.memberAccess.map(m =>
-                m.id === memberId ? { ...m, has_access: false } : m
-            )
+            applicationTenants: state.applicationTenants.filter(t => t.tenant_id !== tenantId)
         }))
     },
 
-    getLaunchUrl: async (tenantId, appId) => {
-        return await launchApplication(tenantId, appId)
-    }
+    fetchApiKey: async (appId) => {
+        try {
+            set({ isApiKeyLoading: true })
+            const key = await getApiKey(appId)
+            set({ apiKey: key, isApiKeyLoading: false })
+        } catch (error) {
+            console.error('Error fetching API key:', error)
+            set({ isApiKeyLoading: false })
+        }
+    },
+
+    regenerateApplicationApiKey: async (appId) => {
+        set({ isApiKeyLoading: true })
+        try {
+            const key = await regenerateApiKey(appId)
+            set({ apiKey: key, isApiKeyLoading: false })
+        } catch (error) {
+            set({ isApiKeyLoading: false })
+            throw error
+        }
+    },
+
+    fetchTenantsForSelect: async () => {
+        const tenants = await getTenantsForSelect()
+        set({ tenantOptions: tenants })
+    },
 }))

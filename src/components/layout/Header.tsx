@@ -54,6 +54,21 @@ function getCompanyAdminBreadcrumbs(pathname: string): Crumb[] {
         crumbs.push({ label: "Member Settings", href: pathname });
     }
 
+    if (section === "applications" && rest[0]) {
+        const appBase = `${base}/applications/${rest[0]}`;
+        if (!rest[1]) {
+            crumbs.push({ label: "Application Dashboard", href: appBase });
+        } else if (rest[1] === "settings") {
+            crumbs.push({ label: "Application Settings", href: pathname });
+        } else if (rest[1] === "portal") {
+            crumbs.push({ label: "Portal", href: `${appBase}/portal` });
+            if (rest[2] === "customization") crumbs.push({ label: "Customization", href: pathname });
+            else if (rest[2] === "domains") crumbs.push({ label: "Domains", href: pathname });
+        } else if (rest[1] === "members") {
+            crumbs.push({ label: "Members", href: pathname });
+        }
+    }
+
     return crumbs;
 }
 
@@ -203,6 +218,8 @@ export const Header = ({
     const isManagementPath = /^\/(tenants|applications)\/management\//.test(pathname);
     const managementTrail = getManagementBreadcrumbs(pathname, isSuperAdmin);
     const companyAdminTrail = getCompanyAdminBreadcrumbs(pathname);
+    const companyAdminSegments = pathname.split("/").filter(Boolean);
+    const isCompanyAdminApplicationDetail = companyAdminTrail.length > 0 && companyAdminSegments[1] === "applications" && !!companyAdminSegments[2];
     const userSettingsTrail = getUserSettingsBreadcrumbs(pathname, searchParams.get("user"), isSuperAdmin);
     const breadcrumbTrail = managementTrail.length > 0
         ? managementTrail
@@ -227,7 +244,7 @@ export const Header = ({
                                 return (
                                     <span key={crumb.href} className="flex items-center gap-2">
                                         {index > 0 && <span className="text-slate-300">/</span>}
-                                        {index === 0 && !isSuperAdmin && SectionIcon && (
+                                        {index === 0 && !isSuperAdmin && !isCompanyAdminApplicationDetail && SectionIcon && (
                                             <SectionIcon className="w-3.5 h-3.5 shrink-0 text-slate-500" />
                                         )}
                                         {isLast ? (
@@ -290,9 +307,9 @@ export const Header = ({
                         className="flex gap-3 items-center cursor-pointer"
                     >
                         <img
-                            src={defaultUser?.avatar_url || "https://ichef.bbci.co.uk/ace/standard/609/cpsprodpb/a0d9/live/211e77d0-7cd1-11f1-926f-c90d1bcfbc84.jpg"}
+                            src={defaultUser?.avatar_url || "https://i.pinimg.com/originals/75/ae/6e/75ae6eeeeb590c066ec53b277b614ce3.jpg"}
                             alt="userprofile"
-                            className="w-11 h-11 rounded-full object-cover shrink-0 bg-gray-200"
+                            className="w-11 h-11 rounded-full object-cover shrink-0 bg-gray-200 border border-slate-200"
                         />
                         <div className="text-left leading-tight">
                             <p className="text-sm font-bold">{defaultUser.name}</p>

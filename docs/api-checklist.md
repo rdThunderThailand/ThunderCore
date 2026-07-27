@@ -67,13 +67,13 @@ revoke เป็น soft flag ดูรายละเอียดใน [API_RE
 
 | Endpoint | ทำอะไร | BE | FE | E2E |
 |---|---|:--:|:--:|:--:|
-| `GET /tenants/:id/applications` | แอปของ tenant (ที่เป็นเจ้าของ + ที่ถูกแชร์มา) | ⬜ | ⬜ | ⬜ |
-| `POST /tenants/:id/applications` | สร้างแอปใหม่ใต้ tenant | ⬜ | ⬜ | ⬜ |
-| `PATCH /tenants/:id/applications/:appId` | แก้ชื่อ/คำอธิบาย/env/url/สถานะ | ⬜ | ⬜ | ⬜ |
-| `DELETE /tenants/:id/applications/:appId` | ลบแอป (ต้อง cascade สิทธิ์ที่ให้ไว้) | ⬜ | ⬜ | ⬜ |
-| `GET /tenants/:id/applications/:appId/members` | สมาชิกทั้งหมด + ใครเข้าแอปนี้ได้บ้าง | ⬜ | ⬜ | ⬜ |
-| `POST /.../members/:memberId` | ให้สิทธิ์สมาชิกเข้าแอป | ⬜ | ⬜ | ⬜ |
-| `DELETE /.../members/:memberId` | ถอนสิทธิ์ | ⬜ | ⬜ | ⬜ |
+| `GET /tenants/:id/applications` | แอปของ tenant (ที่เป็นเจ้าของ + ที่ถูกแชร์มา) | ✅ | ✅ | ⬜ |
+| `POST /tenants/:id/applications` | สร้างแอปใหม่ใต้ tenant | ✅ | ✅ | ⬜ |
+| `PATCH /tenants/:id/applications/:appId` | แก้ชื่อ/คำอธิบาย/env/url/สถานะ | ✅ | ✅ | ⬜ |
+| `DELETE /tenants/:id/applications/:appId` | ลบแอป (ต้อง cascade สิทธิ์ที่ให้ไว้) | ✅ | ✅ | ⬜ |
+<!-- | `GET /tenants/:id/applications/:appId/members` | สมาชิกทั้งหมด + ใครเข้าแอปนี้ได้บ้าง | ⬜ | ⬜ | ⬜ | -->
+| `POST /.../members/:memberId` | ให้สิทธิ์สมาชิกเข้าแอป | ✅ | ✅ | ⬜ |
+| `DELETE /.../members/:memberId` | ถอนสิทธิ์ | ✅ | ✅ | ⬜ |
 | `POST /tenants/:id/applications/:appId/launch` | ออก token อายุสั้นแล้วคืน URL เปิดแอป | ⬜ | ⬜ | ⬜ |
 
 **หมายเหตุ:** 3 เส้นสุดท้ายซ้ำกับ members §3 (คนละมุมของตาราง `member_app_access` เดียวกัน) — ตอนทำจริง
@@ -85,11 +85,11 @@ revoke เป็น soft flag ดูรายละเอียดใน [API_RE
 
 | Endpoint | ทำอะไร | BE | FE | E2E |
 |---|---|:--:|:--:|:--:|
-| `GET /applications` | แอปทั้งแพลตฟอร์ม (หน้า `/applications`) | ✅ | ✅ | ✅ |
-| `POST /applications` | สร้างแอประดับแพลตฟอร์ม | ✅ | ✅ | ✅ |
+| `GET /applications` | แอปทั้งแพลตฟอร์ม (หน้า `/applications`) | ✅ | ✅ | ✅ |**********
+| `POST /applications` | สร้างแอประดับแพลตฟอร์ม | ✅ | ✅ | ✅ |************
 | `GET /applications/:id` | รายละเอียดแอป + ฟิลด์ portal | ✅ | ✅ | ✅ |
-| `PATCH /applications/:id` | แก้ข้อมูลทั่วไป + portal (domain, สี, โลโก้) | ✅ | ✅ | ✅ |
-| `DELETE /applications/:id` | ลบแอป | ✅ | ✅ | ✅ |
+| `PATCH /applications/:id` | แก้ข้อมูลทั่วไป + portal (domain, สี, โลโก้) | ✅ | ✅ | ✅ |*********
+| `DELETE /applications/:id` | ลบแอป | ✅ | ✅ | ✅ |************
 | `GET /applications/:id/tenants` | tenant ที่ได้รับอนุญาตใช้แอปนี้ | ✅ | ✅ | ✅ |
 | `POST /applications/:id/tenants` | เพิ่มสิทธิ์ให้ tenant | ✅ | ✅ | ✅ |
 | `DELETE /applications/:id/tenants/:tenantId` | ถอนสิทธิ์ tenant | ✅ | ✅ | ✅ |

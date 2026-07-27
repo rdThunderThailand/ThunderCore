@@ -1,24 +1,24 @@
 'use client'
 
+import { useApplicationStore } from '@/store/useApplicationStore'
 import { ChevronLeft, Globe, Info, Loader2, Save } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { getApplicationById, updateApplication } from '../../../actions'
 
 const cardClass = 'rounded-2xl border border-slate-200 bg-white p-6'
 const inputClass = 'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500'
 
 export function ApplicationManagementidPortalDomainsClient({ appId, basePath = '/applications' }: { appId: string; basePath?: string }) {
     const router = useRouter()
+    const { isAppLoading: isLoading, fetchApplicationById, updateApplicationDetail } = useApplicationStore()
     const [domain, setDomain] = useState('')
-    const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
 
     useEffect(() => {
         const load = async () => {
             try {
-                const data = await getApplicationById(appId)
+                const data = await fetchApplicationById(appId)
                 if (!data) {
                     router.push(basePath)
                     return
@@ -26,12 +26,10 @@ export function ApplicationManagementidPortalDomainsClient({ appId, basePath = '
                 setDomain(data.custom_domain ?? '')
             } catch {
                 toast.error('Failed to load application')
-            } finally {
-                setIsLoading(false)
             }
         }
         load()
-    }, [appId, router, basePath])
+    }, [appId, router, basePath, fetchApplicationById])
 
     const handleSave = async () => {
         // Normalize: strip protocol + trailing slash, lowercase.
@@ -45,7 +43,7 @@ export function ApplicationManagementidPortalDomainsClient({ appId, basePath = '
 
         setIsSaving(true)
         try {
-            await updateApplication(appId, { custom_domain: cleaned || null })
+            await updateApplicationDetail(appId, { custom_domain: cleaned || null })
             toast.success('Domain settings updated')
         } catch (err) {
             toast.error((err as Error).message)

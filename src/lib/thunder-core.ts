@@ -92,13 +92,13 @@ export async function registerRequest(email: string, password: string): Promise<
 
 export async function getCurrentUser(): Promise<CurrentUser> {
   const res = await thunderCore.get<ThunderResponse<CurrentUser>>('/me')
-  console.log('getCurrentUser', res.data.data)
+  // console.log('getCurrentUser', res.data.data)
   return res.data.data
 }
 
 export async function getMyMemberships(): Promise<Membership[]> {
   const res = await thunderCore.get<ThunderResponse<Membership[]>>('/me/memberships')
-  console.log('getMyMemberships', res.data.data)
+  // console.log('getMyMemberships', res.data.data)
   return res.data.data
 }
 

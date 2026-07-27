@@ -18,9 +18,9 @@ export default function OrgManagementApplications() {
 
     const {
         applications, isLoading, searchTerm, setSearchTerm,
-        memberAccess, isAccessLoading,
+        applicationMembers: memberAccess, isMembersLoading: isAccessLoading,
         fetchApplications, createApp, updateApp, deleteApp,
-        fetchMemberAccess, grantAccess, revokeAccess, getLaunchUrl
+        fetchApplicationMembers: fetchMemberAccess, revokeAccess, getLaunchUrl
     } = useApplicationStore()
 
     // Modal States
@@ -50,9 +50,9 @@ export default function OrgManagementApplications() {
 
     useEffect(() => {
         if (accessApp) {
-            fetchMemberAccess(tenantId, accessApp.id)
+            fetchMemberAccess(accessApp.id)
         }
-    }, [accessApp, tenantId, fetchMemberAccess])
+    }, [accessApp, fetchMemberAccess])
 
     const resetForm = () => {
         setFormData({ name: '', description: '', environment: 'production', url: '' })
@@ -152,23 +152,19 @@ export default function OrgManagementApplications() {
         setAccessApp(app)
         setActiveDropdown(null)
         try {
-            await fetchMemberAccess(tenantId, app.id)
+            await fetchMemberAccess(app.id)
         } catch (err) {
             console.error('Error loading member access:', err)
             setError('Failed to load member access')
         }
     }
 
-    const handleToggleAccess = async (memberId: string, hasAccess: boolean) => {
+    const handleRevokeAccess = async (accessId: string) => {
         if (!accessApp) return
 
         try {
-            if (hasAccess) {
-                await revokeAccess(tenantId, accessApp.id, memberId)
-            } else {
-                await grantAccess(tenantId, accessApp.id, memberId)
-            }
-            setSuccess(hasAccess ? 'Access revoked' : 'Access granted')
+            await revokeAccess(tenantId, accessApp.id, accessId)
+            setSuccess('Access revoked')
             setTimeout(() => setSuccess(null), 2000)
         } catch (err) {
             const error = err as Error
@@ -499,37 +495,34 @@ export default function OrgManagementApplications() {
                         ) : memberAccess.length === 0 ? (
                             <div className="text-center py-12">
                                 <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                                <p className="text-slate-500">No members in this tenant</p>
+                                <p className="text-slate-500">No one has access to this application yet</p>
                             </div>
                         ) : (
                             <div className="space-y-2 max-h-80 overflow-y-auto">
                                 {memberAccess.map(member => (
                                     <div
-                                        key={member.user_id}
+                                        key={member.id}
                                         className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all"
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                                                {member.user?.full_name?.[0] || member.user?.email?.[0]?.toUpperCase() || '?'}
+                                                {member.name?.[0] || member.email?.[0]?.toUpperCase() || '?'}
                                             </div>
                                             <div>
                                                 <p className="font-bold text-slate-900">
-                                                    {member.user?.full_name || member.user?.email || 'Unknown'}
+                                                    {member.name || member.email || 'Unknown'}
                                                 </p>
                                                 <p className="text-xs text-slate-500">
-                                                    {member.role} {member.user?.email && `• ${member.user.email}`}
+                                                    {member.role} {member.email && `• ${member.email}`}
                                                 </p>
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => handleToggleAccess(member.user_id, member.has_access)}
-                                            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${member.has_access ? 'bg-violet-600' : 'bg-slate-200'
-                                                }`}
+                                            onClick={() => handleRevokeAccess(member.id)}
+                                            title="Revoke access"
+                                            className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                                         >
-                                            <span
-                                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${member.has_access ? 'translate-x-5' : 'translate-x-0'
-                                                    }`}
-                                            />
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
                                 ))}

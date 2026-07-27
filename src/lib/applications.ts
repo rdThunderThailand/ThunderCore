@@ -1,5 +1,6 @@
 import { isDevBypass } from './dev'
 import { MOCK_APPLICATIONS } from './mock/applications'
+import { MOCK_APPLICATION_MEMBERS } from './mock/application-members'
 import { MOCK_MEMBERS } from './mock/members'
 import { MOCK_TENANTS } from './mock/tenants'
 import { thunderCore } from './thunder-core'
@@ -169,30 +170,49 @@ const MOCK_APP_TENANTS = new Map<string, ApplicationTenantsAccess[]>(
 
 
 
+const appAccessRoleLabel = (r: string): AppMember['role'] =>
+    r === 'owner' ? 'Admin' : r === 'admin' ? 'Developer' : 'Viewer'
+
+// Raw row shape returned by GET /applications/:id/members — not AppMember-shaped,
+// must be mapped (full_name -> name, is_active -> status, tenant_name -> tenantName, ...).
+type BackendMemberRow = {
+    id: string
+    membership_id: string
+    full_name: string
+    email: string
+    role: string
+    is_active: boolean
+    tenant_name: string | null
+}
+
 export async function getApplicationMembers(appId: string): Promise<AppMember[]> {
     if (isDevBypass()) {
-        // members = everyone in the app's owner tenant + its authorized tenants
-        const app = MOCK_APPLICATIONS.find((a) => a.id === appId)
-        const tenantIds = new Set<string>([
-            ...(app?.tenant_id ? [app.tenant_id] : []),
-            ...(MOCK_APP_TENANTS.get(appId) ?? []).map((t) => t.tenant_id),
-        ])
-        const roleLabel = (r: string): AppMember['role'] =>
-            r === 'owner' ? 'Admin' : r === 'admin' ? 'Developer' : 'Viewer'
-        return MOCK_MEMBERS
-            .filter((m) => tenantIds.has(m.tenant_id))
-            .map((m) => ({
-                id: m.id,
-                name: m.user?.full_name ?? 'Unknown User',
-                email: m.user?.email ?? 'No email',
-                role: roleLabel(m.role),
-                status: 'Active' as const,
-                tenantName: MOCK_TENANTS.find((t) => t.id === m.tenant_id)?.name,
-            }))
+        return MOCK_APPLICATION_MEMBERS
+            .filter((access) => access.application_id === appId)
+            .map((access) => {
+                const membership = MOCK_MEMBERS.find((m) => m.id === access.membership_id)
+                return {
+                    id: access.id,
+                    membershipId: access.membership_id,
+                    name: membership?.user?.full_name ?? 'Unknown User',
+                    email: membership?.user?.email ?? 'No email',
+                    role: appAccessRoleLabel(access.role),
+                    status: access.is_active ? 'Active' as const : 'Pending' as const,
+                    tenantName: MOCK_TENANTS.find((t) => t.id === membership?.tenant_id)?.name,
+                }
+            })
     }
 
-    const res = await thunderCore.get<ThunderResponse<AppMember[]>>(`/applications/${appId}/members`)
-    return res.data.data
+    const res = await thunderCore.get<ThunderResponse<BackendMemberRow[]>>(`/applications/${appId}/members`)
+    return res.data.data.map((row) => ({
+        id: row.id,
+        membershipId: row.membership_id,
+        name: row.full_name || 'Unknown User',
+        email: row.email || 'No email',
+        role: appAccessRoleLabel(row.role),
+        status: row.is_active ? 'Active' as const : 'Pending' as const,
+        tenantName: row.tenant_name ?? undefined,
+    }))
 }
 
 // interface ScenarioState {
