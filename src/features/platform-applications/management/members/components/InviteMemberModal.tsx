@@ -5,7 +5,7 @@ import { Membership } from '@/types/members'
 import { Loader2, Search, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-const APP_ROLES = ['Viewer', 'Developer', 'Admin'] as const
+const APP_ROLES = ['Viewer', 'Developer', 'Admin', 'Owner'] as const
 type AppRole = (typeof APP_ROLES)[number]
 
 interface InviteMemberModalProps {
@@ -34,10 +34,15 @@ export function InviteMemberModal({
     useEffect(() => {
         if (selected) return
         const term = query.trim()
+        if (!term) {
+            setResults([])
+            setIsSearching(false)
+            return
+        }
         const timer = setTimeout(async () => {
             setIsSearching(true)
             try {
-                const res = await getMemberships(tenantId, { search: term, limit: 8 })
+                const res = await getMemberships(tenantId, { search: term })
                 setResults(res.data.filter((m) => !existingMemberIds.includes(m.id)))
             } finally {
                 setIsSearching(false)
@@ -76,7 +81,7 @@ export function InviteMemberModal({
                                     type="text"
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
-                                    placeholder="Search by name or email..."
+                                    placeholder="Type a name or email to search..."
                                     className="w-full rounded-lg border border-slate-200 pl-9 pr-3 py-2 text-sm outline-none focus:border-blue-500"
                                 />
                                 {(isSearching || results.length > 0) && (

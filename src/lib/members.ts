@@ -34,7 +34,7 @@ export async function getMemberships(
     options: GetMembersOptions = {}
 ): Promise<{ data: Membership[]; count: number }> {
     if (isDevBypass()) {
-        const { page = 1, limit = 8, search = '' } = options
+        const { page = 1, search = '' } = options
         const term = search.trim().toLowerCase()
 
         const filtered = MOCK_MEMBERS.filter((m) => {
@@ -46,9 +46,9 @@ export async function getMemberships(
             )
         })
 
-        const start = (page - 1) * limit
+        // const start = (page - 1)
         return {
-            data: filtered.slice(start, start + limit),
+            data: filtered,
             count: filtered.length,
         }
     }

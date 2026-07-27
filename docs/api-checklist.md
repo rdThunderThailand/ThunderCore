@@ -33,10 +33,11 @@
 
 | Endpoint | ทำอะไร | BE | FE | E2E |
 |---|---|:--:|:--:|:--:|
-| `GET /tenants` | รายชื่อ tenant ทั้งหมด + จำนวนสมาชิก/แอป | ✅ | ✅ | ⬜ |
+| `GET /tenants` | รายชื่อ tenant ทั้งหมด + จำนวนสมาชิก/แอป | ✅ | ✅ | ✅  |
 | `GET /tenants/usage` | ตัวเลข 4 การ์ดสถิติหัวหน้า `/tenants` | ✅ | ✅ | ⬜ |
 | `POST /tenants` | สร้าง tenant ใหม่ (generate `tenant_code` ให้) | ✅ | ✅ | ⬜ |
 | `GET /tenants/:id` | ข้อมูล tenant เดียว (หน้า settings ใช้) | ✅ | ✅ | ⬜ |
+| `GET /tenants/:id/sub-tenants` | รายชื่อ subtenant ของ tenant | ✅ | ✅ | ✅  |
 | `PATCH /tenants/:id` | แก้ชื่อ/สถานะ/ติดต่อ/เว็บไซต์ | ✅ | ✅ | ⬜ |
 | `DELETE /tenants/:id` | ลบ tenant (cascade สมาชิก+asset) | ✅ | ✅ | ⬜ |
 | `GET /tenants/:id/dashboard` | สรุปหน้า management: quota, device, สมาชิก, log | ✅ | ✅ | ⬜ |
@@ -67,13 +68,13 @@ revoke เป็น soft flag ดูรายละเอียดใน [API_RE
 
 | Endpoint | ทำอะไร | BE | FE | E2E |
 |---|---|:--:|:--:|:--:|
-| `GET /tenants/:id/applications` | แอปของ tenant (ที่เป็นเจ้าของ + ที่ถูกแชร์มา) | ✅ | ✅ | ⬜ |
-| `POST /tenants/:id/applications` | สร้างแอปใหม่ใต้ tenant | ✅ | ✅ | ⬜ |
-| `PATCH /tenants/:id/applications/:appId` | แก้ชื่อ/คำอธิบาย/env/url/สถานะ | ✅ | ✅ | ⬜ |
-| `DELETE /tenants/:id/applications/:appId` | ลบแอป (ต้อง cascade สิทธิ์ที่ให้ไว้) | ✅ | ✅ | ⬜ |
+| `GET /tenants/:id/applications` | แอปของ tenant (ที่เป็นเจ้าของ + ที่ถูกแชร์มา) | ✅ | ✅ | ✅ |
+| `POST /tenants/:id/applications` | สร้างแอปใหม่ใต้ tenant | ✅ | ✅ | ✅ |
+| `PATCH /tenants/:id/applications/:appId` | แก้ชื่อ/คำอธิบาย/env/url/สถานะ | ✅ | ✅ | ✅ |
+| `DELETE /tenants/:id/applications/:appId` | ลบแอป (ต้อง cascade สิทธิ์ที่ให้ไว้) | ✅ | ✅ | ✅ |
 <!-- | `GET /tenants/:id/applications/:appId/members` | สมาชิกทั้งหมด + ใครเข้าแอปนี้ได้บ้าง | ⬜ | ⬜ | ⬜ | -->
-| `POST /.../members/:memberId` | ให้สิทธิ์สมาชิกเข้าแอป | ✅ | ✅ | ⬜ |
-| `DELETE /.../members/:memberId` | ถอนสิทธิ์ | ✅ | ✅ | ⬜ |
+| `POST /.../members/:memberId` | ให้สิทธิ์สมาชิกเข้าแอป | ✅ | ✅ | ✅ |
+| `DELETE /.../members/:memberId` | ถอนสิทธิ์ | ✅ | ✅ | ✅ |
 | `POST /tenants/:id/applications/:appId/launch` | ออก token อายุสั้นแล้วคืน URL เปิดแอป | ⬜ | ⬜ | ⬜ |
 
 **หมายเหตุ:** 3 เส้นสุดท้ายซ้ำกับ members §3 (คนละมุมของตาราง `member_app_access` เดียวกัน) — ตอนทำจริง
@@ -93,9 +94,9 @@ revoke เป็น soft flag ดูรายละเอียดใน [API_RE
 | `GET /applications/:id/tenants` | tenant ที่ได้รับอนุญาตใช้แอปนี้ | ✅ | ✅ | ✅ |
 | `POST /applications/:id/tenants` | เพิ่มสิทธิ์ให้ tenant | ✅ | ✅ | ✅ |
 | `DELETE /applications/:id/tenants/:tenantId` | ถอนสิทธิ์ tenant | ✅ | ✅ | ✅ |
-| `GET /applications/:id/members` | ผู้ใช้ทั้งหมดที่เข้าแอปนี้ได้ | ✅ | ✅ | ⬜ |
-| `GET /applications/:id/api-key` | ดู API key ของแอป | ✅ | ✅ | ⬜ |
-| `POST /applications/:id/api-key/regenerate` | ออก API key ใหม่ (ต้องเป็น super_admin) | ✅ | ✅ | ⬜ |
+| `GET /applications/:id/members` | ผู้ใช้ทั้งหมดที่เข้าแอปนี้ได้ | ✅ | ✅ | ✅ |
+| `GET /applications/:id/api-key` | ดู API key ของแอป | ✅ | ✅ | ✅ |
+| `POST /applications/:id/api-key/regenerate` | ออก API key ใหม่ (ต้องเป็น super_admin) | ✅ | ✅ | ✅ |
 
 **มีอยู่แล้วใน core/v1 ทับกับหมวดนี้:** `POST /tenants/:id/apps/enable` และ `disable` ทำงานเดียวกับ
 `POST/DELETE /applications/:id/tenants` แต่เป็น soft-disable (`ended_at`) ซึ่งดีกว่า — ตอนทำอย่าสร้างซ้ำ

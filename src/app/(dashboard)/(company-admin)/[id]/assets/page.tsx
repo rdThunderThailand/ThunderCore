@@ -1,8 +1,10 @@
 import { TenantsManagementidAssetsClient } from "@/features/platform-tenants/management/[id]/assets/TenantsManagementidAssetsClient"
+import { resolveCurrentUser } from "@/lib/current-user"
 
 export const dynamic = 'force-dynamic'
 
 export default async function CompanyAdminAssetsPage(props: { params: Promise<{ id: string }> }) {
     const { id } = await props.params
-    return <TenantsManagementidAssetsClient basePath={`/${id}`} />
+    const user = await resolveCurrentUser()
+    return <TenantsManagementidAssetsClient basePath={`/${id}`} user={user} />
 }

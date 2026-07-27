@@ -78,7 +78,15 @@ export function MembersTable({
                                         </div>
                                     </td>
                                     <td className="py-3 text-slate-600">{member.role}</td>
-                                    <td className="py-3 text-slate-600">{member.status}</td>
+                                    <td className="py-3">
+                                        <span className={
+                                            member.status === 'Inactive'
+                                                ? 'text-red-600'
+                                                : 'text-emerald-600'
+                                        }>
+                                            {member.status}
+                                        </span>
+                                    </td>
                                     <td className="py-3 text-right">
                                         <div className="relative inline-block text-left">
                                             <button

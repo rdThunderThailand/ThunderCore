@@ -10,8 +10,12 @@ export async function getAllApplications() {
     return applications.getAllApplications()
 }
 
-export async function getTenantsForSelect() {
-    return applications.getTenantsForSelect()
+export async function getAllTenantsForSelect() {
+    return applications.getAllTenantsForSelect()
+}
+
+export async function getSubTenantsForSelect(tenantId: string) {
+    return applications.getSubTenantsForSelect(tenantId)
 }
 
 export async function createApplication(data: applications.CreateApplicationDTO) {

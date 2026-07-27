@@ -32,6 +32,8 @@ export interface Application {
   portal_title?: string | null
   portal_description?: string | null
   allow_self_registration?: boolean
+  // Present on tenant-scoped listings (see TenantApplicationView) — absent on app-management views.
+  relation?: 'owned' | 'granted'
 }
 
 export type ApplicationDetails = Application
@@ -74,8 +76,8 @@ export interface AppMember {
   membershipId: string
   name: string
   email: string
-  role: 'Admin' | 'Developer' | 'Viewer'
-  status: 'Active' | 'Pending'
+  role: 'Owner' | 'Admin' | 'Developer' | 'Viewer'
+  status: 'Active' | 'Inactive'
   tenantName?: string
 }
 
