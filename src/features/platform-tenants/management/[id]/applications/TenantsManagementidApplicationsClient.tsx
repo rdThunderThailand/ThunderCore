@@ -19,6 +19,7 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
     const { t } = useTranslation()
     const role = useAuthStore((s) => s.role)
     const isSuperAdmin = role === 'super_admin'
+    const isCompanyAdmin = role === 'company_admin'
 
     const {
         applications, isLoading, searchTerm, setSearchTerm,
@@ -164,13 +165,15 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
                     className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-violet-50/50 outline-none transition-all font-bold"
                 />
 
-                <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="flex items-center whitespace-nowrap gap-2 px-6 py-3.5 bg-slate-900 text-white font-black rounded-[2rem] hover:bg-slate-800 transition-all shadow-2xl shadow-slate-200"
-                >
-                    <Plus className="w-5 h-5" />
-                    New Application
-                </button>
+                {isCompanyAdmin && (
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="flex items-center whitespace-nowrap gap-2 px-6 py-3.5 bg-slate-900 text-white font-black rounded-[2rem] hover:bg-slate-800 transition-all shadow-2xl shadow-slate-200"
+                    >
+                        <Plus className="w-5 h-5" />
+                        New Application
+                    </button>
+                )}
             </div>
 
             {/* Apps Grid */}
