@@ -11,6 +11,7 @@ const ASSETS_COMPANYADMIN = /^\/[^/]+\/assets$/
 
 export function AmbientHeader(props: HeaderProps) {
     const pathname = usePathname()
+    // console.log(pathname)
     if (ASSETS_SUPERADMIN.test(pathname) || ASSETS_COMPANYADMIN.test(pathname)) return null
     return <Header {...props} />
 }

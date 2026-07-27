@@ -38,12 +38,24 @@ function matchesFilters(asset: Asset, options?: GetAssetsOptions): boolean {
     if (!options) return true
 
     if (options.search) {
-        const term = options.search.toLowerCase()
-        const haystack = [asset.device_name, asset.name, asset.serial_number, asset.mac_address, asset.model]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase()
-        if (!haystack.includes(term)) return false
+        const term = options.search.trim().toLowerCase()
+        if (term) {
+            const rawTags = (asset.tags ?? []).map((t) => t.split(':::')[0])
+            const searchableFields = [
+                asset.device_name,
+                asset.name,
+                asset.serial_number,
+                asset.mac_address,
+                asset.model,
+                asset.site,
+                asset.zone,
+                ...rawTags,
+            ]
+            const isMatch = searchableFields.some(
+                (field) => field != null && String(field).toLowerCase().includes(term)
+            )
+            if (!isMatch) return false
+        }
     }
 
     if (options.status && options.status !== 'all') {
@@ -119,11 +131,41 @@ export async function getTenantAssets(tenantId: string, options?: GetAssetsOptio
         return { data: filtered, count: filtered.length }
     }
     try {
-        const res = await thunderCore.get<ThunderResponse<{ data: Asset[]; count: number }>>(`/assets`, {
+        const res = await thunderCore.get<unknown>(`/assets`, {
             params: { tenantId, ...options }
         })
-        console.log('asset', res.data.data)
-        return res.data.data
+        console.log('asset response:', res.data)
+
+        const raw = (res.data as { data?: unknown })?.data ?? res.data
+        let items: Asset[] = []
+
+        if (Array.isArray(raw)) {
+            items = raw as Asset[]
+        } else if (raw && typeof raw === 'object' && 'data' in raw && Array.isArray((raw as { data: unknown[] }).data)) {
+            items = (raw as { data: Asset[] }).data
+        }
+
+        // Filter items first if backend returned raw unfiltered dataset
+        let filtered = items
+        if (options && (options.search || (options.status && options.status !== 'all') || options.folderId || (options.tags && options.tags.length > 0) || options.v2AssetId || options.activeTab)) {
+            filtered = sortAssets(
+                items.filter((a) => matchesFilters(a, options)),
+                options?.sortBy
+            )
+        } else if (options?.sortBy) {
+            filtered = sortAssets(items, options.sortBy)
+        }
+
+        const totalMatchingCount = filtered.length
+
+        // Apply pagination slicing if data returned is larger than limit
+        if (options?.page && options?.limit && filtered.length > options.limit) {
+            const from = (options.page - 1) * options.limit
+            const sliced = filtered.slice(from, from + options.limit)
+            return { data: sliced, count: totalMatchingCount }
+        }
+
+        return { data: filtered, count: totalMatchingCount }
     } catch (error) {
         console.warn(`GET /assets failed for tenant ${tenantId}:`, error)
         return { data: [], count: 0 }

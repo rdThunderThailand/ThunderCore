@@ -40,6 +40,7 @@ interface AssetStore {
     currentPage: number
     setCurrentPage: (page: number) => void
     itemsPerPage: number
+    setItemsPerPage: (limit: number) => void
 
     // Folder State
     selectedFolderId: string | null
@@ -106,6 +107,7 @@ export const useAssetStore = create<AssetStore>()(
             currentPage: 1,
             setCurrentPage: (currentPage) => set({ currentPage }),
             itemsPerPage: 12,
+            setItemsPerPage: (itemsPerPage) => set({ itemsPerPage, currentPage: 1 }),
 
             // Folder State
             selectedFolderId: null,
@@ -130,7 +132,7 @@ export const useAssetStore = create<AssetStore>()(
                     const state = get()
 
                     // Fetch V2 assets concurrently
-                    getAssetsV2(tenantId).then(v2Assets => set({ v2Assets })).catch(console.error)
+                    // getAssetsV2(tenantId).then(v2Assets => set({ v2Assets })).catch(console.error)
 
                     const { assets, quota, folders, availableTags } = await getAssetDashboardData(tenantId, {
                         page: state.currentPage,

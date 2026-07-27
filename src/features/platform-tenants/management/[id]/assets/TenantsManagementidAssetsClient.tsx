@@ -5,7 +5,7 @@ import {
     AlertCircle, ChevronLeft,
     ChevronRight, Hourglass, LayoutGrid, Loader2, Monitor, Rocket, ShieldCheck, XCircle
 } from 'lucide-react'
-import { useParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams, useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 // =====================
@@ -38,6 +38,10 @@ import Header from '@/components/layout/Header'
 
 export function TenantsManagementidAssetsClient({ basePath }: { basePath?: string } = {}) {
     const params = useParams()
+    const router = useRouter()
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
+
     const tenantId = params.id as string
     console.log(tenantId)
     const base = basePath ?? `/dashboard/tenants/management/${tenantId}`
@@ -48,6 +52,7 @@ export function TenantsManagementidAssetsClient({ basePath }: { basePath?: strin
         statusFilter,
         sortBy,
         currentPage, setCurrentPage,
+        itemsPerPage, setItemsPerPage,
         selectedFolderId,
         selectedTags,
         contextMenu, setContextMenu,
@@ -66,13 +71,59 @@ export function TenantsManagementidAssetsClient({ basePath }: { basePath?: strin
     const [showCreateFolder, setShowCreateFolder] = useState<{ isOpen: boolean; parentId: string | null }>({ isOpen: false, parentId: null })
     const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null)
 
+    // Sync page & limit from URL searchParams
+    useEffect(() => {
+        const urlPage = parseInt(searchParams.get('page') || '', 10)
+        const urlLimit = parseInt(searchParams.get('limit') || '', 10)
+
+        if (!isNaN(urlPage) && urlPage > 0 && urlPage !== currentPage) {
+            setCurrentPage(urlPage)
+        }
+        if (!isNaN(urlLimit) && urlLimit > 0 && urlLimit !== itemsPerPage) {
+            setItemsPerPage(urlLimit)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams])
+
+    const handlePageChange = (newPage: number) => {
+        setCurrentPage(newPage)
+        const p = new URLSearchParams(searchParams.toString())
+        p.set('page', newPage.toString())
+        if (itemsPerPage !== 12) p.set('limit', itemsPerPage.toString())
+        router.push(`${pathname}?${p.toString()}`, { scroll: false })
+    }
+
+    const handleLimitChange = (newLimit: number) => {
+        setItemsPerPage(newLimit)
+        setCurrentPage(1)
+        const p = new URLSearchParams(searchParams.toString())
+        p.set('page', '1')
+        p.set('limit', newLimit.toString())
+        router.push(`${pathname}?${p.toString()}`, { scroll: false })
+    }
+
+    // Reset page to 1 whenever any filter option changes
+    useEffect(() => {
+        setCurrentPage(1)
+        const p = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+        if (p.get('page') && p.get('page') !== '1') {
+            p.set('page', '1')
+            const newUrl = `${pathname}?${p.toString()}`
+            if (typeof window !== 'undefined') {
+                window.history.pushState(null, '', newUrl)
+            }
+            router.replace(newUrl, { scroll: false })
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [statusFilter, searchTerm, selectedTags, selectedFolderId, activeTab, sortBy])
+
     useEffect(() => {
         const timeout = setTimeout(() => {
             fetchData(tenantId)
         }, 300)
         return () => clearTimeout(timeout)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tenantId, currentPage, searchTerm, statusFilter, selectedFolderId, selectedV2AssetId, sortBy, activeTab, selectedTags])
+    }, [tenantId, currentPage, itemsPerPage, searchTerm, statusFilter, selectedFolderId, selectedV2AssetId, sortBy, activeTab, selectedTags])
 
     // Real-time subscription for asset status updates (heartbeat)
     // useEffect(() => {
@@ -100,11 +151,73 @@ export function TenantsManagementidAssetsClient({ basePath }: { basePath?: strin
     //     }
     // }, [tenantId, updateAssetStatus])
 
-    // Pagination Logic
-    const totalPages = Math.ceil(totalCount / 12) // itemsPerPage is 12 in store
+    // Frontend UI Filtering & Pagination Logic
+    const filteredAssets = assets.filter((asset) => {
+        // Status filter check
+        if (statusFilter && statusFilter !== 'all') {
+            if (['online', 'offline', 'busy'].includes(statusFilter)) {
+                if (asset.connection_status !== statusFilter) return false
+            } else if (asset.registry_status !== statusFilter) {
+                return false
+            }
+        }
 
-    // Helper to get folder path for breadcrumbs
-    // const getFolderPath = ... (removed unused helper)
+        // Active tab check
+        if (activeTab === 'unregister') {
+            if (!['pending', 'unregistered'].includes(asset.registry_status)) return false
+        } else if (activeTab === 'player') {
+            if (asset.registry_status !== 'active') return false
+        }
+
+        // Tag filter check
+        if (selectedTags && selectedTags.length > 0) {
+            if (!asset.tags?.some((t) => selectedTags.includes(t))) return false
+        }
+
+        // Search term check
+        if (searchTerm.trim()) {
+            const term = searchTerm.trim().toLowerCase()
+            const rawTags = (asset.tags ?? []).map((t) => t.split(':::')[0])
+            const searchableFields = [
+                asset.device_name,
+                asset.name,
+                asset.serial_number,
+                asset.mac_address,
+                asset.model,
+                asset.site,
+                asset.zone,
+                ...rawTags,
+            ]
+            const isMatch = searchableFields.some(
+                (field) => field != null && String(field).toLowerCase().includes(term)
+            )
+            if (!isMatch) return false
+        }
+
+        return true
+    })
+
+    const effectiveTotalCount = searchTerm.trim()
+        ? filteredAssets.length
+        : (totalCount || filteredAssets.length)
+    const totalPages = Math.ceil(effectiveTotalCount / itemsPerPage)
+    const activePage = Math.min(currentPage, Math.max(1, totalPages || 1))
+
+    const fromItem = effectiveTotalCount === 0 ? 0 : (activePage - 1) * itemsPerPage + 1
+    const toItem = Math.min(activePage * itemsPerPage, effectiveTotalCount)
+
+    const getPageNumbers = (current: number, total: number) => {
+        if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+        if (current <= 4) return [1, 2, 3, 4, 5, '...', total]
+        if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total]
+        return [1, '...', current - 1, current, current + 1, '...', total]
+    }
+
+    // If data returned is already paginated per page (length <= itemsPerPage), display filteredAssets directly.
+    // Otherwise, if an unpaginated dataset was returned, slice by activePage.
+    const displayAssets = assets.length <= itemsPerPage
+        ? filteredAssets
+        : filteredAssets.slice((activePage - 1) * itemsPerPage, activePage * itemsPerPage)
 
     return (
         <div className="flex h-screen">
@@ -160,7 +273,7 @@ export function TenantsManagementidAssetsClient({ basePath }: { basePath?: strin
                                         </div>
                                     ) : (
                                         <div className="flex flex-wrap gap-5 content-start items-start">
-                                            {assets.map((asset, idx) => (
+                                            {displayAssets.map((asset, idx) => (
                                                 < AssetCard
                                                     key={asset.id}
                                                     asset={asset}
@@ -178,27 +291,74 @@ export function TenantsManagementidAssetsClient({ basePath }: { basePath?: strin
                                 </div>
 
                                 {/* Pagination Footer */}
-                                <div className="p-4 border-t border-slate-100 flex justify-between items-center bg-slate-50/50">
-                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                                        Page {currentPage} of {totalPages || 1} • {totalCount} items
-                                    </p>
-                                    <div className="flex gap-1.5">
-                                        <button
-                                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                                            disabled={currentPage === 1}
-                                            className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-white hover:text-blue-500 hover:border-blue-200 disabled:opacity-30 transition-all shadow-sm"
-                                        >
-                                            <ChevronLeft className="w-3.5 h-3.5" />
-                                        </button>
-                                        <div className="flex items-center px-4 py-1.5 bg-white border border-blue-500 text-blue-500 font-black text-xs rounded-lg shadow-sm shadow-blue-100">
-                                            {currentPage}
+                                <div className="p-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/50">
+                                    {/* Showing item range & Per Page selector */}
+                                    <div className="flex items-center gap-4 flex-wrap">
+                                        <p className="text-[12px] font-medium text-slate-500">
+                                            Showing <span className="font-bold text-slate-700">{fromItem}</span> to{' '}
+                                            <span className="font-bold text-slate-700">{toItem}</span> of{' '}
+                                            <span className="font-bold text-slate-700">{effectiveTotalCount}</span> items
+                                        </p>
+
+                                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                            <span>Per page:</span>
+                                            <select
+                                                value={itemsPerPage}
+                                                onChange={(e) => handleLimitChange(Number(e.target.value))}
+                                                className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 shadow-xs cursor-pointer"
+                                            >
+                                                <option value={12}>12</option>
+                                                <option value={24}>24</option>
+                                                <option value={48}>48</option>
+                                                <option value={96}>96</option>
+                                            </select>
                                         </div>
+                                    </div>
+
+                                    {/* Page Navigation Buttons */}
+                                    <div className="flex items-center gap-1">
+                                        {/* Prev Button */}
                                         <button
-                                            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                                            disabled={currentPage >= totalPages || totalPages === 0}
-                                            className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-white hover:text-blue-500 hover:border-blue-200 disabled:opacity-30 transition-all shadow-sm"
+                                            onClick={() => handlePageChange(Math.max(1, activePage - 1))}
+                                            disabled={activePage === 1}
+                                            className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-white hover:text-blue-600 hover:border-blue-300 disabled:opacity-30 transition-all shadow-xs cursor-pointer"
+                                            title="Previous Page"
                                         >
-                                            <ChevronRight className="w-3.5 h-3.5" />
+                                            <ChevronLeft className="w-4 h-4" />
+                                        </button>
+
+                                        {/* Page Number Buttons */}
+                                        {getPageNumbers(activePage, totalPages || 1).map((page, idx) => {
+                                            if (page === '...') {
+                                                return (
+                                                    <span key={`ellipsis-${idx}`} className="px-2 text-xs text-slate-400 font-bold select-none">
+                                                        ...
+                                                    </span>
+                                                )
+                                            }
+                                            const isCurrent = page === activePage
+                                            return (
+                                                <button
+                                                    key={`page-${page}`}
+                                                    onClick={() => handlePageChange(Number(page))}
+                                                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs ${isCurrent
+                                                        ? 'bg-blue-600 border border-blue-600 text-white shadow-blue-200'
+                                                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                                        }`}
+                                                >
+                                                    {page}
+                                                </button>
+                                            )
+                                        })}
+
+                                        {/* Next Button */}
+                                        <button
+                                            onClick={() => handlePageChange(Math.min(totalPages, activePage + 1))}
+                                            disabled={activePage >= totalPages || totalPages === 0}
+                                            className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-white hover:text-blue-600 hover:border-blue-300 disabled:opacity-30 transition-all shadow-xs cursor-pointer"
+                                            title="Next Page"
+                                        >
+                                            <ChevronRight className="w-4 h-4" />
                                         </button>
                                     </div>
                                 </div>
