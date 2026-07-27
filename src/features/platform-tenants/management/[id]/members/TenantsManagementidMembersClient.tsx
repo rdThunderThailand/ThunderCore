@@ -54,6 +54,8 @@ export function TenantsManagementidMembersClient() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tenantId, currentPage, searchTerm])
 
+    console.log('ไก่กา', members)
+
     const handleInviteSubmit = async (email: string, role: TenantRole) => {
         setIsSubmitting(true)
         setError(null)
@@ -110,9 +112,9 @@ export function TenantsManagementidMembersClient() {
             (member as any).role_type ||
             (member as any).role_name ||
             ''
-        ).toLowerCase().trim()
+        ).toLowerCase().trim() || ''
 
-        return ROLE_MAP[rawRole] || (rawRole ? rawRole.toUpperCase() : 'Member')
+        return ROLE_MAP[rawRole] || (rawRole ? rawRole : 'Member')
     }
 
     return (
@@ -202,7 +204,7 @@ export function TenantsManagementidMembersClient() {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredMembers.map((member) => (
+                                filteredMembers.map((member) => (console.log(member),
                                     <tr key={member.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
                                         <td className="p-4">
                                             <input type="checkbox" className="rounded border-slate-300" />

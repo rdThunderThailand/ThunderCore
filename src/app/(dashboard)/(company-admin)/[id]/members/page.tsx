@@ -5,10 +5,7 @@ export const dynamic = 'force-dynamic'
 export default function CompanyAdminMembersPage() {
     return (
         <>
-            <div>รวมทุก member</div>
             <TenantsManagementidMembersClient />
         </>
-
     )
-
 }

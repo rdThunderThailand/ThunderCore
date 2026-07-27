@@ -53,8 +53,10 @@ export async function getMemberships(
         }
     }
 
-    const res = await thunderCore.get<ThunderResponse<ThunderMemberShipsPayload>>(`/tenants/${tenantId}/members`)
+    const res = await thunderCore.get<ThunderResponse<ThunderMemberShipsPayload>>(`/tenants/${tenantId}/members`, { params: options })
+    console.log('res', res.data.data)
     return res.data.data
+
 
     // ponytail: Supabase shim — replace with axios GET core/v1/tenants/:id/members when it exists
 }

@@ -9,10 +9,11 @@ import { MOCK_ASSETS, MOCK_ASSET_FOLDERS, MOCK_DEVICE_CREDENTIALS } from './mock
 import { MOCK_ASSETS_V2 } from './mock/assets-v2'
 import { MOCK_DEVICES } from './mock/devices'
 import { MOCK_TENANTS } from './mock/tenants'
+import { thunderCore } from './thunder-core'
 
 // Living endpoint catalog — each signature is the future REST contract.
 // Swap bodies to axios (core/v1/tenants/:id/assets) when the endpoints land; callers don't change.
-
+type ThunderResponse<T> = { success: boolean; data: T }
 const noEndpoint = (fn: string): never => {
     throw new Error(`${fn}: no REST endpoint yet — set NEXT_PUBLIC_DEV_BYPASS=true to use mock data`)
 }
@@ -112,7 +113,9 @@ export async function getTenantAssets(tenantId: string, options?: GetAssetsOptio
         }
         return { data: filtered, count: filtered.length }
     }
-    return noEndpoint('getTenantAssets')
+    const res = await thunderCore.get<ThunderResponse<{ data: Asset[]; count: number }>>(`/tenants/${tenantId}/assets`, { params: options })
+    console.log('asset', res.data.data)
+    return res.data.data
 }
 
 export async function getAssetFolders(tenantId: string): Promise<AssetFolder[]> {

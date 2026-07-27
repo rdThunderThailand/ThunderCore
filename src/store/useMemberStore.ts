@@ -47,6 +47,7 @@ export const useMemberStore = create<MemberStore>((set, get) => ({
                 totalCount: res.count,
                 isLoading: false
             })
+            console.log('fetchmem', res.data)
         } catch (error) {
             console.error('Error fetching members:', error)
             set({ isLoading: false })

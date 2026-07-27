@@ -241,7 +241,7 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
                             <span className="text-sm font-bold">Upload</span>
                         </div>
                         <div className="text-center">
-                            <p className="text-sm font-bold text-slate-900">Profile Image</p>
+                            <p className="text-sm font-bold text-slate-900">{`${member?.profiles?.first_name} ${member?.profiles?.last_name}`}</p>
                             <p className="text-xs text-slate-400 mt-1">Recommended: 400x400px</p>
                         </div>
                     </div>

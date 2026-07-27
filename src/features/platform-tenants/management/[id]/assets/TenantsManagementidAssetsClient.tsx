@@ -39,6 +39,7 @@ import Header from '@/components/layout/Header'
 export function TenantsManagementidAssetsClient({ basePath }: { basePath?: string } = {}) {
     const params = useParams()
     const tenantId = params.id as string
+    console.log(tenantId)
     const base = basePath ?? `/dashboard/tenants/management/${tenantId}`
     const {
         assets, totalCount, quota, isLoading,
@@ -55,7 +56,7 @@ export function TenantsManagementidAssetsClient({ basePath }: { basePath?: strin
     } = useAssetStore()
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { isLocalSidebarCollapsed: isSidebarCollapsed, setIsLocalSidebarCollapsed: setIsSidebarCollapsed } = useUIStore()
-
+    console.log(assets)
     // Modals
     const [showRegister, setShowRegister] = useState(false)
     const [showUnregister, setShowUnregister] = useState<Asset | null>(null)

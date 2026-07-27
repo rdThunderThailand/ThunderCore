@@ -130,7 +130,7 @@ export function OrgSettingsClient({ initialTenant, userRole }: OrgSettingsClient
                             <Plus className="w-8 h-8 text-slate-400 group-hover:text-blue-500 mb-1" />
                             <span className="text-xs font-medium text-slate-500 group-hover:text-blue-500">Upload</span>
                         </div>
-                        <h3 className="text-base font-bold text-slate-900">{formData.name}</h3>
+                        <h3 className="text-base font-bold text-slate-900">{initialTenant.name}</h3>
                         <p className="text-xs text-slate-400 mt-0.5">Recommended: 400x400px</p>
                     </div>
 
