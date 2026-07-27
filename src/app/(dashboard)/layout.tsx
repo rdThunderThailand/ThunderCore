@@ -3,6 +3,7 @@ import { DashboardMain } from "@/components/layout/DashboardMain"
 import { ToastProvider } from "@/components/toast"
 import { I18nProvider } from "@/i18n/context"
 import { AmbientHeader } from "@/components/layout/AmbientHeader"
+import { AuthStoreSync } from "@/components/layout/AuthStoreSync"
 import { resolveCurrentUser } from "@/lib/current-user"
 import React, { Suspense } from "react"
 
@@ -12,6 +13,7 @@ async function DashboardLayout({ children }: { children: React.ReactNode }) {
     return (
         <I18nProvider>
             <ToastProvider>
+                <AuthStoreSync user={user} />
                 <div className="flex h-screen w-full bg-[radial-gradient(ellipse_at_top_left,rgba(219,234,254,0.6),rgb(248,250,252),rgb(255,255,255))] overflow-hidden">
                     <div className="hidden lg:flex shrink-0 relative z-50">
                         <Suspense fallback={<div className="w-64 h-full bg-white/0" />}>
