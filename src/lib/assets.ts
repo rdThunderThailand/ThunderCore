@@ -98,7 +98,12 @@ export async function getTenantQuota(tenantId: string): Promise<TenantQuota> {
         const used = MOCK_ASSETS.filter((a) => a.tenant_id === tenantId && a.registry_status !== 'unregistered').length
         return { used, total, remaining: Math.max(0, total - used) }
     }
-    return noEndpoint('getTenantQuota')
+    try {
+        const res = await thunderCore.get<ThunderResponse<TenantQuota>>(`/tenants/${tenantId}/quota`)
+        return res.data.data
+    } catch {
+        return { used: 0, total: 50, remaining: 50 }
+    }
 }
 
 export async function getTenantAssets(tenantId: string, options?: GetAssetsOptions): Promise<{ data: Asset[]; count: number }> {
@@ -113,9 +118,16 @@ export async function getTenantAssets(tenantId: string, options?: GetAssetsOptio
         }
         return { data: filtered, count: filtered.length }
     }
-    const res = await thunderCore.get<ThunderResponse<{ data: Asset[]; count: number }>>(`/tenants/${tenantId}/assets`, { params: options })
-    console.log('asset', res.data.data)
-    return res.data.data
+    try {
+        const res = await thunderCore.get<ThunderResponse<{ data: Asset[]; count: number }>>(`/assets`, {
+            params: { tenantId, ...options }
+        })
+        console.log('asset', res.data.data)
+        return res.data.data
+    } catch (error) {
+        console.warn(`GET /assets failed for tenant ${tenantId}:`, error)
+        return { data: [], count: 0 }
+    }
 }
 
 export async function getAssetFolders(tenantId: string): Promise<AssetFolder[]> {
@@ -124,7 +136,12 @@ export async function getAssetFolders(tenantId: string): Promise<AssetFolder[]> 
             .filter((f) => f.tenant_id === tenantId)
             .sort((a, b) => a.name.localeCompare(b.name))
     }
-    return noEndpoint('getAssetFolders')
+    try {
+        const res = await thunderCore.get<ThunderResponse<AssetFolder[]>>(`/tenants/${tenantId}/folders`)
+        return res.data.data
+    } catch {
+        return []
+    }
 }
 
 export async function getAssetDashboardData(tenantId: string, options?: GetAssetsOptions) {
@@ -142,7 +159,19 @@ export async function getAssetDashboardData(tenantId: string, options?: GetAsset
 
         return { assets, quota, folders, availableTags: Array.from(allTags) }
     }
-    return noEndpoint('getAssetDashboardData')
+
+    const [assets, quota, folders] = await Promise.all([
+        getTenantAssets(tenantId, options),
+        getTenantQuota(tenantId),
+        getAssetFolders(tenantId),
+    ])
+
+    const allTags = new Set<string>()
+    if (Array.isArray(assets?.data)) {
+        assets.data.forEach((a) => a.tags?.forEach((t) => allTags.add(t)))
+    }
+
+    return { assets, quota, folders, availableTags: Array.from(allTags) }
 }
 
 export async function createAsset(tenantId: string, input: CreateAssetInput): Promise<{ asset: Asset; credentials: DeviceCredentials }> {

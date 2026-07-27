@@ -7,5 +7,5 @@ import { MOCK_ASSETS_V2 } from './mock/assets-v2'
 
 export async function getAssetsV2(tenantId: string): Promise<AssetWithDevices[]> {
     if (isDevBypass()) return MOCK_ASSETS_V2.filter((a) => a.tenant_id === tenantId)
-    throw new Error('getAssetsV2: no REST endpoint yet — set NEXT_PUBLIC_DEV_BYPASS=true to use mock data')
+    return []
 }

@@ -56,7 +56,7 @@ export function TenantsManagementidAssetsClient({ basePath }: { basePath?: strin
     } = useAssetStore()
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { isLocalSidebarCollapsed: isSidebarCollapsed, setIsLocalSidebarCollapsed: setIsSidebarCollapsed } = useUIStore()
-    console.log(assets)
+    console.log(assets, 'ในหน้า ยูไอ')
     // Modals
     const [showRegister, setShowRegister] = useState(false)
     const [showUnregister, setShowUnregister] = useState<Asset | null>(null)
@@ -161,7 +161,7 @@ export function TenantsManagementidAssetsClient({ basePath }: { basePath?: strin
                                     ) : (
                                         <div className="flex flex-wrap gap-5 content-start items-start">
                                             {assets.map((asset, idx) => (
-                                                <AssetCard
+                                                < AssetCard
                                                     key={asset.id}
                                                     asset={asset}
                                                     tenantId={tenantId}
