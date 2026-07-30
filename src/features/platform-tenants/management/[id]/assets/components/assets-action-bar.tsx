@@ -2,7 +2,6 @@ import { useAssetStore } from '@/store/useAssetStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { Search, ChevronDown, Plus } from 'lucide-react'
 import { AssetRegistryStatus } from '@/types/assets'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 
 export const statusConfig: Record<AssetRegistryStatus, { label: string; color: string; dot: string; bg: string }> = {
@@ -37,18 +36,8 @@ export function AssetsActionBar({
     const role = useAuthStore((s) => s.role)
     const isSuperAdmin = role === 'super_admin'
 
-    const router = useRouter()
-    const pathname = usePathname()
-
     const resetPageUrlToOne = () => {
         setCurrentPage(1)
-        const p = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
-        p.set('page', '1')
-        const newUrl = `${pathname}?${p.toString()}`
-        if (typeof window !== 'undefined') {
-            window.history.pushState(null, '', newUrl)
-        }
-        router.replace(newUrl, { scroll: false })
     }
 
     const handleSearchChange = (val: string) => {

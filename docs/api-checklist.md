@@ -44,14 +44,14 @@
 ---
 
 ## 3. Members · `src/lib/members.ts`, `member-applications.ts`
-
+role : company_admin
 | Endpoint | ทำอะไร | BE | FE | E2E |
 |---|---|:--:|:--:|:--:|
-| `GET /tenants/:id/members` | รายชื่อสมาชิก + ค้นหา + แบ่งหน้า | ✅ | ⬜ | ⬜ |
-| `POST /tenants/:id/members` | เพิ่มผู้ใช้ที่มีบัญชีอยู่แล้วเข้า tenant | ✅ | ⬜ | ⬜ |
+| `GET /tenants/:id/members` | รายชื่อสมาชิก + ค้นหา + แบ่งหน้า | ✅ | ✅ | ✅ |
+| `POST /tenants/:id/members` | เพิ่มผู้ใช้ที่มีบัญชีอยู่แล้วเข้า tenant | ✅ | ✅ | ✅ |
 | `GET /tenants/:id/members/:memberId` | รายละเอียดสมาชิก (หน้า settings) | ✅ | ⬜ | ⬜ |
 | `DELETE /tenants/:id/members/:memberId` | เอาสมาชิกออกจาก tenant | ✅ | ⬜ | ⬜ |
-| `PATCH /tenants/:id/members/:memberId/role` | เปลี่ยน role (แทนที่ ไม่ใช่เพิ่ม) | ✅ | ⬜ | ⬜ |
+| `PATCH /tenants/:id/members/:memberId/role` | เปลี่ยน role (แทนที่ ไม่ใช่เพิ่ม) | ✅ | ⬜ | ⬜ | ไม่สามารถเปลี่ยนเป็น auditor ได้เพราะไม่มี auditor ใน database
 | `GET /tenants/:id/members/:memberId/applications` | แอปที่สมาชิกคนนี้เข้าถึงได้ | ✅ | ⬜ | ⬜ |
 | `POST /tenants/:id/members/:memberId/applications` | ให้สิทธิ์สมาชิกเข้าแอป | ✅ | ⬜ | ⬜ |
 | `DELETE /.../applications/:appId` | ถอนสิทธิ์ (soft flag ไม่ลบ row) | ✅ | ⬜ | ⬜ |

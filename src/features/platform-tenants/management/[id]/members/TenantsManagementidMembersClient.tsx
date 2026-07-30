@@ -19,6 +19,7 @@ const ROLE_MAP: Record<string, string> = {
     'super_admin': 'Super Admin',
     'department_admin': 'Department Admin',
     'company_admin': 'Company Admin',
+    'admin_company': 'Company Admin',
     'executive_viewer': 'Executive Viewer',
     'operator': 'Operator',
     'viewer_auditor': 'Auditor',
@@ -204,7 +205,7 @@ export function TenantsManagementidMembersClient() {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredMembers.map((member) => (console.log(member),
+                                filteredMembers.map((member) => (
                                     <tr key={member.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
                                         <td className="p-4">
                                             <input type="checkbox" className="rounded border-slate-300" />

@@ -5,7 +5,7 @@ import {
     AlertCircle, ChevronLeft,
     ChevronRight, Hourglass, LayoutGrid, Loader2, Monitor, Rocket, ShieldCheck, XCircle
 } from 'lucide-react'
-import { usePathname, useRouter, useSearchParams, useParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 // =====================
@@ -38,10 +38,6 @@ import Header from '@/components/layout/Header'
 
 export function TenantsManagementidAssetsClient({ basePath }: { basePath?: string } = {}) {
     const params = useParams()
-    const router = useRouter()
-    const pathname = usePathname()
-    const searchParams = useSearchParams()
-
     const tenantId = params.id as string
     console.log(tenantId)
     const base = basePath ?? `/dashboard/tenants/management/${tenantId}`
@@ -71,49 +67,18 @@ export function TenantsManagementidAssetsClient({ basePath }: { basePath?: strin
     const [showCreateFolder, setShowCreateFolder] = useState<{ isOpen: boolean; parentId: string | null }>({ isOpen: false, parentId: null })
     const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null)
 
-    // Sync page & limit from URL searchParams
-    useEffect(() => {
-        const urlPage = parseInt(searchParams.get('page') || '', 10)
-        const urlLimit = parseInt(searchParams.get('limit') || '', 10)
-
-        if (!isNaN(urlPage) && urlPage > 0 && urlPage !== currentPage) {
-            setCurrentPage(urlPage)
-        }
-        if (!isNaN(urlLimit) && urlLimit > 0 && urlLimit !== itemsPerPage) {
-            setItemsPerPage(urlLimit)
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams])
-
     const handlePageChange = (newPage: number) => {
         setCurrentPage(newPage)
-        const p = new URLSearchParams(searchParams.toString())
-        p.set('page', newPage.toString())
-        if (itemsPerPage !== 12) p.set('limit', itemsPerPage.toString())
-        router.push(`${pathname}?${p.toString()}`, { scroll: false })
     }
 
     const handleLimitChange = (newLimit: number) => {
         setItemsPerPage(newLimit)
         setCurrentPage(1)
-        const p = new URLSearchParams(searchParams.toString())
-        p.set('page', '1')
-        p.set('limit', newLimit.toString())
-        router.push(`${pathname}?${p.toString()}`, { scroll: false })
     }
 
     // Reset page to 1 whenever any filter option changes
     useEffect(() => {
         setCurrentPage(1)
-        const p = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
-        if (p.get('page') && p.get('page') !== '1') {
-            p.set('page', '1')
-            const newUrl = `${pathname}?${p.toString()}`
-            if (typeof window !== 'undefined') {
-                window.history.pushState(null, '', newUrl)
-            }
-            router.replace(newUrl, { scroll: false })
-        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [statusFilter, searchTerm, selectedTags, selectedFolderId, activeTab, sortBy])
 
