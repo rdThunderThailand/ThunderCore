@@ -7,7 +7,7 @@ import { AppWindow, Globe, LayoutGrid, Loader2, Plus, Search, Trash2, X } from '
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { createApplication, deleteApplication, getAllApplications, getTenantsForSelect } from './actions'
+import { createApplication, deleteApplication, getAllApplications, getAllTenantsForSelect } from './actions'
 
 const STATUS_STYLES: Record<NonNullable<Application['status']>, string> = {
     active: 'bg-green-50 text-green-600',
@@ -28,7 +28,7 @@ export function ApplicationHomeClient() {
     const [page, setPage] = useState(1)
 
     useEffect(() => {
-        Promise.all([getAllApplications(), getTenantsForSelect()])
+        Promise.all([getAllApplications(), getAllTenantsForSelect()])
             .then(([appsData, tenantList]) => {
                 setApps(appsData)
                 setTenants(tenantList)

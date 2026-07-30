@@ -48,7 +48,7 @@ export function ApplicationManagementidMembersClient({
 
     const appName = currentApp?.name ?? ''
 
-    const handleInvite = async (memberId: string, role: 'Admin' | 'Developer' | 'Viewer') => {
+    const handleInvite = async (memberId: string, role: 'Owner' | 'Admin' | 'Developer' | 'Viewer') => {
         setIsInviting(true)
         try {
             await inviteAppMember(tenantId, appId, memberId, role)

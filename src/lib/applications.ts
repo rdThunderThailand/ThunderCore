@@ -20,10 +20,17 @@ export async function getAllApplications(): Promise<Application[]> {
     return res.data.data
 }
 
-/** Owner picker for the create modal. */
-export async function getTenantsForSelect(): Promise<Array<{ id: string; name: string }>> {
+/** Owner picker for the create-application modal — every tenant on the platform. */
+export async function getAllTenantsForSelect(): Promise<Array<{ id: string; name: string }>> {
     if (isDevBypass()) return MOCK_TENANTS.map(({ id, name }) => ({ id, name }))
     const res = await thunderCore.get<ThunderResponse<Tenant[]>>('/tenants')
+    return res.data.data.map((t) => ({ id: t.id, name: t.name }))
+}
+
+/** Add-tenant-access picker — only sub-tenants of the app's owning tenant. */
+export async function getSubTenantsForSelect(tenantId: string): Promise<Array<{ id: string; name: string }>> {
+    if (isDevBypass()) return MOCK_TENANTS.map(({ id, name }) => ({ id, name }))
+    const res = await thunderCore.get<ThunderResponse<Tenant[]>>(`/tenants/${tenantId}/sub-tenants`)
     return res.data.data.map((t) => ({ id: t.id, name: t.name }))
 }
 
@@ -171,7 +178,7 @@ const MOCK_APP_TENANTS = new Map<string, ApplicationTenantsAccess[]>(
 
 
 const appAccessRoleLabel = (r: string): AppMember['role'] =>
-    r === 'owner' ? 'Admin' : r === 'admin' ? 'Developer' : 'Viewer'
+    r === 'owner' ? 'Owner' : r === 'admin' ? 'Admin' : r === 'developer' ? 'Developer' : 'Viewer'
 
 // Raw row shape returned by GET /applications/:id/members — not AppMember-shaped,
 // must be mapped (full_name -> name, is_active -> status, tenant_name -> tenantName, ...).
@@ -197,7 +204,7 @@ export async function getApplicationMembers(appId: string): Promise<AppMember[]>
                     name: membership?.user?.full_name ?? 'Unknown User',
                     email: membership?.user?.email ?? 'No email',
                     role: appAccessRoleLabel(access.role),
-                    status: access.is_active ? 'Active' as const : 'Pending' as const,
+                    status: access.is_active ? 'Active' as const : 'Inactive' as const,
                     tenantName: MOCK_TENANTS.find((t) => t.id === membership?.tenant_id)?.name,
                 }
             })
@@ -210,7 +217,7 @@ export async function getApplicationMembers(appId: string): Promise<AppMember[]>
         name: row.full_name || 'Unknown User',
         email: row.email || 'No email',
         role: appAccessRoleLabel(row.role),
-        status: row.is_active ? 'Active' as const : 'Pending' as const,
+        status: row.is_active ? 'Active' as const : 'Inactive' as const,
         tenantName: row.tenant_name ?? undefined,
     }))
 }

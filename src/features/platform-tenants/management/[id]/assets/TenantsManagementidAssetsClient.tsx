@@ -30,13 +30,14 @@ import { UnregisterModal } from './components/unregister-modal'
 import { useAssetStore } from '@/store/useAssetStore'
 import { useUIStore } from '@/store/useUIStore'
 import Header from '@/components/layout/Header'
+import type { UserProfile } from '@/store/useAuthStore'
 
 
 // =====================
 // MAIN PAGE
 // =====================
 
-export function TenantsManagementidAssetsClient({ basePath }: { basePath?: string } = {}) {
+export function TenantsManagementidAssetsClient({ basePath, user }: { basePath?: string; user?: UserProfile } = {}) {
     const params = useParams()
     const tenantId = params.id as string
     console.log(tenantId)
@@ -196,7 +197,7 @@ export function TenantsManagementidAssetsClient({ basePath }: { basePath?: strin
             <div className="flex-1 flex min-w-0 h-screen overflow-hidden">
                 <div className="flex-1 flex flex-col min-w-0 overflow-hidden h-screen">
                     {/* Top Header replacing global Navbar */}
-                    <Header />
+                    <Header user={user} />
 
                     {/* Main Content Workspace */}
                     <div className="flex-1 p-6 overflow-y-auto">

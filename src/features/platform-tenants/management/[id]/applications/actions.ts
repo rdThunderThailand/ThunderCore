@@ -15,21 +15,22 @@ export async function createApplication(data: {
     environment: 'production' | 'staging' | 'development'
     url?: string
 }) {
-    return tenantApplications.createApplication(data)
+    return tenantApplications.createTenantApplication(data)
 }
 
-export async function updateApplication(applicationId: string, data: {
+export async function updateApplication(tenantId: string, applicationId: string, data: {
     name?: string
     description?: string
     status?: 'active' | 'inactive' | 'maintenance'
     environment?: 'production' | 'staging' | 'development'
     url?: string
+    logo_url?: string | null
 }) {
-    return tenantApplications.updateApplication(applicationId, data)
+    return tenantApplications.updateTenantApplication(tenantId, applicationId, data)
 }
 
 export async function deleteApplication(applicationId: string, tenantId: string) {
-    return tenantApplications.deleteApplication(applicationId, tenantId)
+    return tenantApplications.deleteTenantApplication(tenantId, applicationId)
 }
 
 export async function revokeMemberAppAccess(
@@ -44,7 +45,7 @@ export async function inviteMember(
     tenantId: string,
     applicationId: string,
     memberId: string,
-    role: 'Admin' | 'Developer' | 'Viewer'
+    role: 'Owner' | 'Admin' | 'Developer' | 'Viewer'
 ) {
     return tenantApplications.inviteMember(tenantId, applicationId, memberId, role)
 }
@@ -53,5 +54,5 @@ export async function launchApplication(
     tenantId: string,
     applicationId: string
 ) {
-    return tenantApplications.launchApplication(tenantId, applicationId)
+    return tenantApplications.launchTenantApplication(tenantId, applicationId)
 }

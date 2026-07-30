@@ -8,7 +8,7 @@ import {
     addApplicationAuthorization,
     getApplicationById,
     getApplicationTenants,
-    getTenantsForSelect,
+    getSubTenantsForSelect,
     removeApplicationAuthorization,
     updateApplication,
 } from '../../actions'
@@ -265,6 +265,7 @@ export function ApplicationidSettingsClient({ appId }: { appId: string }) {
             {isAddOpen && (
                 <AddTenantModal
                     appId={appId}
+                    tenantId={app.tenant_id ?? ''}
                     existingIds={tenants.map((t) => t.tenant_id)}
                     onClose={() => setIsAddOpen(false)}
                     onAdded={async () => {
@@ -287,11 +288,13 @@ function TenantAvatar({ name }: { name: string }) {
 
 function AddTenantModal({
     appId,
+    tenantId: ownerTenantId,
     existingIds,
     onClose,
     onAdded,
 }: {
     appId: string
+    tenantId: string
     existingIds: string[]
     onClose: () => void
     onAdded: () => void
@@ -302,7 +305,7 @@ function AddTenantModal({
     const [isSaving, setIsSaving] = useState(false)
 
     useEffect(() => {
-        getTenantsForSelect()
+        getSubTenantsForSelect(ownerTenantId)
             .then((all) => {
                 const available = all.filter((o) => !existingIds.includes(o.id))
                 setOptions(available)

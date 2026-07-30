@@ -2,7 +2,7 @@ import { Application } from '@/types/applications'
 import { isDevBypass } from './dev'
 import { MOCK_APPLICATIONS } from './mock/applications'
 import { MOCK_APPLICATION_MEMBERS } from './mock/application-members'
-import { thunderCore } from './thunder-core'
+import { isAxiosError, thunderCore } from './thunder-core'
 import { TenantApplicationView } from '@/types/tenant-applications'
 
 // Living endpoint catalog for the tenant-scoped applications surface — each signature is the
@@ -44,7 +44,7 @@ type CreateApplicationInput = {
     url?: string
 }
 
-export async function createApplication(data: CreateApplicationInput): Promise<Application> {
+export async function createTenantApplication(data: CreateApplicationInput): Promise<Application> {
     if (isDevBypass()) {
         const now = new Date()
         return {
@@ -59,8 +59,21 @@ export async function createApplication(data: CreateApplicationInput): Promise<A
             updated_at: now,
         }
     }
-    const res = await thunderCore.post<ThunderResponse<{ application: Application }>>(`/tenants/${data.tenantId}/applications`, data)
-    return res.data.data.application
+    const { tenantId, url, ...payload } = data
+    try {
+        const res = await thunderCore.post<ThunderResponse<Application>>(`/tenants/${tenantId}/applications`, {
+            ...payload,
+            // Backend schema is z.string().url().nullable().optional() — '' fails .url(), only a real URL or an omitted key pass.
+            url: url?.trim() || undefined,
+        })
+        return res.data.data
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.data) {
+            const body = error.response.data as { message?: string; error?: string }
+            throw new Error(body.message || body.error || `Failed to create application (${error.response.status})`)
+        }
+        throw error
+    }
 }
 
 type UpdateApplicationInput = {
@@ -69,18 +82,33 @@ type UpdateApplicationInput = {
     status?: 'active' | 'inactive' | 'maintenance'
     environment?: 'production' | 'staging' | 'development'
     url?: string
+    logo_url?: string | null
 }
 
-export async function updateApplication(tenantId: string, applicationId: string, data: UpdateApplicationInput): Promise<Application> {
+export async function updateTenantApplication(tenantId: string, applicationId: string, data: UpdateApplicationInput): Promise<Application> {
     if (isDevBypass()) {
         const base = MOCK_APPLICATIONS.find((a) => a.id === applicationId) ?? MOCK_APPLICATIONS[0]
         return { ...base, ...data, id: applicationId, updated_at: new Date() }
     }
-    const res = await thunderCore.patch<ThunderResponse<{ application: Application }>>(`/tenants/${tenantId}/applications/${applicationId}`, data)
-    return res.data.data.application
+    const { url, logo_url, ...payload } = data
+    try {
+        const res = await thunderCore.patch<ThunderResponse<Application>>(`/tenants/${tenantId}/applications/${applicationId}`, {
+            ...payload,
+            // Same '' vs .url() problem as create — only send url if it's non-empty.
+            ...(url !== undefined ? { url: url.trim() || undefined } : {}),
+            ...(logo_url !== undefined ? { logo_url: logo_url?.trim() || null } : {}),
+        })
+        return res.data.data
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.data) {
+            const body = error.response.data as { message?: string; error?: string }
+            throw new Error(body.message || body.error || `Failed to update application (${error.response.status})`)
+        }
+        throw error
+    }
 }
 
-export async function deleteApplication(tenantId: string, applicationId: string): Promise<void> {
+export async function deleteTenantApplication(tenantId: string, applicationId: string): Promise<void> {
     if (isDevBypass()) {
         return
     }
@@ -89,8 +117,8 @@ export async function deleteApplication(tenantId: string, applicationId: string)
 
 
 
-const appRoleToBackend = (role: 'Admin' | 'Developer' | 'Viewer'): string =>
-    role === 'Admin' ? 'owner' : role === 'Developer' ? 'admin' : 'user'
+const appRoleToBackend = (role: 'Owner' | 'Admin' | 'Developer' | 'Viewer'): string =>
+    role === 'Owner' ? 'owner' : role === 'Admin' ? 'admin' : role === 'Developer' ? 'developer' : 'viewer'
 
 // memberId here is memberships.id (tenant membership), not a member_app_access row id —
 // this grants an existing tenant member access to the app, it doesn't invite by email.
@@ -98,7 +126,7 @@ export async function inviteMember(
     tenantId: string,
     applicationId: string,
     memberId: string,
-    role: 'Admin' | 'Developer' | 'Viewer'
+    role: 'Owner' | 'Admin' | 'Developer' | 'Viewer'
 ): Promise<{ id: string, application_id: string }> {
     const backendRole = appRoleToBackend(role)
     if (isDevBypass()) {
@@ -143,10 +171,10 @@ export async function revokeMemberAppAccess(tenantId: string, applicationId: str
 
 
 
-export async function launchApplication(tenantId: string, applicationId: string): Promise<string> {
+export async function launchTenantApplication(tenantId: string, applicationId: string): Promise<string> {
     if (isDevBypass()) {
         const app = MOCK_APPLICATIONS.find((a) => a.id === applicationId && a.tenant_id === tenantId)
         return app?.url ?? '#'
     }
-    return noEndpoint('launchApplication')
+    return noEndpoint('launchTenantApplication')
 }

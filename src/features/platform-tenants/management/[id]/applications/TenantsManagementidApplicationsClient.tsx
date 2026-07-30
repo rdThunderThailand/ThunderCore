@@ -5,8 +5,8 @@ import { useApplicationStore } from '@/store/useApplicationStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { Application } from '@/types/applications'
 import {
-    AlertCircle, AppWindow, Code, ExternalLink, Globe, Loader2, MoreVertical, Plus,
-    Search, Server, Settings, Trash2, Users, X
+    AlertCircle, AppWindow, Code, ExternalLink, Globe, Loader2, Plus,
+    Search, Server, Settings, X
 } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -19,22 +19,18 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
     const { t } = useTranslation()
     const role = useAuthStore((s) => s.role)
     const isSuperAdmin = role === 'super_admin'
+    const isCompanyAdmin = role === 'company_admin'
 
     const {
         applications, isLoading, searchTerm, setSearchTerm,
-        applicationMembers, isMembersLoading,
-        fetchApplications, createApp, updateApp, deleteApp,
-        fetchApplicationMembers, revokeAccess, getLaunchUrl
+        fetchApplications, createApp, updateApp, getLaunchUrl
     } = useApplicationStore()
 
     // Modal States
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [editingApp, setEditingApp] = useState<Application | null>(null)
-    const [accessApp, setAccessApp] = useState<Application | null>(null)
-    const [deleteConfirm, setDeleteConfirm] = useState<Application | null>(null)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [showApiKey, setShowApiKey] = useState<{ id: string; name: string } | null>(null)
-    const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
 
     // Form States
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -52,12 +48,6 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
         fetchApplications(tenantId)
         // console.log('tenantId', tenantId)
     }, [tenantId, fetchApplications])
-
-    useEffect(() => {
-        if (accessApp) {
-            fetchApplicationMembers(accessApp.id)
-        }
-    }, [accessApp, fetchApplicationMembers])
 
     const resetForm = () => {
         setFormData({ name: '', description: '', environment: 'production', url: '' })
@@ -89,7 +79,7 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
         setIsSubmitting(true)
         setError(null)
         try {
-            await updateApp(editingApp.id, formData)
+            await updateApp(tenantId, editingApp.id, formData)
             setEditingApp(null)
             resetForm()
             setSuccess(t('applications.updateSuccess'))
@@ -102,23 +92,6 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
         }
     }
 
-    const handleDelete = async () => {
-        if (!deleteConfirm) return
-        setIsSubmitting(true)
-        setError(null)
-        try {
-            await deleteApp(deleteConfirm.id, tenantId)
-            setDeleteConfirm(null)
-            setSuccess(t('applications.deleteSuccess'))
-            setTimeout(() => setSuccess(null), 3000)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-            setError(err.message || 'Failed to delete application')
-        } finally {
-            setIsSubmitting(false)
-        }
-    }
-
     const handleLaunch = async (app: Application) => {
         try {
             const launch_url = await getLaunchUrl(tenantId, app.id)
@@ -126,43 +99,6 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setError(err.message || 'Failed to launch application')
-        }
-    }
-
-    const handleStatusToggle = async (app: Application) => {
-        try {
-            const newStatus = app.status === 'active' ? 'inactive' : 'active'
-            await updateApp(app.id, { status: newStatus })
-            setSuccess(`Application ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`)
-            setTimeout(() => setSuccess(null), 3000)
-            setActiveDropdown(null)
-        } catch (err) {
-            const error = err as Error
-            setError(error.message)
-        }
-    }
-
-    const openAccessModal = async (app: Application) => {
-        setAccessApp(app)
-        setActiveDropdown(null)
-        try {
-            await fetchApplicationMembers(app.id)
-        } catch (err) {
-            console.error('Error loading application members:', err)
-            setError('Failed to load application members')
-        }
-    }
-
-    const handleRevokeAccess = async (accessId: string) => {
-        if (!accessApp) return
-
-        try {
-            await revokeAccess(tenantId, accessApp.id, accessId)
-            setSuccess('Access revoked')
-            setTimeout(() => setSuccess(null), 2000)
-        } catch (err) {
-            const error = err as Error
-            setError(error.message)
         }
     }
 
@@ -229,13 +165,15 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
                     className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-violet-50/50 outline-none transition-all font-bold"
                 />
 
-                <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="flex items-center whitespace-nowrap gap-2 px-6 py-3.5 bg-slate-900 text-white font-black rounded-[2rem] hover:bg-slate-800 transition-all shadow-2xl shadow-slate-200"
-                >
-                    <Plus className="w-5 h-5" />
-                    New Application
-                </button>
+                {isCompanyAdmin && (
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="flex items-center whitespace-nowrap gap-2 px-6 py-3.5 bg-slate-900 text-white font-black rounded-[2rem] hover:bg-slate-800 transition-all shadow-2xl shadow-slate-200"
+                    >
+                        <Plus className="w-5 h-5" />
+                        New Application
+                    </button>
+                )}
             </div>
 
             {/* Apps Grid */}
@@ -286,7 +224,9 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
                                             {!isSuperAdmin && (
                                                 <button
                                                     onClick={() => router.push(`${base}/${app.id}`)}
-                                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 text-slate-900 text-xs font-black rounded-md hover:bg-slate-200 transition-all"
+                                                    disabled={app.relation === 'granted'}
+                                                    title={app.relation === 'granted' ? 'Only the owning tenant can edit this application' : undefined}
+                                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 text-slate-900 text-xs font-black rounded-md hover:bg-slate-200 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-slate-100"
                                                 >
                                                     <Settings className="w-4 h-4" />
                                                     Edit Details
@@ -305,50 +245,7 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
                                     </div>
 
                                 </div>
-                                {/* <div className="relative flex-shrink-0">
-                                    <button
-                                        onClick={() => setActiveDropdown(activeDropdown === app.id ? null : app.id)}
-                                        className="p-2 text-slate-300 hover:text-slate-900 transition-colors"
-                                    >
-                                        <MoreVertical className="w-5 h-5" />
-                                    </button>
-                                    {activeDropdown === app.id && (
-                                        <>
-                                            <div className="fixed inset-0 z-10" onClick={() => setActiveDropdown(null)} />
-                                            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-2xl shadow-2xl z-20 py-2">
-                                                <button
-                                                    onClick={() => openAccessModal(app)}
-                                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all"
-                                                >
-                                                    <Users className="w-4 h-4" />
-                                                    Manage Access
-                                                </button>
-                                                <button
-                                                    onClick={() => handleStatusToggle(app)}
-                                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all"
-                                                >
-                                                    <AppWindow className="w-4 h-4" />
-                                                    {app.status === 'active' ? 'Deactivate' : 'Activate'}
-                                                </button>
-                                                <div className="my-1 mx-2 border-t border-slate-100" />
-                                                <button
-                                                    onClick={() => {
-                                                        setDeleteConfirm(app)
-                                                        setActiveDropdown(null)
-                                                    }}
-                                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 transition-all"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        </>
-                                    )}
-                                </div> */}
                             </div>
-
-
-
                         </div>
                     ))}
                 </div>
@@ -432,103 +329,6 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
                 </div>
             )}
 
-            {/* Delete Confirmation */}
-            {deleteConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl">
-                        <h2 className="text-2xl font-bold text-slate-900 mb-2">Delete Application</h2>
-                        <p className="text-slate-600 mb-8">Are you sure you want to delete this application? This action cannot be undone.</p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setDeleteConfirm(null)}
-                                className="flex-1 px-6 py-3 bg-slate-100 text-slate-900 font-bold rounded-xl hover:bg-slate-200 transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleDelete}
-                                disabled={isSubmitting}
-                                className="flex-1 px-6 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Member Access Modal */}
-            {accessApp && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 animate-in zoom-in-95 duration-300">
-                        <div className="flex items-center justify-between mb-6">
-                            <div>
-                                <h3 className="text-xl font-black text-slate-900">Manage Access</h3>
-                                <p className="text-sm text-slate-500 mt-1">
-                                    Control who can access <span className="font-bold">{accessApp.name}</span>
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setAccessApp(null)}
-                                className="p-2 hover:bg-slate-100 rounded-full transition-all"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        {isMembersLoading ? (
-                            <div className="flex items-center justify-center py-12">
-                                <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
-                            </div>
-                        ) : applicationMembers.length === 0 ? (
-                            <div className="text-center py-12">
-                                <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                                <p className="text-slate-500">No one has access to this application yet</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-2 max-h-80 overflow-y-auto">
-                                {applicationMembers.map(member => (
-                                    <div
-                                        key={member.id}
-                                        className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                                                {member.name?.[0] || member.email?.[0]?.toUpperCase() || '?'}
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-slate-900">
-                                                    {member.name || member.email || 'Unknown'}
-                                                </p>
-                                                <p className="text-xs text-slate-500">
-                                                    {member.role} {member.email && `• ${member.email}`}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={() => handleRevokeAccess(member.id)}
-                                            title="Revoke access"
-                                            className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        <div className="mt-6 pt-4 border-t border-slate-200">
-                            <button
-                                onClick={() => setAccessApp(null)}
-                                className="w-full px-6 py-3 bg-slate-100 text-slate-900 font-bold rounded-xl hover:bg-slate-200 transition-all"
-                            >
-                                Done
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     )
 }

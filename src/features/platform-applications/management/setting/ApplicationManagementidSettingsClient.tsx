@@ -12,12 +12,12 @@ type TenantAccess = { id: string; name: string; starts_at: string | null; ends_a
 const inputClass = 'w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500'
 const cardClass = 'rounded-2xl border border-slate-200 bg-white p-6'
 
-export function ApplicationManagementidSettingsClient({ appId }: { appId: string }) {
+export function ApplicationManagementidSettingsClient({ appId, tenantId }: { appId: string; tenantId: string }) {
     const router = useRouter()
     const {
         currentApp: app, applicationTenants, isAppLoading, isTenantsLoading,
-        fetchApplicationById, fetchApplicationTenants, updateApplicationDetail,
-        deleteApplicationById, removeTenantAuthorization,
+        fetchApplicationById, fetchApplicationTenants, updateApp,
+        deleteApp, removeTenantAuthorization,
     } = useApplicationStore()
     const isLoading = isAppLoading || isTenantsLoading
     const tenants: TenantAccess[] = applicationTenants.map((t) => ({
@@ -48,7 +48,7 @@ export function ApplicationManagementidSettingsClient({ appId }: { appId: string
         if (!form.name.trim()) return toast.error('Application name is required')
         setIsSaving(true)
         try {
-            await updateApplicationDetail(appId, { name: form.name.trim(), url: form.url, logo_url: form.logo_url || null })
+            await updateApp(tenantId, appId, { name: form.name.trim(), url: form.url, logo_url: form.logo_url || null })
             toast.success('Settings saved')
         } catch (err) {
             toast.error((err as Error).message)
@@ -60,9 +60,9 @@ export function ApplicationManagementidSettingsClient({ appId }: { appId: string
     const handleDeleteApplication = async () => {
         setIsDeleting(true)
         try {
-            await deleteApplicationById(appId)
+            await deleteApp(appId, tenantId)
             toast.success('Application deleted')
-            router.push('/applications')
+            router.push(`/${tenantId}/applications`)
         } catch (err) {
             toast.error((err as Error).message)
             setIsDeleting(false)
@@ -187,6 +187,7 @@ export function ApplicationManagementidSettingsClient({ appId }: { appId: string
             {isAddOpen && (
                 <AddTenantModal
                     appId={appId}
+                    tenantId={tenantId}
                     existingIds={tenants.map((t) => t.id)}
                     onClose={() => setIsAddOpen(false)}
                     onAdded={async () => {
@@ -240,11 +241,13 @@ const formatWindow = (t: TenantAccess) => {
 
 function AddTenantModal({
     appId,
+    tenantId: ownerTenantId,
     existingIds,
     onClose,
     onAdded,
 }: {
     appId: string
+    tenantId: string
     existingIds: string[]
     onClose: () => void
     onAdded: () => void
@@ -256,7 +259,7 @@ function AddTenantModal({
     const options = tenantOptions.filter((o) => !existingIds.includes(o.id))
 
     useEffect(() => {
-        fetchTenantsForSelect().catch(() => toast.error('Failed to load tenants'))
+        fetchTenantsForSelect(ownerTenantId).catch(() => toast.error('Failed to load tenants'))
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 

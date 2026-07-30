@@ -11,7 +11,7 @@ import {
 import {
     getApplicationById, getApplicationMembers, getApplicationTenants,
     addApplicationAuthorization, removeApplicationAuthorization,
-    getApiKey, regenerateApiKey, getTenantsForSelect,
+    getApiKey, regenerateApiKey, getSubTenantsForSelect,
     updateApplication as updateApplicationDetail,
     deleteApplication as deleteApplicationDetail,
 } from '@/features/platform-applications/actions'
@@ -51,12 +51,13 @@ interface ApplicationStore {
         environment: 'production' | 'staging' | 'development'
         url?: string
     }) => Promise<Application>
-    updateApp: (appId: string, data: {
+    updateApp: (tenantId: string, appId: string, data: {
         name?: string
         description?: string
         status?: 'active' | 'inactive' | 'maintenance'
         environment?: 'production' | 'staging' | 'development'
         url?: string
+        logo_url?: string | null
     }) => Promise<Application>
     deleteApp: (appId: string, tenantId: string) => Promise<void>
     getLaunchUrl: (tenantId: string, appId: string) => Promise<string>
@@ -80,7 +81,7 @@ interface ApplicationStore {
     fetchApiKey: (appId: string) => Promise<void>
     regenerateApplicationApiKey: (appId: string) => Promise<void>
 
-    fetchTenantsForSelect: () => Promise<void>
+    fetchTenantsForSelect: (tenantId: string) => Promise<void>
 }
 
 export const useApplicationStore = create<ApplicationStore>((set, get) => ({
@@ -121,8 +122,8 @@ export const useApplicationStore = create<ApplicationStore>((set, get) => ({
         return newApp
     },
 
-    updateApp: async (appId, data) => {
-        const updatedApp = await updateTenantApplication(appId, data)
+    updateApp: async (tenantId, appId, data) => {
+        const updatedApp = await updateTenantApplication(tenantId, appId, data)
         set((state) => ({
             applications: state.applications.map(app => app.id === appId ? updatedApp : app)
         }))
@@ -180,7 +181,9 @@ export const useApplicationStore = create<ApplicationStore>((set, get) => ({
     revokeAccess: async (tenantId, appId, accessId, membershipId) => {
         await revokeMemberAppAccess(tenantId, appId, membershipId)
         set((state) => ({
-            applicationMembers: state.applicationMembers.filter(m => m.id !== accessId)
+            applicationMembers: state.applicationMembers.map(m =>
+                m.id === accessId ? { ...m, status: 'Inactive' } : m
+            )
         }))
     },
 
@@ -235,8 +238,8 @@ export const useApplicationStore = create<ApplicationStore>((set, get) => ({
         }
     },
 
-    fetchTenantsForSelect: async () => {
-        const tenants = await getTenantsForSelect()
+    fetchTenantsForSelect: async (tenantId) => {
+        const tenants = await getSubTenantsForSelect(tenantId)
         set({ tenantOptions: tenants })
     },
 }))
