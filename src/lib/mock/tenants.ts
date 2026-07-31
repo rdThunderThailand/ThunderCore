@@ -5,6 +5,7 @@ import { Tenant } from '@/types/tenants'
 export const MOCK_TENANTS: Tenant[] = [
     {
         id: 'e316bbcf-2eb6-48ae-b5d9-74d631dec359',
+        tenantCode: 'ART-001',
         name: 'ART',
         type: 'enterprise',
         status: 'active',
@@ -16,6 +17,7 @@ export const MOCK_TENANTS: Tenant[] = [
     },
     {
         id: '00000000-0000-0000-0000-000000000000',
+        tenantCode: 'BEN-002',
         name: 'Executive BEN Tenant',
         type: 'enterprise',
         status: 'active',
@@ -27,6 +29,7 @@ export const MOCK_TENANTS: Tenant[] = [
     },
     {
         id: '28de0dae-568b-433f-b3f6-858caf5e371c',
+        tenantCode: 'PEACH-003',
         name: 'Peach',
         type: 'enterprise',
         status: 'active',

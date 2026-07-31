@@ -69,8 +69,9 @@ export const SideBar = ({
     const storeUser = useAuthStore((s) => s.user);
     const resolvedUser = user ?? storeUser ?? mockUser;
     const managementId = pathname.match(/\/(?:tenants|applications)\/management\/([^/]+)/)?.[1] ?? '';
-    const companyId = pathname.match(/^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i)?.[1] ?? '';
-    const appId = pathname.match(/^\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/applications\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i)?.[1] ?? '';
+    // Structural match, not UUID-shaped — the [code] segment is a tenant_code, not a UUID.
+    const companyId = pathname.match(/^\/([^/]+)\/(?:dashboard|assets|applications|members|settings)(?:\/|$)/)?.[1] ?? '';
+    const appId = pathname.match(/^\/[^/]+\/applications\/([^/]+)(?:\/|$)/)?.[1] ?? '';
 
     const resolvedNavigationItems = navigationItems ?? (() => {
         if (resolvedUser?.role === "super_admin") {

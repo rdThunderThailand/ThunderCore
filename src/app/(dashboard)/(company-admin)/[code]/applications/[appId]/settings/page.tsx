@@ -2,7 +2,7 @@ import { ApplicationManagementidSettingsClient } from '@/features/platform-appli
 
 export const dynamic = 'force-dynamic'
 
-export default async function CompanyAdminApplicationSettingsPage(props: { params: Promise<{ id: string; appId: string }> }) {
-    const { id, appId } = await props.params
-    return <ApplicationManagementidSettingsClient appId={appId} tenantId={id} />
+export default async function CompanyAdminApplicationSettingsPage(props: { params: Promise<{ code: string; appId: string }> }) {
+    const { code, appId } = await props.params
+    return <ApplicationManagementidSettingsClient appId={appId} tenantId={code} />
 }

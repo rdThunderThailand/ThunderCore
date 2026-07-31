@@ -29,7 +29,7 @@ const ROLE_MAP: Record<string, string> = {
 export function TenantsManagementidMembersClient() {
     const params = useParams()
     const pathname = usePathname()
-    const tenantId = params.id as string
+    const tenantId = params.code as string
     const { t } = useTranslation()
 
     const {

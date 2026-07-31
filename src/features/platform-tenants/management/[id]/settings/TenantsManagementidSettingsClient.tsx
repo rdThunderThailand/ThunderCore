@@ -5,11 +5,10 @@ import { getTenant } from '@/lib/tenants'
 import { getCurrentUser } from '@/lib/thunder-core'
 import { redirect } from 'next/navigation'
 
-export async function TenantsManagementidSettingsClient({ params }: { params: Promise<{ id: string }> }) {
+export async function TenantsManagementidSettingsClient({ params }: { params: Promise<{ code: string }> }) {
 
-    const { id } = await params
-    // const tenant = MOCK_TENANTS.find((t) => t.id === id) ?? MOCK_TENANTS[0]
-    const [tenant, user] = await Promise.all([getTenant(id), getCurrentUser()])
+    const { code } = await params
+    const [tenant, user] = await Promise.all([getTenant(code), getCurrentUser()])
     if (!tenant) {
         redirect('no-access')
     }

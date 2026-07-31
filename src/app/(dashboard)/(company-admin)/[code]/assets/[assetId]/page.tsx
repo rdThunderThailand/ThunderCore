@@ -2,7 +2,7 @@ import { TenantsManagementidAssetsassetIdClient } from '@/features/platform-tena
 
 export const dynamic = 'force-dynamic'
 
-export default async function CompanyAdminAssetDetailPage(props: { params: Promise<{ id: string, assetId: string }> }) {
-    const { id } = await props.params
-    return <TenantsManagementidAssetsassetIdClient {...props} basePath={`/${id}`} />
+export default async function CompanyAdminAssetDetailPage(props: { params: Promise<{ code: string, assetId: string }> }) {
+    const { code } = await props.params
+    return <TenantsManagementidAssetsassetIdClient {...props} basePath={`/${code}`} />
 }

@@ -1,13 +1,17 @@
+import { notFound } from 'next/navigation'
 import { requireTenantAccess } from '@/lib/rbac'
+import { getTenant } from '@/lib/tenants'
 
 export default async function TenantManagementLayout({
     children,
     params,
 }: {
     children: React.ReactNode
-    params: Promise<{ id: string }>
+    params: Promise<{ code: string }>
 }) {
-    const { id } = await params
-    await requireTenantAccess(id)
+    const { code } = await params
+    const tenant = await getTenant(code)
+    if (!tenant) notFound()
+    await requireTenantAccess(tenant.id)
     return <>{children}</>
 }

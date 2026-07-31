@@ -45,7 +45,7 @@ interface AssetsSidebarProps {
 
 export function AssetsSidebar({ setShowCreateFolder }: AssetsSidebarProps) {
     const params = useParams()
-    const tenantId = params.id as string
+    const tenantId = params.code as string
 
     const {
         folders,

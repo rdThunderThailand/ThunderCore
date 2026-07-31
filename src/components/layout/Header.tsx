@@ -42,10 +42,9 @@ const COMPANY_ADMIN_SECTION_LABELS: Record<string, string> = {
 };
 
 function getCompanyAdminBreadcrumbs(pathname: string): Crumb[] {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const segments = pathname.split("/").filter(Boolean);
     const [tenantId, section, ...rest] = segments;
-    if (!uuidRegex.test(tenantId ?? "") || !section || !(section in COMPANY_ADMIN_SECTION_LABELS)) return [];
+    if (!tenantId || !section || !(section in COMPANY_ADMIN_SECTION_LABELS)) return [];
 
     const base = `/${tenantId}`;
     const crumbs: Crumb[] = [{ label: COMPANY_ADMIN_SECTION_LABELS[section], href: `${base}/${section}` }];
@@ -199,7 +198,8 @@ export const Header = ({
 
     const isSuperAdmin = defaultUser.role === "super_admin";
 
-    const companyTenantId = pathname.match(/^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i)?.[1] ?? "";
+    // Structural match, not UUID-shaped — the [code] segment is a tenant_code, not a UUID.
+    const companyTenantId = pathname.match(/^\/([^/]+)\/(?:dashboard|assets|applications|members|settings)(?:\/|$)/)?.[1] ?? "";
     const allNavItems = isSuperAdmin
         ? superAdminNavigationItems
         : companyTenantId

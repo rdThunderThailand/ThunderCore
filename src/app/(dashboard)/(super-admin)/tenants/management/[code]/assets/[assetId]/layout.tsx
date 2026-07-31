@@ -18,9 +18,9 @@ export function getDeviceIcon(type: string) {
 
 export default async function AssetDetailLayout(props: {
     children: React.ReactNode,
-    params: Promise<{ id: string, assetId: string }>
+    params: Promise<{ code: string, assetId: string }>
 }) {
-    const { id: tenantId, assetId } = await props.params
+    const { code: tenantId, assetId } = await props.params
 
     const asset = await getAsset(tenantId, assetId)
 

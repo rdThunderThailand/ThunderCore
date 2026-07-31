@@ -3,6 +3,7 @@ export type TenantStatus = 'active' | 'suspended' | 'archived';
 
 export interface Tenant {
     id: string;
+    tenantCode: string;
     name: string;
     type: TenantType;
     status: TenantStatus;

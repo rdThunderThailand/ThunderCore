@@ -165,7 +165,7 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
                 setOrgs([newOrg, ...orgs])
                 setIsModalOpen(false)
                 setFormData({ name: '', type: 'enterprise', status: 'active' })
-                router.push(`/tenants/management/${newOrg.id}/settings?created=true`)
+                router.push(`/tenants/management/${newOrg.tenantCode}/settings?created=true`)
             }
         } catch (err) {
             const error = err as Error
@@ -354,7 +354,7 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
                                     return (
                                         <tr
                                             key={org.id}
-                                            onClick={() => router.push(`/tenants/management/${org.id}/settings`)}
+                                            onClick={() => router.push(`/tenants/management/${org.tenantCode}/settings`)}
                                             className={`group transition-colors cursor-pointer ${isSelected ? 'bg-blue-50/60 hover:bg-blue-50' : 'hover:bg-slate-50/50'}`}
                                         >
                                             <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>

@@ -3,8 +3,8 @@ import { resolveCurrentUser } from "@/lib/current-user"
 
 export const dynamic = 'force-dynamic'
 
-export default async function CompanyAdminAssetsPage(props: { params: Promise<{ id: string }> }) {
-    const { id } = await props.params
+export default async function CompanyAdminAssetsPage(props: { params: Promise<{ code: string }> }) {
+    const { code } = await props.params
     const user = await resolveCurrentUser()
-    return <TenantsManagementidAssetsClient basePath={`/${id}`} user={user} />
+    return <TenantsManagementidAssetsClient basePath={`/${code}`} user={user} />
 }

@@ -6,10 +6,10 @@ import { AssetActivityTimeline } from "../components/asset-activity-timeline"
 import { LinkedDevicesList } from "../components/linked-devices-list"
 
 export async function TenantsManagementidAssetsassetIdClient(props: {
-    params: Promise<{ id: string, assetId: string }>
+    params: Promise<{ code: string, assetId: string }>
     basePath?: string
 }) {
-    const { id: tenantId, assetId } = await props.params
+    const { code: tenantId, assetId } = await props.params
     const basePath = props.basePath
 
     const asset = await getAsset(tenantId, assetId)

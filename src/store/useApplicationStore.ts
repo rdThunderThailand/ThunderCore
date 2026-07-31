@@ -109,7 +109,7 @@ export const useApplicationStore = create<ApplicationStore>((set, get) => ({
         try {
             set({ isLoading: true })
             const apps = await getTenantApplications(tenantId)
-            set({ applications: apps, isLoading: false })
+            set({ applications: apps as unknown as Application[], isLoading: false })
         } catch (error) {
             console.error('Error fetching applications:', error)
             set({ isLoading: false })

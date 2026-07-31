@@ -2,7 +2,7 @@ import { TenantsManagementidAssetsassetIdDevicesdeviceIdClient } from '@/feature
 
 export const dynamic = 'force-dynamic'
 
-export default async function CompanyAdminDeviceConfigPage(props: { params: Promise<{ id: string, assetId: string, deviceId: string }> }) {
-    const { id } = await props.params
-    return <TenantsManagementidAssetsassetIdDevicesdeviceIdClient {...props} basePath={`/${id}`} />
+export default async function CompanyAdminDeviceConfigPage(props: { params: Promise<{ code: string, assetId: string, deviceId: string }> }) {
+    const { code } = await props.params
+    return <TenantsManagementidAssetsassetIdDevicesdeviceIdClient {...props} basePath={`/${code}`} />
 }

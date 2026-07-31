@@ -17,6 +17,7 @@ type ThunderResponse<T> = { success: boolean; data: T }
 export async function getTenants(): Promise<Tenant[]> {
     if (isDevBypass()) return MOCK_TENANTS
     const res = await thunderCore.get<ThunderResponse<Tenant[]>>('/tenants')
+    // console.log('RAW /tenants response:', JSON.stringify(res.data.data, null, 2))
     return res.data.data
 }
 
@@ -33,9 +34,13 @@ export async function getTenantUsageStats(): Promise<TenantUsageStats> {
     return res.data.data
 }
 
-export async function getTenant(id: string): Promise<Tenant | null> {
-    if (isDevBypass()) return MOCK_TENANTS.find((t) => t.id === id) ?? null
-    const res = await thunderCore.get<ThunderResponse<Tenant>>(`/tenants/${id}`)
+// Accepts either the real id or the tenant_code — Thunder Core resolves either on this endpoint.
+export async function getTenant(identifier: string): Promise<Tenant | null> {
+    console.log('identifier', identifier)
+    if (isDevBypass()) {
+        return MOCK_TENANTS.find((t) => t.id === identifier || t.tenantCode === identifier) ?? null
+    }
+    const res = await thunderCore.get<ThunderResponse<Tenant>>(`/tenants/${identifier}`)
     return res.data.data
 }
 
@@ -54,6 +59,7 @@ export async function createTenant(data: TenantInput): Promise<Tenant> {
         // server row. Not persisted across requests in bypass mode.
         return {
             id: crypto.randomUUID(),
+            tenantCode: `MOCK-${Math.floor(Math.random() * 900 + 100)}`,
             name: data.name,
             type: data.type,
             status: data.status,
@@ -85,15 +91,15 @@ export async function deleteTenant(id: string): Promise<void> {
     await thunderCore.delete(`/tenants/${id}`)
 }
 
-export async function getTenantDashboard(tenantId: string): Promise<TenantDashboard | null> {
+export async function getTenantDashboard(identifier: string): Promise<TenantDashboard | null> {
     if (isDevBypass()) {
-        const tenant = MOCK_TENANTS.find((t) => t.id === tenantId)
+        const tenant = MOCK_TENANTS.find((t) => t.id === identifier || t.tenantCode === identifier)
         if (!tenant) return null
 
-        const quota = await getTenantQuota(tenantId)
+        const quota = await getTenantQuota(tenant.id)
 
         const playerStatus = { online: 0, offline: 0, busy: 0, error: 0, total: 0 }
-        MOCK_ASSETS.filter((a) => a.tenant_id === tenantId).forEach((a) => {
+        MOCK_ASSETS.filter((a) => a.tenant_id === tenant.id).forEach((a) => {
             playerStatus.total++
             if (a.connection_status === 'online') playerStatus.online++
             else if (a.connection_status === 'offline') playerStatus.offline++
@@ -101,7 +107,7 @@ export async function getTenantDashboard(tenantId: string): Promise<TenantDashbo
             else playerStatus.error++
         })
 
-        const members = MOCK_MEMBERS.filter((m) => m.tenant_id === tenantId).map((m) => {
+        const members = MOCK_MEMBERS.filter((m) => m.tenant_id === tenant.id).map((m) => {
             const fullName = m.user?.full_name ?? ''
             const [firstName, ...rest] = fullName.split(' ')
             return {
@@ -113,7 +119,7 @@ export async function getTenantDashboard(tenantId: string): Promise<TenantDashbo
         })
 
         const recentLogs = MOCK_TENANT_ACTIVITY
-            .filter((log) => log.tenant_id === tenantId)
+            .filter((log) => log.tenant_id === tenant.id)
             .sort((a, b) => b.created_at.localeCompare(a.created_at))
 
         return {
@@ -135,6 +141,6 @@ export async function getTenantDashboard(tenantId: string): Promise<TenantDashbo
     }
     // The server composes this in one call — quota, device counts, members and logs are
     // joined there rather than fanned out across seam functions like the bypass branch does.
-    const res = await thunderCore.get<ThunderResponse<TenantDashboard>>(`/tenants/${tenantId}/dashboard`)
+    const res = await thunderCore.get<ThunderResponse<TenantDashboard>>(`/tenants/${identifier}/dashboard`)
     return res.data.data
 }

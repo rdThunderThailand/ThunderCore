@@ -39,7 +39,7 @@ import type { UserProfile } from '@/store/useAuthStore'
 
 export function TenantsManagementidAssetsClient({ basePath, user }: { basePath?: string; user?: UserProfile } = {}) {
     const params = useParams()
-    const tenantId = params.id as string
+    const tenantId = params.code as string
     console.log(tenantId)
     const base = basePath ?? `/dashboard/tenants/management/${tenantId}`
     const {

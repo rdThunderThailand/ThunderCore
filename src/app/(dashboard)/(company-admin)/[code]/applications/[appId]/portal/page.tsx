@@ -2,7 +2,7 @@ import { ApplicationManagementidPortalClient } from '@/features/platform-applica
 
 export const dynamic = 'force-dynamic'
 
-export default async function CompanyAdminApplicationPortalPage(props: { params: Promise<{ id: string; appId: string }> }) {
-    const { id, appId } = await props.params
-    return <ApplicationManagementidPortalClient appId={appId} basePath={`/${id}/applications`} />
+export default async function CompanyAdminApplicationPortalPage(props: { params: Promise<{ code: string; appId: string }> }) {
+    const { code, appId } = await props.params
+    return <ApplicationManagementidPortalClient appId={appId} basePath={`/${code}/applications`} />
 }

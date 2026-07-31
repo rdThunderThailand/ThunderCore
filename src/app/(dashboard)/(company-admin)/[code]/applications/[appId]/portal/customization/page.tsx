@@ -2,7 +2,7 @@ import { ApplicationManagementidPortalCustomizationClient } from '@/features/pla
 
 export const dynamic = 'force-dynamic'
 
-export default async function CompanyAdminApplicationPortalCustomizationPage(props: { params: Promise<{ id: string; appId: string }> }) {
-    const { id, appId } = await props.params
-    return <ApplicationManagementidPortalCustomizationClient appId={appId} basePath={`/${id}/applications`} />
+export default async function CompanyAdminApplicationPortalCustomizationPage(props: { params: Promise<{ code: string; appId: string }> }) {
+    const { code, appId } = await props.params
+    return <ApplicationManagementidPortalCustomizationClient appId={appId} basePath={`/${code}/applications`} />
 }

@@ -2,7 +2,7 @@ import { TenantsManagementidApplicationsClient } from "@/features/platform-tenan
 
 export const dynamic = 'force-dynamic'
 
-export default async function CompanyAdminApplicationsPage(props: { params: Promise<{ id: string }> }) {
-    const { id } = await props.params
-    return <TenantsManagementidApplicationsClient basePath={`/${id}/applications`} />
+export default async function CompanyAdminApplicationsPage(props: { params: Promise<{ code: string }> }) {
+    const { code } = await props.params
+    return <TenantsManagementidApplicationsClient basePath={`/${code}/applications`} />
 }
