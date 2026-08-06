@@ -18,7 +18,7 @@ interface OrgSettingsClientProps {
 export function OrgSettingsClient({ initialTenant, userRole }: OrgSettingsClientProps) {
     const params = useParams()
     const router = useRouter()
-    const tenantId = params.id as string
+    const tenantId = params.code as string
 
     const isSuperAdmin = userRole === 'super_admin'
     const canEdit = isSuperAdmin || userRole === 'company_admin'

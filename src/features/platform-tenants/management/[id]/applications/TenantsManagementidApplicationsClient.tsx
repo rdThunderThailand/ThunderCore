@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react'
 export function TenantsManagementidApplicationsClient({ basePath }: { basePath?: string } = {}) {
     const params = useParams()
     const router = useRouter()
-    const tenantId = params.id as string
+    const tenantId = params.code as string
     const base = basePath ?? '/applications/management'
     const { t } = useTranslation()
     const role = useAuthStore((s) => s.role)

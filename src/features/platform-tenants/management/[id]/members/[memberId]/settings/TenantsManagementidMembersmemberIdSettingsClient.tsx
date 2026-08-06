@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Application } from '@/types/applications'
+import { TenantApplicationView } from '@/types/tenant-applications'
 import { MemberDetails, TenantRole } from '@/types/members'
 import { useMemberStore } from '@/store/useMemberStore'
 import {
@@ -47,7 +48,7 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
     const params = useParams()
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const router = useRouter()
-    const tenantId = params.id as string
+    const tenantId = params.code as string
     const memberId = params.memberId as string
 
     const { members } = useMemberStore()
@@ -61,7 +62,7 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
 
     // Add Application Modal State
     const [showAddAppModal, setShowAddAppModal] = useState(false)
-    const [orgApps, setOrgApps] = useState<Application[]>([])
+    const [orgApps, setOrgApps] = useState<TenantApplicationView[]>([])
     const [selectedAppId, setSelectedAppId] = useState('')
     const [isAddingApp, setIsAddingApp] = useState(false)
     const [appToDelete, setAppToDelete] = useState<string | null>(null)

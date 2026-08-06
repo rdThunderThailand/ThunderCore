@@ -6,10 +6,10 @@ import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 export async function TenantsManagementidAssetsassetIdDevicesdeviceIdClient(props: {
-    params: Promise<{ id: string, assetId: string, deviceId: string }>
+    params: Promise<{ code: string, assetId: string, deviceId: string }>
     basePath?: string
 }) {
-    const { id: tenantId, assetId, deviceId } = await props.params
+    const { code: tenantId, assetId, deviceId } = await props.params
     const basePath = props.basePath ?? `/dashboard/tenants/management/${tenantId}`
 
     const device = await getDeviceById(tenantId, deviceId)

@@ -4,13 +4,13 @@ import { DeviceSettingsForm } from "./device-settings-form"
 
 interface SettingPageProps {
     params: Promise<{
-        id: string;
+        code: string;
         assetId: string;
     }>
 }
 
 export async function TenantsManagementidAssetsassetIdSettingsClient({ params }: SettingPageProps) {
-    const { id: tenantId, assetId } = await params;
+    const { code: tenantId, assetId } = await params;
 
     const asset = await getAsset(tenantId, assetId)
 
