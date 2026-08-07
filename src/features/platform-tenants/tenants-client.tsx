@@ -354,7 +354,7 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
                                     return (
                                         <tr
                                             key={org.id}
-                                            onClick={() => router.push(`/tenants/management/${org.tenantCode}/settings`)}
+                                            onClick={() => router.push(`/tenants/management/${org.id}/settings`)}
                                             className={`group transition-colors cursor-pointer ${isSelected ? 'bg-blue-50/60 hover:bg-blue-50' : 'hover:bg-slate-50/50'}`}
                                         >
                                             <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>

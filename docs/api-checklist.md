@@ -8,7 +8,7 @@
 | **FE** | `thundercore/src/lib/<domain>.ts` เรียก axios จริงแล้ว (ไม่ใช่ `throw`) |
 | **E2E** | เปิดเบราว์เซอร์ใช้จริงโดยปิด `NEXT_PUBLIC_DEV_BYPASS` แล้วผ่าน |
 
-**สถานะรวม: BE 21/65 · FE 11/65 · E2E 4/65** (2026-07-20)
+**สถานะรวม: BE 22/65 · FE 11/65 · E2E 4/65** (2026-08-07)
 
 > ⚠️ BE ผ่านไม่ได้แปลว่าใช้งานได้จริง — ทุกเส้นที่ E2E ยังไม่ติ๊ก ยังไม่เคยมีคนเปิดหน้าเว็บดู
 
@@ -115,7 +115,7 @@ super_admin gate ต้อง enforce ที่ backend
 | `GET /tenants/:id/quota` | โควตาอุปกรณ์ (ใช้ไป/ทั้งหมด) | ⬜ | ⬜ | ⬜ |
 | `GET /tenants/:id/assets` | รายการ asset + filter + แบ่งหน้า | ⬜ | ⬜ | ⬜ |
 | `GET /tenants/:id/assets/dashboard` | ตัวเลขสรุปหน้า assets (รวม 3 call ในเส้นเดียว) | ⬜ | ⬜ | ⬜ |
-| `POST /tenants/:id/assets` | ลงทะเบียน asset + คืน credentials | ⬜ | ⬜ | ⬜ |
+| `POST /tenants/:id/assets` | ลงทะเบียน asset + คืน credentials | ✅ | ⬜ | ⬜ |
 | `GET /tenants/:id/assets/:assetId` | รายละเอียด asset | ⬜ | ⬜ | ⬜ |
 | `PATCH /tenants/:id/assets/:assetId` | แก้ข้อมูล asset | ⬜ | ⬜ | ⬜ |
 | `DELETE /tenants/:id/assets/:assetId` | ลบ asset | ⬜ | ⬜ | ⬜ |
@@ -134,6 +134,20 @@ super_admin gate ต้อง enforce ที่ backend
 
 **สำคัญ:** validation ที่ mock ทำอยู่ตอนนี้ (เช็คโควตา, serial/MAC ห้ามซ้ำ, ห้ามย้ายโฟลเดอร์เข้าตัวเอง)
 เป็น trust boundary ต้องย้ายไป backend ทั้งหมด ห้ามพึ่ง frontend
+
+**`POST /tenants/:id/assets` — ทำ BE เสร็จแล้ว (regression test: `tests/api/assets-core-v1.test.mjs`, 29 assert)
+ก่อนต่อ FE อ่านตรงนี้ก่อน:**
+- Auth gate: `x-api-key` + Bearer token, ต้องเป็น `super_admin` หรือ `company_admin` ของ tenant นั้น (เหมือน
+  `PATCH /tenants/:id`) — ไม่ใช่แค่ login เฉยๆ
+- `mqtt_client_id` ที่ backend สร้างจริงคือ `device_{tenantId8}_{assetId8}_{timestamp36}` (มี server action
+  สองที่ในนั้นใช้ฟอร์แมตนี้อยู่แล้ว และ dev DB มี row จริงยืนยัน) **ไม่ใช่** `mqtt-{tenantId8}-{assetId8}` ที่
+  `generateMqttClientId()` ใน `src/lib/assets.ts` mock ไว้ — ตอนต่อ FE จริงให้แก้ helper ตัวนั้นให้ตรงกัน
+  ไม่งั้น dev-bypass กับของจริงจะโชว์ client id คนละฟอร์แมต
+- `image_url` มีใน `CreateAssetInput`/`Asset` แต่ column ยังไม่มีใน DB จริง (ไม่เคยมี migration เพิ่ม) — backend
+  เพิ่ม migration ไว้ที่ `Thunder_Core/supabase/migrations/048_assets_image_url.sql` แล้ว แต่ต้อง apply ก่อน
+  ฟิลด์นี้ถึงจะ persist ได้จริง ระหว่างนี้ POST จะรับค่ามาเฉยๆ แต่ไม่บันทึก
+- `activation_code` รับเข้ามาแต่ backend ยังไม่ทำอะไรกับมัน (mock เดิมก็ไม่ใช้เหมือนกัน) — ต้องคุยกับทีม device
+  provisioning ว่าจะใช้ยังไงก่อนเพิ่ม logic
 
 ---
 
@@ -177,6 +191,7 @@ super_admin gate ต้อง enforce ที่ backend
 node --env-file=.env tests/api/auth-refresh.test.mjs      # 12 assert
 node --env-file=.env tests/api/tenants-core-v1.test.mjs   # 39 assert
 node --env-file=.env tests/api/members-core-v1.test.mjs   # 45 assert
+node --env-file=.env tests/api/assets-core-v1.test.mjs    # 29 assert
 ```
 
 

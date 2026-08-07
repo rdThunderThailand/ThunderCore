@@ -65,14 +65,17 @@ export function OrgSettingsClient({ initialTenant, userRole }: OrgSettingsClient
         setSuccess(null)
 
         try {
-            const fullWebsiteUrl = formData.website.trim() ? `${formData.websiteProtocol}${formData.website}${formData.websiteSuffix}` : ''
+            const trimmedEmail = formData.email.trim()
+            const trimmedWebsite = formData.website.trim()
 
+            // The server validates contact_email/website_url as email/URL format when present —
+            // it rejects an empty string as bad format, so blank fields must be omitted, not sent as ''.
             await updateTenant(tenantId, {
                 name: formData.name,
                 type: initialTenant.type,
                 status: initialTenant.status,
-                contact_email: formData.email,
-                website_url: fullWebsiteUrl,
+                ...(trimmedEmail && { contact_email: trimmedEmail }),
+                ...(trimmedWebsite && { website_url: `${formData.websiteProtocol}${trimmedWebsite}${formData.websiteSuffix}` }),
                 description: formData.description
             })
             setSuccess('Success! Your tenant has been updated.')

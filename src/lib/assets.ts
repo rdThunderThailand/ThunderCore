@@ -9,7 +9,7 @@ import { MOCK_ASSETS, MOCK_ASSET_FOLDERS, MOCK_DEVICE_CREDENTIALS } from './mock
 import { MOCK_ASSETS_V2 } from './mock/assets-v2'
 import { MOCK_DEVICES } from './mock/devices'
 import { MOCK_TENANTS } from './mock/tenants'
-import { thunderCore } from './thunder-core'
+import { isAxiosError, thunderCore } from './thunder-core'
 
 // Living endpoint catalog — each signature is the future REST contract.
 // Swap bodies to axios (core/v1/tenants/:id/assets) when the endpoints land; callers don't change.
@@ -18,8 +18,11 @@ const noEndpoint = (fn: string): never => {
     throw new Error(`${fn}: no REST endpoint yet — set NEXT_PUBLIC_DEV_BYPASS=true to use mock data`)
 }
 
+// Matches the backend's established convention (two server actions already mint client ids this
+// way; confirmed against a live device_credentials row) — not the placeholder format this mock
+// used before the real endpoint existed.
 function generateMqttClientId(tenantId: string, assetId: string): string {
-    return `mqtt-${tenantId.slice(0, 8)}-${assetId.slice(0, 8)}`
+    return `device_${tenantId.slice(0, 8)}_${assetId.slice(0, 8)}_${Date.now().toString(36)}`
 }
 
 export interface GetAssetsOptions {
@@ -217,7 +220,24 @@ export async function getAssetDashboardData(tenantId: string, options?: GetAsset
 }
 
 export async function createAsset(tenantId: string, input: CreateAssetInput): Promise<{ asset: Asset; credentials: DeviceCredentials }> {
-    if (!isDevBypass()) return noEndpoint('createAsset')
+    if (!isDevBypass()) {
+        try {
+            const res = await thunderCore.post<ThunderResponse<{ asset: Asset; credentials: DeviceCredentials }>>(
+                `/tenants/${tenantId}/assets`,
+                input
+            )
+            return res.data.data
+        } catch (error) {
+            // Surface the backend's business message (quota/duplicate/validation) to the caller
+            // instead of a generic "Request failed with status code 4xx" — register-modal.tsx
+            // shows error.message directly in a toast.
+            if (isAxiosError(error)) {
+                const message = (error.response?.data as { error?: string } | undefined)?.error
+                if (message) throw new Error(message)
+            }
+            throw error
+        }
+    }
 
     const quota = await getTenantQuota(tenantId)
     if (quota.remaining <= 0) {
@@ -373,6 +393,7 @@ export async function getLinkedDevices(assetId: string): Promise<Device[]> {
             .sort((a, b) => b.created_at.localeCompare(a.created_at))
     }
     return noEndpoint('getLinkedDevices')
+
 }
 
 export async function getAsset(tenantId: string, assetId: string): Promise<Asset | null> {

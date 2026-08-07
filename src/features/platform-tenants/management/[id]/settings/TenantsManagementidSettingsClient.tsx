@@ -9,6 +9,7 @@ export async function TenantsManagementidSettingsClient({ params }: { params: Pr
 
     const { code } = await params
     const [tenant, user] = await Promise.all([getTenant(code), getCurrentUser()])
+
     if (!tenant) {
         redirect('no-access')
     }

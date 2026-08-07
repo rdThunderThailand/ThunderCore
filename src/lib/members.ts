@@ -54,7 +54,7 @@ export async function getMemberships(
     }
 
     const res = await thunderCore.get<ThunderResponse<ThunderMemberShipsPayload>>(`/tenants/${tenantId}/members`, { params: options })
-    console.log('res', res.data.data)
+    // console.log('res', res.data.data)
     return res.data.data
 
 

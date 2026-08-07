@@ -16,7 +16,25 @@ export function RegisterModal({ tenantId, quota, onClose, onSuccess }: {
     const [isAddingTag, setIsAddingTag] = useState(false)
     const [newTagValue, setNewTagValue] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [errors, setErrors] = useState<{
+        device_name?: string; model?: string; serial_number?: string; mac_address?: string; activation_code?: string
+    }>({})
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const clearFieldError = (field: keyof typeof errors) => {
+        setErrors(prev => (prev[field] ? { ...prev, [field]: undefined } : prev))
+    }
+
+    const validate = (): boolean => {
+        const nextErrors: typeof errors = {}
+        if (!formData.device_name.trim()) nextErrors.device_name = 'please input Device Name'
+        if (!formData.model?.trim()) nextErrors.model = 'please input Model/Type'
+        if (!formData.serial_number?.trim()) nextErrors.serial_number = 'please input Serial Number'
+        if (!formData.mac_address?.trim()) nextErrors.mac_address = 'please input MAC Address'
+        if (!formData.activation_code?.trim()) nextErrors.activation_code = 'please input Activation Code'
+        setErrors(nextErrors)
+        return Object.keys(nextErrors).length === 0
+    }
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -42,6 +60,7 @@ export function RegisterModal({ tenantId, quota, onClose, onSuccess }: {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        if (!validate()) return
         setIsSubmitting(true)
         try {
             await createAsset(tenantId, { ...formData, image_url: imagePreview?.url })
@@ -78,7 +97,7 @@ export function RegisterModal({ tenantId, quota, onClose, onSuccess }: {
                     </p>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} noValidate className="space-y-5">
                     <div className="flex items-start gap-4">
                         <button
                             type="button"
@@ -117,32 +136,42 @@ export function RegisterModal({ tenantId, quota, onClose, onSuccess }: {
 
                     <FormField label="Device Name" required>
                         <input required type="text" placeholder="Enter device name"
-                            value={formData.device_name} onChange={e => setFormData({ ...formData, device_name: e.target.value })}
+                            value={formData.device_name}
+                            onChange={e => { setFormData({ ...formData, device_name: e.target.value }); clearFieldError('device_name') }}
                             className="form-input" />
+                        {errors.device_name && <p className="text-xs font-bold text-red-500 ml-1">{errors.device_name}</p>}
                     </FormField>
 
-                    <FormField label="Model/Type">
-                        <input type="text" placeholder="Enter model/type"
-                            value={formData.model || ''} onChange={e => setFormData({ ...formData, model: e.target.value })}
+                    <FormField label="Model/Type" required>
+                        <input required type="text" placeholder="Enter model/type"
+                            value={formData.model || ''}
+                            onChange={e => { setFormData({ ...formData, model: e.target.value }); clearFieldError('model') }}
                             className="form-input" />
+                        {errors.model && <p className="text-xs font-bold text-red-500 ml-1">{errors.model}</p>}
                     </FormField>
 
-                    <FormField label="Serial Number">
-                        <input type="text" placeholder="Enter Serial Number"
-                            value={formData.serial_number || ''} onChange={e => setFormData({ ...formData, serial_number: e.target.value })}
+                    <FormField label="Serial Number" required>
+                        <input required type="text" placeholder="Enter Serial Number"
+                            value={formData.serial_number || ''}
+                            onChange={e => { setFormData({ ...formData, serial_number: e.target.value }); clearFieldError('serial_number') }}
                             className="form-input" />
+                        {errors.serial_number && <p className="text-xs font-bold text-red-500 ml-1">{errors.serial_number}</p>}
                     </FormField>
 
-                    <FormField label="MAC Address">
-                        <input type="text" placeholder="Enter MAC address"
-                            value={formData.mac_address || ''} onChange={e => setFormData({ ...formData, mac_address: e.target.value })}
+                    <FormField label="MAC Address" required>
+                        <input required type="text" placeholder="Enter MAC address"
+                            value={formData.mac_address || ''}
+                            onChange={e => { setFormData({ ...formData, mac_address: e.target.value }); clearFieldError('mac_address') }}
                             className="form-input" />
+                        {errors.mac_address && <p className="text-xs font-bold text-red-500 ml-1">{errors.mac_address}</p>}
                     </FormField>
 
-                    <FormField label="Activation Code">
+                    <FormField label="Activation Code" required>
                         <div className="relative">
-                            <input type={showActivationCode ? 'text' : 'password'} placeholder="Enter activation code"
-                                value={formData.activation_code || ''} onChange={e => setFormData({ ...formData, activation_code: e.target.value })}
+                            <input required type="text" placeholder="Enter activation code" autoComplete="off"
+                                value={formData.activation_code || ''}
+                                onChange={e => { setFormData({ ...formData, activation_code: e.target.value }); clearFieldError('activation_code') }}
+                                style={{ WebkitTextSecurity: showActivationCode ? 'none' : 'disc' } as React.CSSProperties}
                                 className="form-input pr-12" />
                             <button
                                 type="button"
@@ -152,6 +181,7 @@ export function RegisterModal({ tenantId, quota, onClose, onSuccess }: {
                                 {showActivationCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
                         </div>
+                        {errors.activation_code && <p className="text-xs font-bold text-red-500 ml-1">{errors.activation_code}</p>}
                     </FormField>
 
                     <div className="flex items-center gap-2 flex-wrap">

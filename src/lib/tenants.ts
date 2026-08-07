@@ -5,7 +5,7 @@ import { MOCK_ASSETS } from './mock/assets'
 import { MOCK_MEMBERS } from './mock/members'
 import { MOCK_TENANT_ACTIVITY } from './mock/tenant-activity'
 import { MOCK_TENANTS, MOCK_TENANT_USAGE } from './mock/tenants'
-import { thunderCore } from './thunder-core'
+import { isAxiosError, thunderCore } from './thunder-core'
 
 // Living endpoint catalog — each signature is the REST contract.
 // Backed by Thunder Core core/v1/tenants. Requests send snake_case (they mirror DB columns),
@@ -17,7 +17,6 @@ type ThunderResponse<T> = { success: boolean; data: T }
 export async function getTenants(): Promise<Tenant[]> {
     if (isDevBypass()) return MOCK_TENANTS
     const res = await thunderCore.get<ThunderResponse<Tenant[]>>('/tenants')
-    // console.log('RAW /tenants response:', JSON.stringify(res.data.data, null, 2))
     return res.data.data
 }
 
@@ -36,7 +35,6 @@ export async function getTenantUsageStats(): Promise<TenantUsageStats> {
 
 // Accepts either the real id or the tenant_code — Thunder Core resolves either on this endpoint.
 export async function getTenant(identifier: string): Promise<Tenant | null> {
-    console.log('identifier', identifier)
     if (isDevBypass()) {
         return MOCK_TENANTS.find((t) => t.id === identifier || t.tenantCode === identifier) ?? null
     }
@@ -82,8 +80,28 @@ export async function updateTenant(id: string, data: Partial<TenantInput>): Prom
     }
     // The server rejects any key outside its whitelist with a 400 rather than ignoring it,
     // so never spread extra state into `data` here.
-    const res = await thunderCore.patch<ThunderResponse<Tenant>>(`/tenants/${id}`, data)
-    return res.data.data
+    try {
+        const res = await thunderCore.patch<ThunderResponse<Tenant>>(`/tenants/${id}`, data)
+        return res.data.data
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.data) {
+            const responseData = error.response.data
+            // Validation failures come back as a bare array of Zod issues, not the
+            // { message/error } shape other endpoints use — format those into one readable line.
+            if (Array.isArray(responseData)) {
+                const message = responseData
+                    .map((issue: { path?: string[]; message?: string }) =>
+                        issue.path?.length ? `${issue.path.join('.')}: ${issue.message}` : issue.message
+                    )
+                    .filter(Boolean)
+                    .join('; ')
+                throw new Error(message || `Failed to update tenant (${error.response.status})`)
+            }
+            const body = responseData as { message?: string; error?: string }
+            throw new Error(body.message || body.error || `Failed to update tenant (${error.response.status})`)
+        }
+        throw error
+    }
 }
 
 export async function deleteTenant(id: string): Promise<void> {
