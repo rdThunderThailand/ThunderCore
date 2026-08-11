@@ -23,7 +23,7 @@ export const knowledgebaseNavSections: KnowledgebaseNavSection[] = [
         items: [
             { label: "All Collections", href: "/knowledgebase", icon: LayoutGrid },
             { label: "Foundation Collection", href: "/knowledgebase/foundation", icon: Building2 },
-            { label: "Strategy Collection", href: "/knowledgebase/strategy", icon: Target, chevron: true },
+            { label: "Strategy Collection", href: "/knowledgebase/strategy", icon: Target},
             { label: "Platform Collection", href: "/knowledgebase/platform", icon: Layers },
             { label: "Operations Collection", href: "/knowledgebase/operations", icon: Wrench },
             { label: "Manuals Collection", href: "/knowledgebase/manuals", icon: BookOpen },
