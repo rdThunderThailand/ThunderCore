@@ -218,6 +218,11 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
                                                 {getEnvironmentIcon(app.environment || 'production')}
                                                 {app.environment}
                                             </span>
+                                            {app.relation && (
+                                                <span className={`px-3 py-1 text-[9px] font-black uppercase rounded-full ${app.relation === 'granted' ? 'bg-violet-100 text-violet-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                    {app.relation === 'granted' ? 'Granted' : 'Owned'}
+                                                </span>
+                                            )}
                                         </div>
 
                                         <div className="flex flex-col gap-2 w-full">
