@@ -118,7 +118,8 @@ export const useApplicationStore = create<ApplicationStore>((set, get) => ({
 
     createApp: async (data) => {
         const newApp = await createTenantApplication(data)
-        set((state) => ({ applications: [newApp, ...state.applications] }))
+        // The create endpoint doesn't return `relation`, but a tenant always owns what it creates.
+        set((state) => ({ applications: [{ ...newApp, relation: 'owned' }, ...state.applications] }))
         return newApp
     },
 

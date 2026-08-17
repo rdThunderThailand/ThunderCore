@@ -33,7 +33,12 @@ export async function getTenantApplications(tenantId: string): Promise<TenantApp
             }))
     }
     const res = await thunderCore.get<ThunderResponse<{ applications: TenantApplicationView[] }>>(`/tenants/${tenantId}/applications`)
-    return res.data.data.applications ?? []
+    // The endpoint can list the same application twice (once owned, once granted) — keep the owned row.
+    const seen = new Map<string, TenantApplicationView>()
+    for (const app of res.data.data.applications ?? []) {
+        if (!seen.has(app.id) || app.relation === 'owned') seen.set(app.id, app)
+    }
+    return Array.from(seen.values())
 }
 
 type CreateApplicationInput = {
