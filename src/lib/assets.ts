@@ -392,8 +392,12 @@ export async function getLinkedDevices(assetId: string): Promise<Device[]> {
             .filter((d) => d.current_asset_id === assetId)
             .sort((a, b) => b.created_at.localeCompare(a.created_at))
     }
-    return noEndpoint('getLinkedDevices')
-
+    try {
+        const res = await thunderCore.get<ThunderResponse<Device[]>>(`/assets/${assetId}/devices`)
+        return res.data.data
+    } catch {
+        return []
+    }
 }
 
 export async function getAsset(tenantId: string, assetId: string): Promise<Asset | null> {
