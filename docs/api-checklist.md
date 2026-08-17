@@ -126,7 +126,7 @@ super_admin gate ต้อง enforce ที่ backend
 | `POST /tenants/:id/asset-folders` | สร้างโฟลเดอร์ | ⬜ | ⬜ | ⬜ |
 | `PATCH /tenants/:id/asset-folders/:folderId` | เปลี่ยนชื่อ / ย้ายโฟลเดอร์ | ⬜ | ⬜ | ⬜ |
 | `DELETE /tenants/:id/asset-folders/:folderId` | ลบโฟลเดอร์ | ⬜ | ⬜ | ⬜ |
-| `GET /assets/:assetId/devices` | อุปกรณ์ที่ผูกกับ asset | ⬜ | ⬜ | ⬜ |
+| `GET /assets/:assetId/devices` | อุปกรณ์ที่ผูกกับ asset | ✅ | ✅ | ⬜ |
 | `GET /assets/:assetId/activity-logs` | ประวัติการใช้งาน asset | ⬜ | ⬜ | ⬜ |
 | `GET /tenants/:id/devices/:deviceId` | รายละเอียดอุปกรณ์ | ⬜ | ⬜ | ⬜ |
 | `PATCH /tenants/:id/devices/:deviceId` | แก้ข้อมูลอุปกรณ์ | ⬜ | ⬜ | ⬜ |

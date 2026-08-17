@@ -10,6 +10,8 @@ import { cn } from "@/utils/cn";
 import logo from "../../../../public/logo.png";
 import { knowledgebaseNavSections } from "./knowledgebase-nav";
 
+// ---- Types ----
+
 export interface KnowledgebaseNavItem {
     label: string;
     href: string;
@@ -31,6 +33,8 @@ export interface KnowledgebaseSidebarProps {
     footer?: ReactNode;
 }
 
+// ---- Helpers ----
+
 // Exact match for the collection root (every knowledgebase route is a prefix
 // of it otherwise), prefix match for everything else so nested routes added
 // later under a collection highlight the right item with no Sidebar changes.
@@ -38,6 +42,8 @@ function isNavItemActive(pathname: string, href: string): boolean {
     if (href === "/knowledgebase") return pathname === href;
     return pathname === href || pathname.startsWith(`${href}/`);
 }
+
+// ---- Default footer (quote + copyright) ----
 
 const DefaultSidebarFooter = () => (
     <div className="flex flex-col gap-3">
@@ -64,6 +70,7 @@ export const Sidebar = ({
 
     return (
         <>
+            {/* Mobile-only hamburger button that toggles the off-canvas sidebar */}
             <button
                 onClick={() => setIsOpenMobile(!isOpenMobile)}
                 className="md:hidden fixed top-4 left-4 z-50 p-2.5 rounded-xl bg-slate-900 border border-slate-700 shadow-sm text-slate-300 hover:text-white focus:outline-none transition-all duration-200 hover:bg-slate-800"
@@ -72,6 +79,7 @@ export const Sidebar = ({
                 {isOpenMobile ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
+            {/* Mobile-only dim backdrop shown while the sidebar is open, tap to close */}
             {isOpenMobile && (
                 <div
                     onClick={() => setIsOpenMobile(false)}
@@ -79,6 +87,7 @@ export const Sidebar = ({
                 />
             )}
 
+            {/* Sidebar shell: sticky on desktop (collapsible width), off-canvas drawer on mobile */}
             <aside
                 className={cn(
                     "relative bg-slate-900 border-r border-slate-800 p-4 font-sans flex flex-col justify-between select-none transition-all duration-300 ease-in-out z-40",
@@ -89,6 +98,7 @@ export const Sidebar = ({
                 )}
             >
                 <div className="flex flex-col gap-6 min-h-0">
+                    {/* Brand logo (links home) + desktop collapse/expand toggle */}
                     <div className="flex items-center justify-center gap-6">
                         <Link
                             href="/knowledgebase"
@@ -115,6 +125,7 @@ export const Sidebar = ({
                         </button>
                     </div>
 
+                    {/* Nav sections (from `sections` prop, defaults to knowledgebaseNavSections) */}
                     <nav className="flex flex-col gap-4 overflow-y-auto max-h-[calc(100vh-180px)] scrollbar-none pr-0.5">
                         {sections.length === 0 && !isCollapsed && (
                             <p className="px-3 text-xs text-slate-500">No collections configured yet.</p>
@@ -122,11 +133,13 @@ export const Sidebar = ({
 
                         {sections.map((section, sectionIndex) => (
                             <div key={section.title ?? sectionIndex} className="flex flex-col gap-1">
+                                {/* Section title label (hidden when collapsed) */}
                                 {section.title && !isCollapsed && (
                                     <p className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                                         {section.title}
                                     </p>
                                 )}
+                                {/* Nav items within the section: icon + label + optional badge/chevron */}
                                 {section.items.map((item) => {
                                     const isActive = isNavItemActive(pathname, item.href);
                                     const Icon = item.icon;
@@ -177,6 +190,7 @@ export const Sidebar = ({
                     </nav>
                 </div>
 
+                {/* Footer slot (from `footer` prop, defaults to DefaultSidebarFooter), hidden when collapsed */}
                 {!isCollapsed && footer && <div className="shrink-0">{footer}</div>}
             </aside>
         </>

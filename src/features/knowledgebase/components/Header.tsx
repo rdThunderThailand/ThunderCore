@@ -5,12 +5,16 @@ import { Search, Home, Star, Bell, HelpCircle } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { mockUser, useAuthStore, type UserProfile } from "@/store/useAuthStore";
 
+// ---- Types ----
+
 export interface KnowledgebaseHeaderProps {
     user?: UserProfile;
     notificationCount?: number;
     // Not wired to a search backend yet — the shell only reports the query upward.
     onSearch?: (query: string) => void;
 }
+
+// ---- Static config: right-side utility buttons (Home / Favorites) ----
 
 const UTILITY_ITEMS = [
     { label: "Home", icon: Home },
@@ -29,6 +33,7 @@ export const Header = ({ user, notificationCount = 0, onSearch }: KnowledgebaseH
 
     return (
         <div className="w-full min-h-[8vh] pl-16 pr-4 py-4 md:px-6 flex items-center justify-between gap-3 md:gap-4 bg-white border-b border-slate-200">
+            {/* Search bar (query state is local; submission bubbles up via onSearch) */}
             <form onSubmit={handleSubmit} className="flex-1 min-w-0 max-w-xl">
                 <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus-within:border-blue-300 focus-within:bg-white transition-colors">
                     <Search className="w-4 h-4 text-slate-400 shrink-0" />
@@ -45,6 +50,7 @@ export const Header = ({ user, notificationCount = 0, onSearch }: KnowledgebaseH
             </form>
 
             <div className="flex items-center gap-1 md:gap-2 shrink-0">
+                {/* Desktop-only utility buttons: Home, Favorites, Help */}
                 <div className="hidden md:flex items-center gap-1 md:gap-2">
                     {UTILITY_ITEMS.map(({ label, icon: Icon }) => (
                         <button
@@ -68,6 +74,7 @@ export const Header = ({ user, notificationCount = 0, onSearch }: KnowledgebaseH
                     </button>
                 </div>
 
+                {/* Notification bell with unread-count badge */}
                 <button
                     type="button"
                     title="Updates"
@@ -84,6 +91,7 @@ export const Header = ({ user, notificationCount = 0, onSearch }: KnowledgebaseH
                     <span className="hidden lg:block text-[10px] font-medium">Updates</span>
                 </button>
 
+                {/* Current user avatar + name/role (falls back to store user, then mockUser) */}
                 <div className={cn("flex items-center gap-2.5 pl-2 md:pl-3 ml-1 border-l border-slate-200")}>
                     <img
                         src={defaultUser?.avatar_url || "https://i.pinimg.com/originals/75/ae/6e/75ae6eeeeb590c066ec53b277b614ce3.jpg"}
