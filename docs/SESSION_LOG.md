@@ -11,6 +11,102 @@ decisions were made). This file is the *history*; those are the *rules*.
 
 ---
 
+## 2026-08-27 — Invite-new-member-by-email: send flow finished, accept flow built
+
+**Branch:** `fix/tenants-lint` · **Commits:** none yet (uncommitted — user is actively editing
+this checkout live in an editor; changes left uncommitted for review, see below)
+
+**Goal:** user asked to add "invite a new member into a tenant via email." The admin-side send
+flow turned out to already be built (`addMembership` → `POST /tenants/:id/members` falls back to
+creating a `user_invitations` row + `invite_url` when the email has no account) — the user
+finished surfacing that link in the invite modal mid-session. Testing that live surfaced the real
+gap: clicking the invite link went nowhere.
+
+**Done + verified (live curl against the real backend, both dev servers already running on
+:3000/:3001, dev-bypass off):**
+- **Root cause (FE):** no `/invites/accept` page existed at all, and `src/middleware.ts` redirected
+  the (unauthenticated) invitee to `/login` while dropping the token from `next=` and leaking it
+  onto `/login`'s own query string instead — the link was doubly broken.
+- **`thunder_core_API/src/app/api/core/v1/invites/accept/route.ts`** — added `GET` (app-key only,
+  no user session) that hashes the token, looks up `user_invitations`, and returns
+  `{ email, status, has_account, tenant, role, expires_at }` so an invitee with no account yet can
+  see who invited them before deciding to log in or register. Verified via direct curl with the
+  app API key — correct tenant/role/email back for a real pending invite.
+- **`src/middleware.ts`** — added `/invites/accept` to `PUBLIC_PATHS`; fixed the `next=` bug in both
+  redirect branches (now preserves full path+query instead of just pathname).
+- **New:** `src/types/invites.ts`, `src/lib/invites.ts` (seam: `getInviteDetails`, `acceptInvite`,
+  dev-bypass mock), `src/features/invites/actions.ts`, `src/features/invites/AcceptInviteClient.tsx`,
+  `src/app/(auth)/invites/accept/page.tsx`. Branches on invite status (pending/expired/accepted/
+  cancelled), then on visitor state: logged in as a different email (blocked, sign-out CTA) /
+  logged in as the matching email ("Accept & join" → `POST /invites/accept`) / not logged in with
+  an existing account (`Sign in to accept` → `/login`, then reopen the link) / not logged in with
+  **no** account yet.
+- **Iterated past the first cut** (user showed the existing `/settings?user=<id>` profile-edit page
+  as a style reference and asked for one link → fill in info → done, no separate register/login/
+  reopen-the-link steps): the "no account yet" branch is now an inline form on `/invites/accept`
+  itself (First Name, Last Name, Email locked to the invited address, Password, Confirm Password)
+  instead of a redirect to `/register`. `completeInviteSignup` (new Server Action in
+  `features/invites/actions.ts`) chains three already-existing, already-working endpoints in one
+  submit: `POST /auth/register` (now takes optional `first_name`/`last_name` — `registerRequest` in
+  `src/lib/thunder-core.ts` got a new optional third param for this) → `POST /auth/login` (sets the
+  session cookies) → `POST /invites/accept` → `redirect('/dashboard')`. No new backend endpoint
+  needed for this part; deliberately avoided pre-provisioning the Supabase auth user at invite time
+  (would've needed a new password-set-via-token endpoint — more backend risk for the same end
+  result).
+- `EmailField` gained optional `defaultValue`/`readOnly` props and `/register/page.tsx` reads
+  `?email=` — kept in even though the invite flow no longer routes through `/register` (harmless,
+  backward-compatible, may still be useful for a direct register link).
+- Confirmed via curl: `/invites/accept?token=<real pending token>` returns 200 (was a 307 loop to
+  `/login?token=...` before this session) and renders the tenant ("AIS"), role ("Company Admin"),
+  hidden `token`/`email` inputs, and the `firstName`/`lastName`/`confirmPassword` fields with a
+  "Create account & join" submit — i.e. the final inline-form version, not the earlier redirect-to-
+  `/register` version.
+- `npx tsc --noEmit` clean in both repos; `npx eslint` clean on every touched/new file in both
+  repos (backend has pre-existing unrelated errors elsewhere, untouched).
+
+**Addendum — register gate blocked every invite signup; fixed with an invite-token bypass:**
+User's live browser test of `completeInviteSignup` hit `Unable to create your account right now.
+Please try again.` Reproduced directly with curl using a completely fresh, never-used email (not
+the user's real one) — same failure: `POST /auth/register` → 403
+`Permission denied: account creation is not enabled for this app`. Root cause: the `applications`
+row behind `THUNDER_CORE_APP_API_KEY` has `allow_account_creation = false` in the DB — unrelated to
+anything built this session, and not fixable through any endpoint (`allow_account_creation` is only
+ever read in `auth/register/route.ts`, never written anywhere in the API surface). Did **not**
+flip it directly in the database (would need Supabase dashboard/SQL access, and it's a broad
+platform-wide switch, not scoped to invites — out of bounds for a one-off script without explicit
+sign-off). User chose the better fix instead: **`thunder_core_API/src/app/api/core/v1/auth/register/route.ts`**
+now accepts an optional `invite_token` in the body — if it hashes to a `user_invitations` row that
+is `status: 'pending'`, not expired, and whose `email` matches the request's `email` exactly, the
+`allow_account_creation` gate is bypassed entirely (a verified invite from a tenant admin is its
+own authorization; anonymous self-registration is untouched, still gated as before). `registerRequest()`
+in `src/lib/thunder-core.ts` grew an `inviteToken` option; `completeInviteSignup` now passes the
+invite's own token through. **Verified end-to-end with curl, replicating the exact
+register → login → accept chain the Server Action performs:** no-token register still 403s (gate
+intact for anonymous signups); bogus token and mismatched-email token both correctly rejected
+(`400 Invalid input: invite token is invalid, expired, or does not match this email`); the real
+token + its matching email succeeded (`201`), logged in, and accepted — `test001@example.com` is
+now a real `active` membership (`membership_id: a7239744-c286-41ae-9766-5886ef5de259`) in tenant
+AIS. `tsc`/`eslint` clean on every file this addendum touched.
+
+**Not done / next up:**
+- Still never drove a real browser — no Chrome extension connection in this session. The curl chain
+  above proves the backend contract end-to-end, but the actual form submit (cookies via the browser,
+  not manual headers) and the "wrong email" / "already accepted" / "expired" / "has an account →
+  sign in instead" card states are still unverified live.
+- `docs/api-checklist.md`'s stale 404 note was already fixed by the peer session
+  `thundercore-prj-frontend-d2` mid-session (not by this session) — but neither checklist doc has
+  been updated yet for the new `invite_token` param on `POST /auth/register` added in this addendum.
+- If `completeInviteSignup` fails partway (e.g. register succeeds but accept fails) the user is left
+  logged in with an account but not yet a tenant member; the error message tells them to reopen the
+  link and retry (`acceptInvite`/`POST /invites/accept` is idempotent-safe to retry), but this
+  recovery path hasn't been exercised live either.
+- Everything above is **uncommitted** in the primary checkout (not a job worktree — isolation was
+  explicitly skipped this session via `.claude/settings.json` `worktree.bgIsolation: "none"`,
+  because the running dev servers watch this exact directory and a worktree would've decoupled
+  edits from what was being live-tested).
+
+---
+
 ## 2026-07-21 — Auth/RBAC fix plan (T4–T6): token refresh, redirect loop, dead activation button
 
 **Branch:** `feat/api` · **Commits:** this session — see below (T1–T3 + earlier work

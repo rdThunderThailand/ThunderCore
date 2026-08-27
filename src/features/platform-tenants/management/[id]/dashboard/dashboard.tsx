@@ -1,119 +1,73 @@
-import CardGreetingDemo from '@/features/platform-tenants/management/[id]/components/greetingCard'
-import { DashboardMap } from '@/features/platform-tenants/management/[id]/components/DashboardMap'
-import {
-    getCurrentUser,
-    getMyMemberships,
-    isAxiosError,
-    type CurrentUser,
-    type Membership,
-} from '@/lib/thunder-core'
+import { StatCard } from '@/features/platform-tenants/management/[id]/components/stat-card'
+import { getCurrentUser, getMyMemberships, isAxiosError } from '@/lib/thunder-core'
 import {
     CheckCircle2,
     ChevronDown,
     ExternalLink,
     Inbox,
     MessageSquare,
-    MousePointer2,
     RotateCw,
     Timer,
 } from 'lucide-react'
 import { redirect } from 'next/navigation'
+import { ChatProgressChart } from './components/chat-progress-chart'
+import { ChatsGauge } from './components/chats-gauge'
 
 export default async function CompanyAdminDashboard() {
-    let user: CurrentUser
-    let memberships: Membership[]
-
+    // The page below is all placeholder chat-stat content (no real backend for it yet) — these
+    // calls exist purely as the auth gate: an expired/missing session bounces to /login instead
+    // of rendering fake data as if the user were signed in.
     try {
-        ;[user, memberships] = await Promise.all([getCurrentUser(), getMyMemberships()])
+        await Promise.all([getCurrentUser(), getMyMemberships()])
     } catch (error) {
         if (isAxiosError(error) && error.response?.status === 401) redirect('/login')
         throw error
     }
 
-    const recipientName = user.first_name + ' ' + user.last_name
-
     return (
         <div className="min-h-screen p-6 lg:p-8 space-y-6">
-            {/* Greeting Header */}
-            <CardGreetingDemo recipient={recipientName} avatarSrc={user.avatar_url ?? undefined} />
-
             {/* Top 4 Stats Cards */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                {/* Total Chat */}
-                <div className="flex items-start justify-between rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-md">
-                    <div>
-                        <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                            Total Chat
-                        </p>
-                        <h3 className="mt-2 text-2xl font-bold text-slate-900">12,402</h3>
-                        <p className="mt-1 text-xs text-slate-400 font-medium">+12.5% from last month</p>
-                    </div>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-xs">
-                        <MessageSquare className="h-5 w-5 fill-current" />
-                    </div>
-                </div>
-
-                {/* Remaining */}
-                <div className="flex items-start justify-between rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-md">
-                    <div>
-                        <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                            Remaining
-                        </p>
-                        <h3 className="mt-2 text-2xl font-bold text-slate-900">2,598</h3>
-                        <p className="mt-1 text-xs text-slate-400 font-medium">-2% since yesterday</p>
-                    </div>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500 text-white shadow-xs">
-                        <RotateCw className="h-5 w-5" />
-                    </div>
-                </div>
-
-                {/* Recently (24H) */}
-                <div className="flex items-start justify-between rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-md">
-                    <div>
-                        <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                            Recently (24H)
-                        </p>
-                        <h3 className="mt-2 text-2xl font-bold text-slate-900">156</h3>
-                        <p className="mt-1 text-xs text-slate-400 font-medium">+12 since last hour</p>
-                    </div>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-500 text-white shadow-xs">
-                        <Timer className="h-5 w-5" />
-                    </div>
-                </div>
-
-                {/* Completed */}
-                <div className="flex items-start justify-between rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-md">
-                    <div>
-                        <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                            Completed
-                        </p>
-                        <h3 className="mt-2 text-2xl font-bold text-slate-900">4,892</h3>
-                        <p className="mt-1 text-xs text-slate-400 font-medium">+8.4% from last week</p>
-                    </div>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-white shadow-xs">
-                        <CheckCircle2 className="h-5 w-5" />
-                    </div>
-                </div>
+                <StatCard
+                    label="Total Chat"
+                    value="12,402"
+                    subtext="+12.5% from last month"
+                    icon={<MessageSquare className="h-5 w-5" />}
+                    iconBg="bg-blue-500"
+                />
+                <StatCard
+                    label="Remaining"
+                    value="2,598"
+                    subtext="-2% since yesterday"
+                    icon={<RotateCw className="h-5 w-5" />}
+                    iconBg="bg-amber-500"
+                />
+                <StatCard
+                    label="Recently (24H)"
+                    value="156"
+                    subtext="+12 since last hour"
+                    icon={<Timer className="h-5 w-5" />}
+                    iconBg="bg-rose-500"
+                />
+                <StatCard
+                    label="Completed"
+                    value="4,892"
+                    subtext="+8.4% from last week"
+                    icon={<CheckCircle2 className="h-5 w-5" />}
+                    iconBg="bg-emerald-500"
+                />
             </div>
 
-            {/* Middle Row: Todays Chats Map & Chat Progress Chart */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-
-                {/* Todays Chats Map Card */}
-                <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
-                    <h2 className="text-base font-bold text-slate-900 mb-1">Todays Chats</h2>
-                    <div className="mt-4 h-[300px] w-full">
-                        <DashboardMap />
-                    </div>
-                </div>
+            {/* Middle Row: Chat Progress, Todays Chats gauge, User */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
 
                 {/* Chat Progress Chart Card */}
-                <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
+                <div className="lg:col-span-5 rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
                     <h2 className="text-base font-bold text-slate-900">Chat Progress</h2>
 
-                    <div className="mt-4 flex h-64 flex-col justify-between rounded-lg border border-slate-100 p-4 bg-white relative">
+                    <div className="mt-4 rounded-lg border border-slate-100 p-4 bg-white">
                         {/* Legend */}
-                        <div className="flex items-center justify-center gap-6 text-xs font-semibold text-slate-500">
+                        <div className="flex items-center justify-center gap-6 text-xs font-semibold text-slate-500 mb-2">
                             <div className="flex items-center gap-2">
                                 <span className="h-3 w-3 rounded-xs bg-blue-600"></span>
                                 <span>STUDY</span>
@@ -124,85 +78,31 @@ export default async function CompanyAdminDashboard() {
                             </div>
                         </div>
 
-                        {/* Chart Area with Gridlines */}
-                        <div className="relative mt-4 flex-1 flex flex-col justify-between text-xs text-slate-400">
-                            {['80 HR', '60 HR', '40 HR', '20 HR', '0 HR'].map((label) => (
-                                <div key={label} className="relative flex items-center w-full">
-                                    <span className="w-12 text-right pr-3 font-medium">{label}</span>
-                                    <div className="flex-1 border-b border-dashed border-slate-200"></div>
-                                </div>
-                            ))}
-
-                            {/* Stacked Bars overlay */}
-                            <div className="absolute left-14 right-4 bottom-5 top-2 flex items-end justify-around">
-                                {/* JAN */}
-                                <div className="flex flex-col items-center gap-1">
-                                    <div className="w-8 flex flex-col rounded-md overflow-hidden shadow-xs">
-                                        <div className="h-10 bg-sky-400"></div>
-                                        <div className="h-16 bg-blue-600"></div>
-                                    </div>
-                                    <span className="text-[11px] font-semibold text-slate-500 mt-2">JAN</span>
-                                </div>
-
-                                {/* FEB */}
-                                <div className="flex flex-col items-center gap-1">
-                                    <div className="w-8 flex flex-col rounded-md overflow-hidden shadow-xs">
-                                        <div className="h-6 bg-sky-400"></div>
-                                        <div className="h-10 bg-blue-600"></div>
-                                    </div>
-                                    <span className="text-[11px] font-semibold text-slate-500 mt-2">FEB</span>
-                                </div>
-
-                                {/* MAR with Tooltip */}
-                                <div className="relative flex flex-col items-center gap-1">
-                                    {/* Tooltip Popup */}
-                                    <div className="absolute -top-12 z-20 flex flex-col rounded-lg bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-white shadow-xl">
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="h-2 w-2 rounded-full bg-blue-400"></span>
-                                            <span>35 HR</span>
-                                        </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="h-2 w-2 rounded-full bg-sky-400"></span>
-                                            <span>52 HR</span>
-                                        </div>
-                                    </div>
-                                    <MousePointer2 className="absolute -top-3 right-0 z-30 h-4 w-4 text-slate-900 fill-slate-900 drop-shadow-sm" />
-
-                                    <div className="w-8 flex flex-col rounded-md overflow-hidden shadow-xs">
-                                        <div className="h-8 bg-sky-400"></div>
-                                        <div className="h-24 bg-blue-600"></div>
-                                    </div>
-                                    <span className="text-[11px] font-semibold text-slate-500 mt-2">MAR</span>
-                                </div>
-
-                                {/* APR */}
-                                <div className="flex flex-col items-center gap-1">
-                                    <div className="w-8 flex flex-col rounded-md overflow-hidden shadow-xs">
-                                        <div className="h-6 bg-sky-400"></div>
-                                        <div className="h-18 bg-blue-600"></div>
-                                    </div>
-                                    <span className="text-[11px] font-semibold text-slate-500 mt-2">APR</span>
-                                </div>
-
-                                {/* MAY */}
-                                <div className="flex flex-col items-center gap-1">
-                                    <div className="w-8 flex flex-col rounded-md overflow-hidden shadow-xs">
-                                        <div className="h-4 bg-sky-400"></div>
-                                        <div className="h-8 bg-blue-600"></div>
-                                    </div>
-                                    <span className="text-[11px] font-semibold text-slate-500 mt-2">MAY</span>
-                                </div>
-                            </div>
-                        </div>
+                        <ChatProgressChart />
                     </div>
                 </div>
-            </div>
 
-            {/* Bottom Row: User Table & Recent Chats Table */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {/* Todays Chats Gauge Card */}
+                <div className="lg:col-span-4 rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
+                    <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-base font-bold text-slate-900">Todays Chats</h2>
+                        <button className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+                            Monthly
+                            <ChevronDown className="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-blue-600"></span>
+                        Remaining
+                    </div>
+                    <div className="flex justify-center py-4">
+                        <ChatsGauge remaining={1000} total={2598} />
+                    </div>
+                </div>
+
                 {/* User Card */}
-                <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
-                    <div className="flex items-center justify-between">
+                <div className="lg:col-span-3 rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
+                    <div className="flex items-center justify-between mb-4">
                         <h2 className="text-base font-bold text-slate-900">User</h2>
                         <a
                             href="#"
@@ -213,7 +113,7 @@ export default async function CompanyAdminDashboard() {
                         </a>
                     </div>
 
-                    <div className="mt-4 rounded-lg border border-slate-100 overflow-hidden">
+                    <div className="rounded-lg border border-slate-100 overflow-hidden">
                         {/* Table Header */}
                         <div className="flex items-center justify-between bg-slate-50/80 px-4 py-2.5 text-xs font-semibold text-slate-700 border-b border-slate-100">
                             <div className="flex items-center gap-3">
@@ -226,14 +126,10 @@ export default async function CompanyAdminDashboard() {
                                     <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
                                 </div>
                             </div>
-                            <div className="flex items-center gap-1 cursor-pointer select-none">
-                                <span>Created At</span>
-                                <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-                            </div>
                         </div>
 
                         {/* Empty State Body */}
-                        <div className="flex flex-col items-center justify-center bg-white py-12">
+                        <div className="flex flex-col items-center justify-center bg-white py-10">
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-50 text-slate-300">
                                 <Inbox className="h-8 w-8 stroke-[1.5]" />
                             </div>
@@ -244,50 +140,50 @@ export default async function CompanyAdminDashboard() {
                         <div className="h-8 border-t border-slate-100 bg-slate-50/50"></div>
                     </div>
                 </div>
+            </div>
 
-                {/* Recent Chats Card */}
-                <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-base font-bold text-slate-900">Recent Chats</h2>
-                        <a
-                            href="#"
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700"
-                        >
-                            View Chats
-                            <ExternalLink className="h-3.5 w-3.5" />
-                        </a>
-                    </div>
+            {/* Bottom Row: Recent Chats Table */}
+            <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-base font-bold text-slate-900">Recent Chats</h2>
+                    <a
+                        href="#"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700"
+                    >
+                        View Chats
+                        <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                </div>
 
-                    <div className="mt-4 rounded-lg border border-slate-100 overflow-hidden">
-                        {/* Table Header */}
-                        <div className="flex items-center justify-between bg-slate-50/80 px-4 py-2.5 text-xs font-semibold text-slate-700 border-b border-slate-100">
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="checkbox"
-                                    className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                />
-                                <div className="flex items-center gap-1 cursor-pointer select-none">
-                                    <span>Title</span>
-                                    <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-                                </div>
-                            </div>
+                <div className="mt-4 rounded-lg border border-slate-100 overflow-hidden">
+                    {/* Table Header */}
+                    <div className="flex items-center justify-between bg-slate-50/80 px-4 py-2.5 text-xs font-semibold text-slate-700 border-b border-slate-100">
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                            />
                             <div className="flex items-center gap-1 cursor-pointer select-none">
-                                <span>Created At</span>
+                                <span>Title</span>
                                 <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
                             </div>
                         </div>
-
-                        {/* Empty State Body */}
-                        <div className="flex flex-col items-center justify-center bg-white py-12">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-50 text-slate-300">
-                                <Inbox className="h-8 w-8 stroke-[1.5]" />
-                            </div>
-                            <span className="mt-2 text-xs font-medium text-slate-400">No Data</span>
+                        <div className="flex items-center gap-1 cursor-pointer select-none">
+                            <span>Created At</span>
+                            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
                         </div>
-
-                        {/* Footer Bar */}
-                        <div className="h-8 border-t border-slate-100 bg-slate-50/50"></div>
                     </div>
+
+                    {/* Empty State Body */}
+                    <div className="flex flex-col items-center justify-center bg-white py-12">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-50 text-slate-300">
+                            <Inbox className="h-8 w-8 stroke-[1.5]" />
+                        </div>
+                        <span className="mt-2 text-xs font-medium text-slate-400">No Data</span>
+                    </div>
+
+                    {/* Footer Bar */}
+                    <div className="h-8 border-t border-slate-100 bg-slate-50/50"></div>
                 </div>
             </div>
         </div>

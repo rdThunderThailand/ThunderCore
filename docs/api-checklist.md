@@ -49,7 +49,7 @@ role : company_admin
 | Endpoint | ทำอะไร | BE | FE | E2E |
 |---|---|:--:|:--:|:--:|
 | `GET /tenants/:id/members` | รายชื่อสมาชิก + ค้นหา + แบ่งหน้า | ✅ | ✅ | ✅ |
-| `POST /tenants/:id/members` | เพิ่มผู้ใช้ที่มีบัญชีอยู่แล้วเข้า tenant | ✅ | ✅ | ✅ |
+| `POST /tenants/:id/members` | เพิ่มผู้ใช้เข้า tenant ด้วย email — มีบัญชีอยู่แล้ว → สร้าง membership ทันที, ยังไม่มีบัญชี → fallback ไปสร้างคำเชิญแบบเดียวกับ `POST /tenants/:id/invites` (ไม่ 404 แล้ว) | ✅ | ✅ | ✅ |
 | `GET /tenants/:id/members/:memberId` | รายละเอียดสมาชิก (หน้า settings) | ✅ | ⬜ | ⬜ |
 | `DELETE /tenants/:id/members/:memberId` | เอาสมาชิกออกจาก tenant | ✅ | ⬜ | ⬜ |
 | `PATCH /tenants/:id/members/:memberId/role` | เปลี่ยน role (แทนที่ ไม่ใช่เพิ่ม) | ✅ | ⬜ | ⬜ | ไม่สามารถเปลี่ยนเป็น auditor ได้เพราะไม่มี auditor ใน database
@@ -57,10 +57,21 @@ role : company_admin
 | `POST /tenants/:id/members/:memberId/applications` | ให้สิทธิ์สมาชิกเข้าแอป | ✅ | ⬜ | ⬜ |
 | `DELETE /.../applications/:appId` | ถอนสิทธิ์ (soft flag ไม่ลบ row) | ✅ | ⬜ | ⬜ |
 | `PATCH /users/:id` | แก้ชื่อโปรไฟล์ (มีผลข้ามทุก tenant) | ✅ | ⬜ | ⬜ |
+| `POST /tenants/:id/invites` | สร้างคำเชิญด้วย email (คนที่ยังไม่มีบัญชี) — company_admin เชิญได้แค่ operator, super_admin เชิญ role ไหนก็ได้ | ✅ | ✅ | ⬜ |
+| `GET /tenants/:id/invites` | คำเชิญที่ค้างอยู่ของ tenant (สถานะ pending/accepted/expired/cancelled) | ✅ | ⬜ | ⬜ |
+| `DELETE /tenants/:id/invites/:invitationId` | ยกเลิกคำเชิญที่ยัง pending | ✅ | ⬜ | ⬜ |
+| `GET /invites/accept?token=` | ดูรายละเอียดคำเชิญก่อน login/สมัคร (unauthenticated, app-key เท่านั้น) — ใช้ใน `AcceptInviteClient` | ✅ | ✅ | ⬜ |
+| `POST /invites/accept` | รับคำเชิญ → สร้าง membership จริง (ใช้ตอน login แล้วเท่านั้น) | ✅ | ✅ | ⬜ |
 
 **FE ต้องอ่านก่อนต่อ:** สัญญาไม่ตรงกับ mock เดิม 4 จุด — ไม่มี field `role` เป็น string แล้ว (คืน
-`role_type`+`role_code`), `:memberId` คือ `memberships.id` ไม่ใช่ `user_id`, `POST` ต้องเป็นบัญชีที่มีอยู่แล้ว,
-revoke เป็น soft flag ดูรายละเอียดใน [API_READINESS.md](API_READINESS.md)
+`role_type`+`role_code`), `:memberId` คือ `memberships.id` ไม่ใช่ `user_id`, `POST /tenants/:id/members` ไม่ต้อง
+เป็นบัญชีที่มีอยู่แล้วอีกต่อไป (ยังไม่มีบัญชี → คืนคำเชิญ ไม่ใช่ membership ดู `isPendingInvite()` ใน
+`src/types/members.ts`), revoke เป็น soft flag ดูรายละเอียดใน [API_READINESS.md](API_READINESS.md)
+
+**⚠️ Backend ยังไม่แก้ (ดู `invites/accept/route.ts` KNOWN GAP comment):** ถ้า admin เพิ่มคนที่มีบัญชีอยู่แล้ว
+ผ่าน `POST /tenants/:id/members` มันจะสร้าง membership เป็น `status: 'invited'` ตรงๆ (ไม่ผ่าน `user_invitations`)
+— คนนั้นจะ accept คำเชิญเข้า tenant เดียวกันภายหลังไม่ได้อีกเลย (`POST /invites/accept` เจอ membership เดิม
+อยู่แล้วเลย 409 ถาวร) ยืนยันด้วย regression test `tests/api/invites-core-v1.test.mjs` (เคส "KNOWN GAP")
 
 ---
 
@@ -172,8 +183,6 @@ super_admin gate ต้อง enforce ที่ backend
 | `POST /tenants/:id/apps/enable` | เปิดใช้แอปให้ tenant |
 | `POST /tenants/:id/apps/disable` | ปิดใช้แบบ soft (`ended_at`) |
 | `GET /tenants/:id/roles` | role ที่ tenant นี้ใช้ได้ (ใช้ตอนทำ dropdown เปลี่ยน role) |
-| `GET /tenants/:id/invites` | คำเชิญที่ค้างอยู่ |
-| `POST /invites/accept` | รับคำเชิญ |
 | `GET /tenants/:id/organizations` · `GET /organizations/:orgId` | หน่วยงานย่อยใต้ tenant |
 | `GET /availability/search` · `bookings/*` | ระบบจอง (คนละโดเมน) |
 
@@ -190,8 +199,9 @@ super_admin gate ต้อง enforce ที่ backend
 ```
 node --env-file=.env tests/api/auth-refresh.test.mjs      # 12 assert
 node --env-file=.env tests/api/tenants-core-v1.test.mjs   # 39 assert
-node --env-file=.env tests/api/members-core-v1.test.mjs   # 45 assert
+node --env-file=.env tests/api/members-core-v1.test.mjs   # 46 assert
 node --env-file=.env tests/api/assets-core-v1.test.mjs    # 29 assert
+node --env-file=.env tests/api/invites-core-v1.test.mjs   # 33 assert
 ```
 
 

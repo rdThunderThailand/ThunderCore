@@ -7,7 +7,7 @@ import AuthShell from "@/features/auth/components/AuthShell"
 import EmailField from "@/features/auth/components/EmailField"
 import PasswordField from "@/features/auth/components/PasswordField"
 
-export default function RegisterClient() {
+export default function RegisterClient({ initialEmail }: { initialEmail?: string } = {}) {
     const [state, formAction, isPending] = useActionState(registerAccount, {})
     const [showTermsModal, setShowTermsModal] = useState(false);
     const [isTermsRead, setIsTermsRead] = useState(false);
@@ -28,7 +28,11 @@ export default function RegisterClient() {
                 <form action={formAction} className="space-y-4">
                     {state.error && <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm font-medium">{state.error}</div>}
                     
-                    <EmailField error={state.fieldErrors?.email} />
+                    <EmailField
+                        error={state.fieldErrors?.email}
+                        defaultValue={initialEmail}
+                        readOnly={Boolean(initialEmail)}
+                    />
                     <PasswordField error={state.fieldErrors?.password} />
 
                     <div className="space-y-3 pt-2">

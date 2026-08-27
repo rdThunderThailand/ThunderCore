@@ -85,8 +85,20 @@ export async function loginRequest(email: string, password: string): Promise<Log
 
 export type RegisterResult = { user_id: string; email: string; global_user_code: string }
 
-export async function registerRequest(email: string, password: string): Promise<RegisterResult> {
-  const res = await thunderCore.post<ThunderResponse<RegisterResult>>('/auth/register', { email, password })
+export async function registerRequest(
+  email: string,
+  password: string,
+  options?: { firstName?: string; lastName?: string; inviteToken?: string }
+): Promise<RegisterResult> {
+  const res = await thunderCore.post<ThunderResponse<RegisterResult>>('/auth/register', {
+    email,
+    password,
+    first_name: options?.firstName,
+    last_name: options?.lastName,
+    // A verified pending invite for this email bypasses the app's allow_account_creation gate
+    // server-side — see thunder_core_API auth/register/route.ts.
+    invite_token: options?.inviteToken,
+  })
   return res.data.data
 }
 
