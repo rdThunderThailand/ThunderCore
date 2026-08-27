@@ -1,14 +1,15 @@
 'use client'
 
 import { useTranslation } from '@/i18n/context'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Membership, TenantRole } from '@/types/members'
+import { isPendingInvite, Membership } from '@/types/members'
+import { TenantRoleDefinition } from '@/types/roles'
 import {
     AlertCircle, Crown, Loader2, Plus, Search, Shield, Users, X
 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { getTenantRoles } from './actions'
 import { DeleteConfirmModal } from './components/delete-confirm-modal'
 import { InviteModal } from './components/invite-modal'
 import { useMemberStore } from '@/store/useMemberStore'
@@ -20,7 +21,6 @@ const ROLE_MAP: Record<string, string> = {
     'department_admin': 'Department Admin',
     'company_admin': 'Company Admin',
     'admin_company': 'Company Admin',
-    'executive_viewer': 'Executive Viewer',
     'operator': 'Operator',
     'viewer_auditor': 'Auditor',
     'auditor': 'Auditor',
@@ -43,6 +43,10 @@ export function TenantsManagementidMembersClient() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
+    // Set when addMembership() falls back to a pending invitation (brand-new email) — the
+    // backend never sends the invite email itself, so this link is the only way to deliver it.
+    const [pendingInviteUrl, setPendingInviteUrl] = useState<string | null>(null)
+    const [roles, setRoles] = useState<TenantRoleDefinition[]>([])
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
@@ -55,17 +59,29 @@ export function TenantsManagementidMembersClient() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tenantId, currentPage, searchTerm])
 
+    useEffect(() => {
+        getTenantRoles(tenantId)
+            .then(setRoles)
+            .catch((err) => console.error('Failed to load tenant roles:', err))
+    }, [tenantId])
+
     console.log('ไก่กา', members)
 
-    const handleInviteSubmit = async (email: string, role: TenantRole) => {
+    const handleInviteSubmit = async (email: string, roleCode: string) => {
         setIsSubmitting(true)
         setError(null)
 
         try {
-            await inviteMember(tenantId, email, role)
-            setShowInviteModal(false)
-            setSuccess('Member added successfully!')
-            setTimeout(() => setSuccess(null), 3000)
+            const result = await inviteMember(tenantId, email, roleCode)
+            if (isPendingInvite(result)) {
+                // Keep the modal open so the invite link can be handed to the invitee — closing
+                // it here would throw the only copy of the link away.
+                setPendingInviteUrl(result.invite_url)
+            } else {
+                setShowInviteModal(false)
+                setSuccess('Member added successfully!')
+                setTimeout(() => setSuccess(null), 3000)
+            }
         } catch (err) {
             const error = err as Error
             setError(error.message)
@@ -92,9 +108,9 @@ export function TenantsManagementidMembersClient() {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const handleRoleChange = async (memberId: string, newRole: TenantRole) => {
+    const handleRoleChange = async (memberId: string, newRoleCode: string) => {
         try {
-            await changeRole(tenantId, memberId, newRole)
+            await changeRole(tenantId, memberId, newRoleCode)
             setActiveDropdown(null)
             setSuccess('Role updated successfully')
             setTimeout(() => setSuccess(null), 3000)
@@ -141,7 +157,10 @@ export function TenantsManagementidMembersClient() {
                     </button>
                 </div>
                 <button
-                    onClick={() => setShowInviteModal(true)}
+                    onClick={() => {
+                        setPendingInviteUrl(null)
+                        setShowInviteModal(true)
+                    }}
                     className="flex items-center gap-2 px-4 py-2 bg-[#0F53FF] text-white font-medium rounded-lg hover:bg-blue-700 transition-all shadow-sm shadow-blue-200 text-sm whitespace-nowrap"
                 >
                     <Plus className="w-4 h-4" />
@@ -289,8 +308,13 @@ export function TenantsManagementidMembersClient() {
             {showInviteModal && (
                 <InviteModal
                     onSubmit={handleInviteSubmit}
-                    onClose={() => setShowInviteModal(false)}
+                    onClose={() => {
+                        setShowInviteModal(false)
+                        setPendingInviteUrl(null)
+                    }}
                     isSubmitting={isSubmitting}
+                    inviteUrl={pendingInviteUrl}
+                    roles={roles}
                 />
             )}
 

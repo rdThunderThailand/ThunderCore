@@ -44,6 +44,11 @@ Session = httpOnly cookies `tc_access_token` / `tc_refresh_token`.
 | `POST /tenants/:id/members/:memberId/applications` | `assignApplicationToMember` |
 | `DELETE /tenants/:id/members/:memberId/applications/:appId` | `removeApplicationFromMember` |
 | `PATCH /users/:id` | `updateMemberProfile` |
+| `POST /tenants/:id/invites` | (ต่อผ่าน `addMembership` fallback — ไม่มี seam fn แยก) |
+| `GET /tenants/:id/invites` | ยังไม่ต่อ (BE พร้อมแล้ว, ยังไม่มี seam fn) |
+| `DELETE /tenants/:id/invites/:invitationId` | ยังไม่ต่อ (BE พร้อมแล้ว, ยังไม่มี seam fn) |
+| `GET /invites/accept?token=` | `getInviteDetails` (`src/lib/invites.ts`) |
+| `POST /invites/accept` | `acceptInvite` (`src/lib/invites.ts`) |
 
 **⚠️ 4 เรื่องที่ทีม frontend ต้องรู้ก่อนต่อ members** (สัญญาไม่ตรงกับ mock เดิม):
 
@@ -53,8 +58,12 @@ Session = httpOnly cookies `tc_access_token` / `tc_refresh_token`.
    (`role_type` = tier ใช้ตัดสินสิทธิ์, `role_code` = persona ใช้แสดงผล)
 2. **`:memberId` คือ `memberships.id` ไม่ใช่ `user_id`** — สองค่านี้คนละคอลัมน์ และ `PATCH /users/:id`
    (แก้โปรไฟล์) ใช้ `user_id` ไม่ใช่ `memberId` ตัว response มีทั้งสองค่าให้
-3. **`POST /members` ต้องเป็น user ที่มีบัญชีอยู่แล้ว** — รับ `{ email, role_code }` และคืน 404 ถ้าไม่มีบัญชี
-   การเชิญคนนอกเป็นคนละ flow (`/tenants/:id/invites`)
+3. ~~**`POST /members` ต้องเป็น user ที่มีบัญชีอยู่แล้ว**~~ — **แก้แล้ว (2026-08-27):** รับ `{ email, role_code }`
+   เหมือนเดิม แต่ถ้า email ยังไม่มีบัญชี จะไม่ 404 อีกต่อไป — fallback ไปสร้างคำเชิญแบบเดียวกับ
+   `POST /tenants/:id/invites` แทน (token + accept flow, membership จริงเกิดตอน accept เท่านั้น) ผลลัพธ์เป็น
+   2 shape ต่างกัน: user เดิม → membership object, email ใหม่ → `{ invitation_id, invite_url, ... }` —
+   แยกด้วย `isPendingInvite()` ใน `src/types/members.ts`. company_admin ยังเชิญได้แค่ operator role
+   เหมือน `/invites` เดิม
 4. **revoke app access เป็น soft flag** (`is_active=false`) ไม่ได้ลบ row — grant ซ้ำหลัง revoke จะปลุกแถวเดิม
    คืน 201 ไม่ใช่ 409
 
@@ -66,7 +75,8 @@ tenant admin แก้ชื่อสมาชิก = ชื่อเปลี�
 ```
 node --env-file=.env tests/api/auth-refresh.test.mjs      # 12 assert
 node --env-file=.env tests/api/tenants-core-v1.test.mjs   # 39 assert
-node --env-file=.env tests/api/members-core-v1.test.mjs   # 45 assert
+node --env-file=.env tests/api/members-core-v1.test.mjs   # 46 assert
+node --env-file=.env tests/api/invites-core-v1.test.mjs   # 33 assert
 ```
 
 **⚠️ "ยังไม่ E2E" หมายถึงอะไร:** สัญญาฝั่ง API ยืนยันครบด้วย 39 assert (ชื่อ field ตรงกับที่

@@ -13,7 +13,7 @@ export function LicensesChart({ quota }: LicensesChartProps) {
     const remain = Math.max(0, max - used)
 
     const data = [
-        { name: 'Used', value: used, color: '#7C3AED' },    // Violet 600
+        { name: 'Used', value: used, color: '#0F53FF' },    // Brand blue
         { name: 'Remain', value: remain, color: '#E2E8F0' } // Slate 200
     ]
 
@@ -52,7 +52,7 @@ export function LicensesChart({ quota }: LicensesChartProps) {
             {/* Legend Bottom */}
             <div className="flex justify-around items-center pt-4 border-t border-slate-100 mt-2">
                 <div className="flex flex-col items-center">
-                    <span className="text-xs font-bold text-violet-600 mb-1">Used</span>
+                    <span className="text-xs font-bold text-blue-600 mb-1">Used</span>
                     <span className="text-xl font-black text-slate-800">{used}</span>
                 </div>
                 <div className="w-px h-10 bg-slate-200" />

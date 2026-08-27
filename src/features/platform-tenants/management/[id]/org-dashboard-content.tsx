@@ -2,12 +2,13 @@
 
 import { useTranslation } from '@/i18n/context'
 import { TenantDashboard } from '@/types/tenants'
-import { Calendar } from 'lucide-react'
+import { Boxes, Calendar, ExternalLink, HardDrive, Users, Wifi } from 'lucide-react'
 import { PlayerStatusChart } from './components/player-status-chart'
 import { LicensesChart } from './components/licenses-chart'
 import { UserListWidget } from './components/user-list-widget'
 import { RecentActivitiesWidget } from './components/recent-activities-widget'
 import { StorageProgressBar } from './components/storage-progress'
+import { StatCard } from './components/stat-card'
 import Map, { NavigationControl } from 'react-map-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -20,34 +21,67 @@ export function OrgDashboardContent({ tenant, createdDate }: OrgDashboardContent
     const { t } = useTranslation()
     const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
+    const usedStorageGb = ((tenant.quota?.used_storage_mb ?? 0) / 1024).toFixed(1)
+    const maxStorageGb = ((tenant.quota?.max_storage_mb ?? 0) / 1024).toFixed(1)
+
     return (
-        <div className="min-h-screen pb-24 lg:pb-0">
-            <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6 lg:space-y-8 animate-in fade-in duration-500">
+        <div className="min-h-screen pb-24 lg:pb-0 bg-slate-50/50">
+            <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6 animate-in fade-in duration-500">
 
                 {/* Header Section */}
-                <div className="flex flex-col gap-2 mb-4">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 lg:w-16 lg:h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100">
-                            <span className="text-xl lg:text-2xl font-black text-violet-600">{tenant.name.charAt(0)}</span>
-                        </div>
-                        <div>
-                            <h1 className="text-2xl lg:text-4xl font-black text-slate-900 tracking-tight">{tenant.name}</h1>
-                            <p className="text-slate-500 font-bold flex items-center gap-2 text-xs lg:text-sm">
-                                <Calendar className="w-3 h-3 lg:w-4 lg:h-4" />
-                                {t('orgDash.memberSince')} {createdDate}
-                            </p>
-                        </div>
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 lg:w-14 lg:h-14 bg-white rounded-2xl flex items-center justify-center shadow-xs border border-slate-200/80">
+                        <span className="text-xl lg:text-2xl font-black text-blue-600">{tenant.name.charAt(0)}</span>
+                    </div>
+                    <div>
+                        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">{tenant.name}</h1>
+                        <p className="text-slate-500 font-medium flex items-center gap-1.5 text-xs lg:text-sm">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {t('orgDash.memberSince')} {createdDate}
+                        </p>
                     </div>
                 </div>
 
-                {/* Main Grid Layout matching Mockup */}
+                {/* Stat Cards */}
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                    <StatCard
+                        label="Assets"
+                        value={`${tenant.quota?.used_assets ?? 0}`}
+                        subtext={`of ${tenant.quota?.max_assets ?? 0} licensed`}
+                        icon={<Boxes className="h-5 w-5" />}
+                        iconBg="bg-blue-500"
+                    />
+                    <StatCard
+                        label="Storage Used"
+                        value={`${usedStorageGb} GB`}
+                        subtext={`of ${maxStorageGb} GB`}
+                        icon={<HardDrive className="h-5 w-5" />}
+                        iconBg="bg-amber-500"
+                    />
+                    <StatCard
+                        label="Members"
+                        value={`${tenant.members?.length ?? 0}`}
+                        subtext="tenant members"
+                        icon={<Users className="h-5 w-5" />}
+                        iconBg="bg-emerald-500"
+                    />
+                    <StatCard
+                        label="Devices Online"
+                        value={`${tenant.playerStatus?.online ?? 0}`}
+                        subtext={`of ${tenant.playerStatus?.total ?? 0} total`}
+                        icon={<Wifi className="h-5 w-5" />}
+                        iconBg="bg-rose-500"
+                    />
+                </div>
+
+                {/* Main Grid Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                     {/* Top Row: Location Map (8 cols) & Player Status (4 cols) */}
-                    <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                        <h2 className="text-lg font-black text-slate-900 mb-1">Location Report</h2>
-                        <p className="text-xs font-bold text-slate-500 mb-4">Location for manage your players</p>
-                        <div className="w-full h-[300px] bg-slate-100 rounded-xl overflow-hidden relative">
+                    <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200/80 shadow-xs p-5">
+                        <h2 className="text-base font-bold text-slate-900 mb-1">Location Report</h2>
+                        <p className="text-xs font-medium text-slate-500 mb-4">Location for manage your players</p>
+                        <div className="w-full h-[300px] bg-slate-100 rounded-lg overflow-hidden relative">
                             {mapboxToken ? (
                                 <Map
                                     mapboxAccessToken={mapboxToken}
@@ -70,43 +104,55 @@ export function OrgDashboardContent({ tenant, createdDate }: OrgDashboardContent
                         </div>
                     </div>
 
-                    <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-lg font-black text-slate-900">Player Status</h2>
-                            <button className="text-xs font-bold text-violet-600 hover:text-violet-700 underline">View All</button>
+                    <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200/80 shadow-xs p-5">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-base font-bold text-slate-900">Player Status</h2>
+                            <button className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
+                                View All
+                                <ExternalLink className="h-3.5 w-3.5" />
+                            </button>
                         </div>
                         <PlayerStatusChart status={tenant.playerStatus} />
                     </div>
 
                     {/* Middle Row: Licenses (4 cols), Users (4 cols), Activities (4 cols) */}
-                    <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-lg font-black text-slate-900">Licenses</h2>
-                            <button className="text-xs font-bold text-violet-600 hover:text-violet-700 underline">Manage</button>
+                    <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200/80 shadow-xs p-5">
+                        <div className="flex justify-between items-center mb-1">
+                            <h2 className="text-base font-bold text-slate-900">Licenses</h2>
+                            <button className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
+                                Manage
+                                <ExternalLink className="h-3.5 w-3.5" />
+                            </button>
                         </div>
-                        <p className="text-xs font-bold text-slate-500 mb-4 -mt-4">Manage your Licenses</p>
+                        <p className="text-xs font-medium text-slate-500 mb-4">Manage your licenses</p>
                         <LicensesChart quota={tenant.quota} />
                     </div>
 
-                    <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-lg font-black text-slate-900">User</h2>
-                            <button className="text-xs font-bold text-violet-600 hover:text-violet-700 underline">View All</button>
+                    <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200/80 shadow-xs p-5">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-base font-bold text-slate-900">User</h2>
+                            <button className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
+                                View All
+                                <ExternalLink className="h-3.5 w-3.5" />
+                            </button>
                         </div>
                         <UserListWidget members={tenant.members} />
                     </div>
 
-                    <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-lg font-black text-slate-900">Recent Activities</h2>
-                            <button className="text-xs font-bold text-violet-600 hover:text-violet-700 underline">View All</button>
+                    <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200/80 shadow-xs p-5">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-base font-bold text-slate-900">Recent Activities</h2>
+                            <button className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
+                                View All
+                                <ExternalLink className="h-3.5 w-3.5" />
+                            </button>
                         </div>
                         <RecentActivitiesWidget logs={tenant.recentLogs} />
                     </div>
 
                     {/* Bottom Row: Storage (12 cols) */}
-                    <div className="lg:col-span-12 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                        <h2 className="text-lg font-black text-slate-900 mb-6">Storage</h2>
+                    <div className="lg:col-span-12 bg-white rounded-xl border border-slate-200/80 shadow-xs p-5">
+                        <h2 className="text-base font-bold text-slate-900 mb-4">Storage</h2>
                         <StorageProgressBar
                             usedStorage={tenant.quota?.used_storage_mb || 0}
                             maxStorage={tenant.quota?.max_storage_mb || 50 * 1024}
@@ -118,4 +164,3 @@ export function OrgDashboardContent({ tenant, createdDate }: OrgDashboardContent
         </div>
     )
 }
-

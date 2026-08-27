@@ -82,6 +82,7 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
 
     useEffect(() => {
         if (searchParams.get('deleted') === 'true') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setShowDeleteSuccess(true)
             const timer = setTimeout(() => setShowDeleteSuccess(false), 1500)
             router.replace('/tenants', { scroll: false })
@@ -165,7 +166,7 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
                 setOrgs([newOrg, ...orgs])
                 setIsModalOpen(false)
                 setFormData({ name: '', type: 'enterprise', status: 'active' })
-                router.push(`/tenants/management/${newOrg.tenantCode}/settings?created=true`)
+                router.push(`/tenants/management/${newOrg.id}/settings?created=true`)
             }
         } catch (err) {
             const error = err as Error

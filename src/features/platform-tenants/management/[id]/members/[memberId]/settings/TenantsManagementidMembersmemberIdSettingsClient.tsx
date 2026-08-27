@@ -11,38 +11,12 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Application } from '@/types/applications'
 import { TenantApplicationView } from '@/types/tenant-applications'
-import { MemberDetails, TenantRole } from '@/types/members'
+import { MemberDetails } from '@/types/members'
+import { TenantRoleDefinition } from '@/types/roles'
 import { useMemberStore } from '@/store/useMemberStore'
 import {
-    assignApplicationToMember, getMemberApplications, getMemberDetails, getTenantApplications, removeApplicationFromMember, updateMemberProfile, updateMemberRole
+    assignApplicationToMember, getMemberApplications, getMemberDetails, getTenantApplications, getTenantRoles, removeApplicationFromMember, updateMemberProfile, updateMemberRole
 } from '../../actions'
-
-const ROLE_MAP: Record<string, string> = {
-    'owner': 'Owner',
-    'admin': 'Admin',
-    'super_admin': 'Super Admin',
-    'department_admin': 'Department Admin',
-    'company_admin': 'Company Admin',
-    'executive_viewer': 'Executive Viewer',
-    'operator': 'Operator',
-    'viewer_auditor': 'Auditor',
-    'auditor': 'Auditor',
-}
-
-const formatRoleFromMemberDetails = (rawRole?: string): TenantRole => {
-    if (!rawRole) return 'Operator'
-    const key = rawRole.toLowerCase().trim()
-    const mapped = ROLE_MAP[key]
-    if (mapped) {
-        return mapped as TenantRole
-    }
-    if (rawRole === 'Executive Viewer' || rawRole === 'Department Admin' || rawRole === 'Company Admin' || rawRole === 'Operator' || rawRole === 'Auditor') {
-        return rawRole as TenantRole
-    }
-    return 'Operator'
-}
-
-
 
 export function TenantsManagementidMembersmemberIdSettingsClient() {
     const params = useParams()
@@ -53,7 +27,9 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
 
     const { members } = useMemberStore()
     const storeMember = members.find((m) => m.id === memberId || m.user_id === memberId)
-    const initialRole = storeMember ? formatRoleFromMemberDetails(storeMember.role) : 'Operator'
+    // storeMember.role is already the real roles.code (e.g. 'admin_company') — no label
+    // translation needed, and no silent guess when it's genuinely unset.
+    const initialRole = storeMember?.role ?? ''
 
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
@@ -71,7 +47,8 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
     const [firstName, setFirstName] = useState('')
     const [lastName, setLastName] = useState('')
     const [email, setEmail] = useState('')
-    const [role, setRole] = useState<TenantRole>(initialRole)
+    const [role, setRole] = useState(initialRole)
+    const [roles, setRoles] = useState<TenantRoleDefinition[]>([])
     const [successMsg, setSuccessMsg] = useState<string | null>(null)
     const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
@@ -92,7 +69,9 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
             setFirstName(memberData.profiles?.first_name ?? '')
             setLastName(memberData.profiles?.last_name ?? '')
             setEmail(memberData.profiles?.email ?? '')
-            setRole(formatRoleFromMemberDetails(memberData.role))
+            // memberData.role is already the real roles.code — empty string means the
+            // membership genuinely has no role assigned, not "Operator" by default.
+            setRole(memberData.role ?? '')
 
         } catch (err) {
             console.error('Error loading member settings:', err)
@@ -103,15 +82,21 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
     }
 
     useEffect(() => {
+        getTenantRoles(tenantId)
+            .then(setRoles)
+            .catch((err) => console.error('Failed to load tenant roles:', err))
+    }, [tenantId])
+
+    useEffect(() => {
         loadData()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [memberId, tenantId])
 
-    const handleRoleChange = async (newRole: TenantRole) => {
-        setRole(newRole)
+    const handleRoleChange = async (newRoleCode: string) => {
+        setRole(newRoleCode)
         try {
             setErrorMsg(null)
-            await updateMemberRole(memberId, tenantId, newRole)
+            await updateMemberRole(memberId, tenantId, newRoleCode)
             setSuccessMsg('Member role updated successfully')
             setTimeout(() => setSuccessMsg(null), 3000)
         } catch (err) {
@@ -285,14 +270,18 @@ export function TenantsManagementidMembersmemberIdSettingsClient() {
                                 <div className="relative">
                                     <select
                                         value={role}
-                                        onChange={(e) => handleRoleChange(e.target.value as TenantRole)}
-                                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all text-sm font-medium appearance-none cursor-pointer pr-10 text-slate-800"
+                                        onChange={(e) => handleRoleChange(e.target.value)}
+                                        disabled={roles.length === 0}
+                                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all text-sm font-medium appearance-none cursor-pointer pr-10 text-slate-800 disabled:opacity-50"
                                     >
-                                        <option value="Executive Viewer">Executive Viewer</option>
-                                        <option value="Department Admin">Department Admin</option>
-                                        <option value="Company Admin">Company Admin</option>
-                                        <option value="Operator">Operator</option>
-                                        <option value="Auditor">Auditor</option>
+                                        {!role && <option value="">No role assigned</option>}
+                                        {roles.length === 0 ? (
+                                            <option value="">Loading roles…</option>
+                                        ) : (
+                                            roles.map((r) => (
+                                                <option key={r.id} value={r.code}>{r.name}</option>
+                                            ))
+                                        )}
                                     </select>
                                     <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                                 </div>

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Membership, TenantRole } from '@/types/members'
+import { AddMembershipResult, isPendingInvite, Membership } from '@/types/members'
 import {
     getMemberships, addMembership,
     removeMembership, updateMemberRole
@@ -17,9 +17,9 @@ interface MemberStore {
     fetchMembers: (tenantId: string) => Promise<void>
     setSearchTerm: (term: string) => void
     setCurrentPage: (page: number) => void
-    inviteMember: (tenantId: string, email: string, role: TenantRole) => Promise<void>
+    inviteMember: (tenantId: string, email: string, roleCode: string) => Promise<AddMembershipResult>
     removeMember: (tenantId: string, memberId: string) => Promise<void>
-    changeRole: (tenantId: string, memberId: string, role: TenantRole) => Promise<void>
+    changeRole: (tenantId: string, memberId: string, roleCode: string) => Promise<void>
 }
 
 export const useMemberStore = create<MemberStore>((set, get) => ({
@@ -54,16 +54,19 @@ export const useMemberStore = create<MemberStore>((set, get) => ({
         }
     },
 
-    inviteMember: async (tenantId: string, email: string, role: TenantRole) => {
-        const newMember = await addMembership({
-            tenantId: tenantId,
-            email,
-            role
-        })
-        set((state) => ({
-            members: [newMember, ...state.members],
-            totalCount: state.totalCount + 1
-        }))
+    inviteMember: async (tenantId: string, email: string, roleCode: string) => {
+        const result = await addMembership({ tenantId, email, roleCode })
+
+        // A brand-new email has no user_id yet, so it's a pending invitation, not a
+        // membership — nothing to add to the roster until the invite is accepted.
+        if (!isPendingInvite(result)) {
+            set((state) => ({
+                members: [result, ...state.members],
+                totalCount: state.totalCount + 1
+            }))
+        }
+
+        return result
     },
 
     removeMember: async (tenantId: string, memberId: string) => {
@@ -77,10 +80,10 @@ export const useMemberStore = create<MemberStore>((set, get) => ({
         await state.fetchMembers(tenantId)
     },
 
-    changeRole: async (tenantId: string, memberId: string, newRole: TenantRole) => {
-        await updateMemberRole(memberId, tenantId, newRole)
+    changeRole: async (tenantId: string, memberId: string, newRoleCode: string) => {
+        await updateMemberRole(memberId, tenantId, newRoleCode)
         set((state) => ({
-            members: state.members.map(m => m.id === memberId ? { ...m, role: newRole } : m)
+            members: state.members.map(m => m.id === memberId ? { ...m, role: newRoleCode } : m)
         }))
     }
 }))

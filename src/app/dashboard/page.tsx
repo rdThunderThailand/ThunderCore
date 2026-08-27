@@ -8,7 +8,6 @@ import {
   type CurrentUser,
   type Membership,
 } from '@/lib/thunder-core'
-import Link from 'next/link'
 
 export default async function DashboardPage() {
   let user: CurrentUser
@@ -29,8 +28,8 @@ export default async function DashboardPage() {
       <div className="mx-auto max-w-3xl space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/cityzen-logo.png" alt="CityZen" className="h-6 w-6 object-contain" />
-            <span className="text-lg font-bold uppercase tracking-tight text-slate-900">CityZen</span>
+            <img src="/logo.png" alt="thunder" className="h-6 w-6 object-contain" />
+            <span className="text-lg font-bold uppercase tracking-tight text-slate-900">THUNDER</span>
           </div>
           <form action={logout}>
             <button
@@ -105,29 +104,6 @@ export default async function DashboardPage() {
               ))}
             </ul>
           )}
-        </section>
-
-        <section>
-          <Link href="/tenants">
-            <button
-              type="submit"
-              className="h-9 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
-            >
-              Go to tenants page (for super_admin only)
-            </button>
-          </Link>
-        </section>
-
-        <section>
-          {/* <Link href="/e316bbcf-2eb6-48ae-b5d9-74d631dec359/assets"> */}
-          <Link href="/22222222-2222-2222-2222-222222222222/assets">
-            <button
-              type="submit"
-              className="h-9 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
-            >
-              Go to assets page (for company_admin only)
-            </button>
-          </Link>
         </section>
 
       </div>

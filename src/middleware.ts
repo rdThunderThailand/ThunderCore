@@ -6,7 +6,7 @@ import { isDevBypass } from '@/lib/dev'
 // ponytail: checks only that the cookie exists, no verify — Thunder_Core verifies on every real call.
 // Upgrade to jose verify here only if a route must render sensitive data before its fetch resolves.
 
-const PUBLIC_PATHS = ['/login', '/register', '/register/confirmed']
+const PUBLIC_PATHS = ['/login', '/register', '/register/confirmed', '/invites/accept']
 
 type RefreshResult =
     | { ok: true; accessToken: string; refreshToken: string; expiresAt: number }
@@ -63,8 +63,13 @@ export async function middleware(request: NextRequest) {
         // Expired, revoked, or already-rotated — the only correct move is to send the
         // user back to login with both cookies cleared, not fall through to a stale check.
         const url = request.nextUrl.clone()
+        // Capture path+query before overwriting them — a bare `pathname` here would drop
+        // any query string (e.g. an invite token) and leave it stranded as a top-level
+        // param on the /login URL instead of round-tripping through `next`.
+        const originalTarget = pathname + request.nextUrl.search
         url.pathname = '/login'
-        url.searchParams.set('next', pathname)
+        url.search = ''
+        url.searchParams.set('next', originalTarget)
         const response = NextResponse.redirect(url)
         response.cookies.delete(ACCESS_TOKEN_COOKIE)
         response.cookies.delete(REFRESH_TOKEN_COOKIE)
@@ -76,8 +81,10 @@ export async function middleware(request: NextRequest) {
 
     if (!hasSession && !isPublic) {
         const url = request.nextUrl.clone()
+        const originalTarget = pathname + request.nextUrl.search
         url.pathname = '/login'
-        url.searchParams.set('next', pathname)
+        url.search = ''
+        url.searchParams.set('next', originalTarget)
         return NextResponse.redirect(url)
     }
 

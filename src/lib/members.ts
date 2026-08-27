@@ -1,24 +1,7 @@
-import { GetMembersOptions, MemberDetails, Membership, TenantRole } from '@/types/members'
+import { AddMembershipResult, GetMembersOptions, MemberDetails, Membership } from '@/types/members'
 import { isDevBypass } from './dev'
 import { MOCK_MEMBERS } from './mock/members'
 import { isAxiosError, thunderCore } from './thunder-core'
-
-export function mapRoleToBackend(role: string): string {
-    switch (role) {
-        case '≈':
-            return 'executive_viewer'
-        case 'Department Admin':
-            return 'department_admin'
-        case 'Company Admin':
-            return 'company_admin'
-        case 'Operator':
-            return 'operator'
-        case 'Auditor':
-            return 'viewer_auditor'
-        default:
-            return role.toLowerCase().replace(/\s+/g, '_')
-    }
-}
 
 const noEndpoint = (fn: string): never => {
     throw new Error(`${fn}: no REST endpoint yet — set NEXT_PUBLIC_DEV_BYPASS=true to use mock data`)
@@ -61,15 +44,20 @@ export async function getMemberships(
     // ponytail: Supabase shim — replace with axios GET core/v1/tenants/:id/members when it exists
 }
 
-type AddMembershipInput = { tenantId: string; email: string; role: TenantRole }
+// roleCode is the real roles.code value (from getTenantRoles()) — not a translated label.
+type AddMembershipInput = { tenantId: string; email: string; roleCode: string }
 
-export async function addMembership(input: AddMembershipInput): Promise<Membership> {
+// Backend resolves the role first, then branches on whether `email` has an account:
+// existing user → membership created immediately; new email → falls back to the same
+// invite mechanism as POST /tenants/:id/invites (pending row, no membership until accepted).
+// Both outcomes are 201 — the caller distinguishes them with isPendingInvite().
+export async function addMembership(input: AddMembershipInput): Promise<AddMembershipResult> {
     if (isDevBypass()) {
         return {
             id: crypto.randomUUID(),
             user_id: crypto.randomUUID(),
             tenant_id: input.tenantId,
-            role: input.role,
+            role: input.roleCode,
             joined_at: new Date().toISOString(),
             user: {
                 id: crypto.randomUUID(),
@@ -80,10 +68,9 @@ export async function addMembership(input: AddMembershipInput): Promise<Membersh
     }
 
     try {
-        const backendRole = mapRoleToBackend(input.role)
-        const res = await thunderCore.post<ThunderResponse<Membership>>(
+        const res = await thunderCore.post<ThunderResponse<AddMembershipResult>>(
             `/tenants/${input.tenantId}/members`,
-            { email: input.email, role_code: backendRole, role: backendRole }
+            { email: input.email, role_code: input.roleCode }
         )
         return res.data.data
     } catch (error) {
@@ -116,15 +103,13 @@ export async function removeMembership(memberId: string, tenantId: string): Prom
 export async function updateMemberRole(
     memberId: string,
     tenantId: string,
-    role: TenantRole
+    roleCode: string
 ): Promise<void> {
     if (isDevBypass()) return
 
     try {
-        const backendRole = mapRoleToBackend(role)
         await thunderCore.patch(`/tenants/${tenantId}/members/${memberId}/role`, {
-            role_code: backendRole,
-            role: backendRole
+            role_code: roleCode,
         })
     } catch (error) {
         if (isAxiosError(error) && error.response?.data) {
