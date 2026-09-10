@@ -24,7 +24,6 @@ export type CurrentUser = {
   avatar_url: string | null
   preferred_language: string
   timezone: string
-  is_super_admin: boolean
   default_tenant_id: string | null
   role: ThunderRole
 }

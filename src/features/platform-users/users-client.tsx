@@ -5,7 +5,9 @@ import { ChevronLeft, ChevronRight, Plus, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { deleteUser, updateUserRole } from './actions'
+import { deleteUser, inviteUser, updateUserRole } from './actions'
+import { DeleteConfirmModal } from './components/delete-confirm-modal'
+import { InviteUserModal } from './components/invite-user-modal'
 import { getRoleDisplay, RoleCell, RoleValue } from './components/role-cell'
 import { RoleConfirmModal } from './components/role-confirm-modal'
 
@@ -23,6 +25,11 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
     const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
     const [roleChangeTarget, setRoleChangeTarget] = useState<{ user: Profile; nextRole: RoleValue } | null>(null)
     const [isRoleUpdating, setIsRoleUpdating] = useState(false)
+    const [isInviteOpen, setIsInviteOpen] = useState(false)
+    const [isInviting, setIsInviting] = useState(false)
+    const [inviteLink, setInviteLink] = useState<string | null>(null)
+    const [deleteTarget, setDeleteTarget] = useState<{ ids: string[]; label: string } | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     // Handle Search click
     const handleSearch = () => {
@@ -77,36 +84,62 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
         }
     }
 
-    // Single Delete
-    const handleDelete = async (id: string, nameOrEmail: string) => {
-        const confirmed = window.confirm(`Are you sure you want to delete user "${nameOrEmail}"?`)
-        if (!confirmed) return
+    // Single Delete — opens the confirm modal, doesn't mutate yet
+    const handleDelete = (id: string, nameOrEmail: string) => {
+        setDeleteTarget({ ids: [id], label: nameOrEmail })
+    }
 
+    // Bulk Delete — opens the confirm modal, doesn't mutate yet
+    const handleBulkDelete = () => {
+        if (selectedUserIds.length === 0) return
+        setDeleteTarget({ ids: selectedUserIds, label: `${selectedUserIds.length} selected users` })
+    }
+
+    const handleDeleteCancel = () => {
+        if (isDeleting) return
+        setDeleteTarget(null)
+    }
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteTarget) return
+        const { ids, label } = deleteTarget
+
+        setIsDeleting(true)
         try {
-            await deleteUser(id)
-            setUsers(users.filter(u => u.id !== id))
-            setSelectedUserIds(selectedUserIds.filter(userId => userId !== id))
-            toast.success(`User "${nameOrEmail}" deleted successfully.`)
+            await Promise.all(ids.map(id => deleteUser(id)))
+            setUsers(users.filter(u => !ids.includes(u.id)))
+            setSelectedUserIds(selectedUserIds.filter(id => !ids.includes(id)))
+            toast.success(ids.length > 1 ? 'Selected users deleted successfully.' : `User "${label}" deleted successfully.`)
+            setDeleteTarget(null)
         } catch (error) {
             const err = error as Error
             toast.error(err.message || 'Failed to delete user.')
+        } finally {
+            setIsDeleting(false)
         }
     }
 
-    // Bulk Delete
-    const handleBulkDelete = async () => {
-        const confirmed = window.confirm(`Are you sure you want to delete ${selectedUserIds.length} selected users?`)
-        if (!confirmed) return
-
+    const handleInviteSubmit = async (input: { email: string; first_name?: string; last_name?: string; role: RoleValue }) => {
+        setIsInviting(true)
         try {
-            await Promise.all(selectedUserIds.map(id => deleteUser(id)))
-            setUsers(users.filter(u => !selectedUserIds.includes(u.id)))
-            setSelectedUserIds([])
-            toast.success('Selected users deleted successfully.')
+            const { invite_link, ...created } = await inviteUser(input)
+            setUsers((prev) => [created, ...prev])
+            toast.success(`Account created for ${input.email}.`)
+            // Keep the modal open to show the link — no email delivery yet, so this is the
+            // only way to hand the invite to the invitee.
+            setInviteLink(invite_link)
         } catch (error) {
             const err = error as Error
-            toast.error(err.message || 'Failed to delete users.')
+            toast.error(err.message || 'Failed to invite user.')
+        } finally {
+            setIsInviting(false)
         }
+    }
+
+    const handleInviteClose = () => {
+        if (isInviting) return
+        setIsInviteOpen(false)
+        setInviteLink(null)
     }
 
     // Role change request from the dropdown — opens the confirm modal, doesn't mutate yet
@@ -176,7 +209,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
 
                         {/* Invite User Button */}
                         <button
-                            onClick={() => toast.info('Invite User modal is not implemented yet.')}
+                            onClick={() => setIsInviteOpen(true)}
                             className="px-4 py-2.5 bg-blue-600 text-white font-semibold text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-lg shadow-blue-600/20 shrink-0"
                         >
                             <Plus className="w-4 h-4" />
@@ -337,6 +370,23 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                     </div>
                 </div>
             </div>
+
+            {isInviteOpen && (
+                <InviteUserModal
+                    onSubmit={handleInviteSubmit}
+                    onClose={handleInviteClose}
+                    isSubmitting={isInviting}
+                    inviteLink={inviteLink}
+                />
+            )}
+
+            <DeleteConfirmModal
+                isOpen={deleteTarget !== null}
+                onClose={handleDeleteCancel}
+                onConfirm={handleDeleteConfirm}
+                isLoading={isDeleting}
+                targetLabel={deleteTarget?.label}
+            />
 
             <RoleConfirmModal
                 isOpen={roleChangeTarget !== null}

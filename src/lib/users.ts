@@ -12,6 +12,42 @@ export async function getUsers(): Promise<Profile[]> {
     return res.data.data
 }
 
+export type InviteUserInput = {
+    email: string
+    first_name?: string
+    last_name?: string
+    role: 'super_admin' | 'company_admin' | 'guest'
+}
+
+export type InviteUserResult = Profile & { invite_link: string | null }
+
+export async function inviteUser(input: InviteUserInput): Promise<InviteUserResult> {
+    if (isDevBypass()) {
+        const mock: InviteUserResult = {
+            id: `mock-${Date.now()}`,
+            email: input.email,
+            first_name: input.first_name ?? '',
+            last_name: input.last_name ?? '',
+            role_code: input.role === 'guest' ? null : input.role,
+            role_type: input.role === 'guest' ? null : input.role,
+            can_invite: input.role !== 'guest',
+            can_create_app: input.role !== 'guest',
+            can_view_logs: input.role === 'super_admin',
+            created_at: new Date().toISOString(),
+            is_active: true,
+            invite_link: 'https://example.com/mock-invite-link',
+        }
+        return mock
+    }
+
+    // ponytail: uses POST /users — see thunder_core_API src/app/api/core/v1/users/route.ts.
+    // Returns invite_link instead of sending an email — the Send Email hook isn't wired up in the
+    // Supabase dashboard for the real project yet (deferred, see project memory), so the caller
+    // hands this link to the invitee directly.
+    const res = await thunderCore.post<{ success: boolean; data: InviteUserResult }>('/users', input)
+    return res.data.data
+}
+
 export type UpdateUserInput = {
     first_name?: string | null
     last_name?: string | null

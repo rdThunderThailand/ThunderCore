@@ -20,19 +20,17 @@ const TIERS: ThunderRole[] = [
 
 type SessionUser = {
     role: ThunderRole
-    isSuperAdmin: boolean
 }
 
 async function getSessionUser(): Promise<SessionUser | null> {
     if (isDevBypass()) {
-        const role = getDevRole()
-        return { role, isSuperAdmin: role === 'super_admin' }
+        return { role: getDevRole() }
     }
 
     try {
         const user = await getCurrentUser()
         // console.log("user", user)
-        return { role: user.role, isSuperAdmin: user.is_super_admin }
+        return { role: user.role }
     } catch (error) {
         if (isAxiosError(error) && error.response?.status === 401) return null
         throw error

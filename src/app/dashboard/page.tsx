@@ -66,7 +66,7 @@ export default async function DashboardPage() {
             <Field label="Preferred language" value={user.preferred_language} />
             <Field label="Timezone" value={user.timezone} />
             <Field label="Default tenant" value={user.default_tenant_id ?? '—'} />
-            <Field label="Super admin" value={user.is_super_admin ? 'Yes' : 'No'} />
+            <Field label="Super admin" value={user.role === 'super_admin' ? 'Yes' : 'No'} />
           </dl>
         </section>
 
