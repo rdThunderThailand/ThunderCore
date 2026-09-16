@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { AddMembershipResult, isPendingInvite, Membership } from '@/types/members'
 import {
     getMemberships, addMembership,
-    removeMembership, updateMemberRole
+    removeMembership, updateMemberRole, updateMemberStatus
 } from '@/features/platform-tenants/management/[id]/members/actions'
 
 interface MemberStore {
@@ -20,6 +20,7 @@ interface MemberStore {
     inviteMember: (tenantId: string, email: string, roleCode: string) => Promise<AddMembershipResult>
     removeMember: (tenantId: string, memberId: string) => Promise<void>
     changeRole: (tenantId: string, memberId: string, roleCode: string) => Promise<void>
+    changeStatus: (tenantId: string, memberId: string, status: string) => Promise<void>
 }
 
 export const useMemberStore = create<MemberStore>((set, get) => ({
@@ -84,6 +85,13 @@ export const useMemberStore = create<MemberStore>((set, get) => ({
         await updateMemberRole(memberId, tenantId, newRoleCode)
         set((state) => ({
             members: state.members.map(m => m.id === memberId ? { ...m, role: newRoleCode } : m)
+        }))
+    },
+
+    changeStatus: async (tenantId: string, memberId: string, status: string) => {
+        await updateMemberStatus(memberId, tenantId, status)
+        set((state) => ({
+            members: state.members.map(m => m.id === memberId ? { ...m, status: status as Membership['status'] } : m)
         }))
     }
 }))

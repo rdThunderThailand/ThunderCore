@@ -9,10 +9,22 @@ import {
 import Link from 'next/link'
 import { useParams, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { getTenantRoles } from './actions'
+import { getTenantRoles, resendInvite } from './actions'
 import { DeleteConfirmModal } from './components/delete-confirm-modal'
 import { InviteModal } from './components/invite-modal'
 import { useMemberStore } from '@/store/useMemberStore'
+
+// Mirrors thunder_core_API's MEMBERSHIP_STATUSES (src/lib/core/member-view.ts). Kept here rather
+// than fetched, same as ROLE_MAP below — it's a closed, rarely-changing set.
+const MEMBER_STATUSES = ['invited', 'active', 'suspended', 'removed', 'archived'] as const
+
+const STATUS_STYLES: Record<string, string> = {
+    invited: 'border-amber-200 bg-amber-50 text-amber-700',
+    active: 'border-green-200 bg-green-50 text-green-700',
+    suspended: 'border-orange-200 bg-orange-50 text-orange-700',
+    removed: 'border-slate-200 bg-slate-50 text-slate-500',
+    archived: 'border-slate-200 bg-slate-50 text-slate-500',
+}
 
 const ROLE_MAP: Record<string, string> = {
     'owner': 'Owner',
@@ -36,13 +48,16 @@ export function TenantsManagementidMembersClient() {
     const {
         members, totalCount, isLoading, searchTerm, setSearchTerm,
         currentPage, setCurrentPage, itemsPerPage,
-        fetchMembers, inviteMember, removeMember, changeRole
+        fetchMembers, inviteMember, removeMember, changeRole, changeStatus
     } = useMemberStore()
 
     const [showInviteModal, setShowInviteModal] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
+    const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
+    const [resendingId, setResendingId] = useState<string | null>(null)
+    const [roleUpdatingId, setRoleUpdatingId] = useState<string | null>(null)
     // Set when addMembership() falls back to a pending invitation (brand-new email) — the
     // backend never sends the invite email itself, so this link is the only way to deliver it.
     const [pendingInviteUrl, setPendingInviteUrl] = useState<string | null>(null)
@@ -107,18 +122,51 @@ export function TenantsManagementidMembersClient() {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handleRoleChange = async (memberId: string, newRoleCode: string) => {
+        setRoleUpdatingId(memberId)
         try {
             await changeRole(tenantId, memberId, newRoleCode)
-            setActiveDropdown(null)
             setSuccess('Role updated successfully')
             setTimeout(() => setSuccess(null), 3000)
         } catch (err) {
             const error = err as Error
             setError(error.message)
+        } finally {
+            setRoleUpdatingId(null)
         }
     }
+    const handleStatusChange = async (memberId: string, newStatus: string) => {
+        setStatusUpdatingId(memberId)
+        try {
+            await changeStatus(tenantId, memberId, newStatus)
+            setSuccess('Status updated successfully')
+            setTimeout(() => setSuccess(null), 3000)
+        } catch (err) {
+            const error = err as Error
+            setError(error.message)
+        } finally {
+            setStatusUpdatingId(null)
+        }
+    }
+
+    const handleResendInvite = async (memberId: string) => {
+        setResendingId(memberId)
+        try {
+            const result = await resendInvite(memberId, tenantId)
+            setSuccess(
+                result.reactivated
+                    ? `Account reactivated — set-password email sent to ${result.email}`
+                    : `Set-password email sent to ${result.email}`
+            )
+            setTimeout(() => setSuccess(null), 4000)
+        } catch (err) {
+            const error = err as Error
+            setError(error.message)
+        } finally {
+            setResendingId(null)
+        }
+    }
+
     const filteredMembers = members
     const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage))
 
@@ -246,9 +294,28 @@ export function TenantsManagementidMembersClient() {
                                             <span className="text-sm text-slate-600">{member.user?.email || 'No email'}</span>
                                         </td>
                                         <td className="px-4 py-4 text-center">
-                                            <span className="text-sm font-medium text-slate-700">
-                                                {getMemberRole(member)}
-                                            </span>
+                                            {roles.length > 0 ? (
+                                                <select
+                                                    value={member.role}
+                                                    onChange={(e) => handleRoleChange(member.id, e.target.value)}
+                                                    disabled={roleUpdatingId === member.id}
+                                                    className="text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded px-2 py-1 cursor-pointer disabled:opacity-50 disabled:cursor-wait"
+                                                >
+                                                    {/* The member's current role_code may not be in this tenant's role list
+                                                        (e.g. a stale/legacy code) — keep it selectable rather than silently
+                                                        switching the <select> to the first option in the list. */}
+                                                    {!roles.some((r) => r.code === member.role) && (
+                                                        <option value={member.role} className="bg-white text-slate-700">{getMemberRole(member)}</option>
+                                                    )}
+                                                    {roles.map((r) => (
+                                                        <option key={r.code} value={r.code} className="bg-white text-slate-700">{r.name}</option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <span className="text-sm font-medium text-slate-700">
+                                                    {getMemberRole(member)}
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-4 py-4">
                                             <span className="text-sm text-slate-500">
@@ -258,11 +325,26 @@ export function TenantsManagementidMembersClient() {
                                             </span>
                                         </td>
                                         <td className="px-4 py-4 text-center">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded border border-green-200 bg-green-50 text-green-700 text-[10px] font-bold uppercase tracking-wide">
-                                                Joined
-                                            </span>
+                                            <select
+                                                value={(member.status || 'invited').toLowerCase()}
+                                                onChange={(e) => handleStatusChange(member.id, e.target.value)}
+                                                disabled={statusUpdatingId === member.id}
+                                                className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wide cursor-pointer disabled:opacity-50 disabled:cursor-wait ${STATUS_STYLES[(member.status || 'invited').toLowerCase()] || STATUS_STYLES.invited}`}
+                                            >
+                                                {MEMBER_STATUSES.map((s) => (
+                                                    <option key={s} value={s} className="bg-white text-slate-700 normal-case font-normal">{s}</option>
+                                                ))}
+                                            </select>
                                         </td>
-                                        <td className="px-4 py-4 text-right">
+                                        <td className="px-4 py-4 text-right space-x-3 whitespace-nowrap">
+                                            <button
+                                                onClick={() => handleResendInvite(member.id)}
+                                                disabled={resendingId === member.id}
+                                                className="text-slate-500 text-sm hover:underline font-medium hover:text-slate-700 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                                                title="Send a fresh set-password email (also reactivates a deactivated account)"
+                                            >
+                                                {resendingId === member.id ? 'Sending…' : 'Resend'}
+                                            </button>
                                             {member.role !== 'owner' && (
                                                 <button
                                                     onClick={() => setDeleteConfirm(member.id)}

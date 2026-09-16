@@ -28,6 +28,14 @@ export async function updateMemberRole(memberId: string, tenantId: string, roleC
     return members.updateMemberRole(memberId, tenantId, roleCode)
 }
 
+export async function updateMemberStatus(memberId: string, tenantId: string, status: string) {
+    return members.updateMemberStatus(memberId, tenantId, status)
+}
+
+export async function resendInvite(memberId: string, tenantId: string) {
+    return members.resendInvite(memberId, tenantId)
+}
+
 export async function getMemberDetails(memberId: string, tenantId: string) {
     return members.getMemberDetails(memberId, tenantId)
 }

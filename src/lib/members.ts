@@ -120,6 +120,52 @@ export async function updateMemberRole(
     }
 }
 
+// The 5 real values Core accepts: invited/active/suspended/removed/archived. A membership
+// created via the "add existing user" path starts as 'invited' with no flow that ever promotes
+// it to 'active' (see thunder_core_API's own "KNOWN GAP" comment on that endpoint) — this is
+// the manual escape hatch until that gap is closed properly.
+export async function updateMemberStatus(
+    memberId: string,
+    tenantId: string,
+    status: string
+): Promise<void> {
+    if (isDevBypass()) return
+
+    try {
+        await thunderCore.patch(`/tenants/${tenantId}/members/${memberId}`, { status })
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.data) {
+            const data = error.response.data as { message?: string; error?: string }
+            throw new Error(data.message || data.error || `Failed to update member status (${error.response.status})`)
+        }
+        throw error
+    }
+}
+
+// Sends a real "set your password" email via Supabase's own /auth/v1/recover, unbanning the
+// account first if it was deactivated. This is the flow that was actually missing: adding a
+// member via addMembership()'s existing-user path never sent anything, and a soft-deleted user
+// (DELETE /users/:id) comes back banned with no way back in without this.
+export async function resendInvite(memberId: string, tenantId: string): Promise<{ email: string; reactivated: boolean }> {
+    if (isDevBypass()) {
+        return { email: 'dev-bypass@example.com', reactivated: false }
+    }
+
+    try {
+        const res = await thunderCore.post<ThunderResponse<{ email: string; reactivated: boolean }>>(
+            `/tenants/${tenantId}/members/${memberId}/resend-invite`,
+            {}
+        )
+        return res.data.data
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.data) {
+            const data = error.response.data as { message?: string; error?: string }
+            throw new Error(data.message || data.error || `Failed to resend invite (${error.response.status})`)
+        }
+        throw error
+    }
+}
+
 export async function getMemberDetails(memberId: string, tenantId: string): Promise<MemberDetails> {
     if (isDevBypass()) {
         const member = MOCK_MEMBERS.find((m) => m.id === memberId || m.user_id === memberId) || MOCK_MEMBERS[0]

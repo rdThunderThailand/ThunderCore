@@ -19,6 +19,9 @@ export interface Membership {
     // A raw roles.code (e.g. 'admin_company', 'operator_technician') — the backend never
     // returns a translated label, so this is always the real per-tenant role code.
     role: string;
+    // Raw memberships.status from Core: 'invited' | 'active' | 'suspended' | 'removed' | 'archived'.
+    // Distinct from the unused MemberStatus above — this is the real value the API returns.
+    status?: string;
     joined_at: string;
     user?: {
         id: string;
