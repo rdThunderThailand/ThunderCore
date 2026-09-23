@@ -1,0 +1,221 @@
+import { AddMembershipResult, GetMembersOptions, MemberDetails, Membership } from '@/types/members'
+import { isDevBypass } from './dev'
+import { MOCK_MEMBERS } from './mock/members'
+import { isAxiosError, thunderCore } from './thunder-core'
+
+const noEndpoint = (fn: string): never => {
+    throw new Error(`${fn}: no REST endpoint yet — set NEXT_PUBLIC_DEV_BYPASS=true to use mock data`)
+}
+
+type ThunderResponse<T> = { success: boolean; data: T }
+type ThunderMemberShipsPayload = { data: Membership[], count: number }
+// Living endpoint catalog — each signature is the future REST contract.
+// Swap the body to axios (core/v1/tenants/:id/members) when the endpoint lands; callers don't change.
+
+export async function getMemberships(
+    tenantId: string,
+    options: GetMembersOptions = {}
+): Promise<{ data: Membership[]; count: number }> {
+    if (isDevBypass()) {
+        const { page = 1, search = '' } = options
+        const term = search.trim().toLowerCase()
+
+        const filtered = MOCK_MEMBERS.filter((m) => {
+            if (m.tenant_id !== tenantId) return false
+            if (!term) return true
+            return (
+                m.user?.email?.toLowerCase().includes(term) ||
+                m.user?.full_name?.toLowerCase().includes(term)
+            )
+        })
+
+        // const start = (page - 1)
+        return {
+            data: filtered,
+            count: filtered.length,
+        }
+    }
+
+    const res = await thunderCore.get<ThunderResponse<ThunderMemberShipsPayload>>(`/tenants/${tenantId}/members`, { params: options })
+    // console.log('res', res.data.data)
+    return res.data.data
+
+
+    // ponytail: Supabase shim — replace with axios GET core/v1/tenants/:id/members when it exists
+}
+
+// roleCode is the real roles.code value (from getTenantRoles()) — not a translated label.
+type AddMembershipInput = { tenantId: string; email: string; roleCode: string }
+
+// Backend resolves the role first, then branches on whether `email` has an account:
+// existing user → membership created immediately; new email → falls back to the same
+// invite mechanism as POST /tenants/:id/invites (pending row, no membership until accepted).
+// Both outcomes are 201 — the caller distinguishes them with isPendingInvite().
+export async function addMembership(input: AddMembershipInput): Promise<AddMembershipResult> {
+    if (isDevBypass()) {
+        return {
+            id: crypto.randomUUID(),
+            user_id: crypto.randomUUID(),
+            tenant_id: input.tenantId,
+            role: input.roleCode,
+            joined_at: new Date().toISOString(),
+            user: {
+                id: crypto.randomUUID(),
+                email: input.email,
+                full_name: input.email.split('@')[0],
+            }
+        }
+    }
+
+    try {
+        const res = await thunderCore.post<ThunderResponse<AddMembershipResult>>(
+            `/tenants/${input.tenantId}/members`,
+            { email: input.email, role_code: input.roleCode }
+        )
+        return res.data.data
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.data) {
+            const data = error.response.data as { message?: string; error?: string }
+            throw new Error(data.message || data.error || `Failed to add member (${error.response.status})`)
+        }
+        throw error
+    }
+}
+
+export async function removeMembership(memberId: string, tenantId: string): Promise<void> {
+    if (isDevBypass()) {
+        return
+    }
+    try {
+        const res = await thunderCore.delete<ThunderResponse<void>>(`/tenants/${tenantId}/members/${memberId}`)
+        if (!res.data?.success && res.data?.success !== undefined) {
+            throw new Error('Failed to remove membership')
+        }
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.data) {
+            const data = error.response.data as { message?: string; error?: string }
+            throw new Error(data.message || data.error || `Failed to remove member (${error.response.status})`)
+        }
+        throw error
+    }
+}
+
+export async function updateMemberRole(
+    memberId: string,
+    tenantId: string,
+    roleCode: string
+): Promise<void> {
+    if (isDevBypass()) return
+
+    try {
+        await thunderCore.patch(`/tenants/${tenantId}/members/${memberId}/role`, {
+            role_code: roleCode,
+        })
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.data) {
+            const data = error.response.data as { message?: string; error?: string }
+            throw new Error(data.message || data.error || `Failed to update member role (${error.response.status})`)
+        }
+        throw error
+    }
+}
+
+// The 5 real values Core accepts: invited/active/suspended/removed/archived. A membership
+// created via the "add existing user" path starts as 'invited' with no flow that ever promotes
+// it to 'active' (see thunder_core_API's own "KNOWN GAP" comment on that endpoint) — this is
+// the manual escape hatch until that gap is closed properly.
+export async function updateMemberStatus(
+    memberId: string,
+    tenantId: string,
+    status: string
+): Promise<void> {
+    if (isDevBypass()) return
+
+    try {
+        await thunderCore.patch(`/tenants/${tenantId}/members/${memberId}`, { status })
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.data) {
+            const data = error.response.data as { message?: string; error?: string }
+            throw new Error(data.message || data.error || `Failed to update member status (${error.response.status})`)
+        }
+        throw error
+    }
+}
+
+// Sends a real "set your password" email via Supabase's own /auth/v1/recover, unbanning the
+// account first if it was deactivated. This is the flow that was actually missing: adding a
+// member via addMembership()'s existing-user path never sent anything, and a soft-deleted user
+// (DELETE /users/:id) comes back banned with no way back in without this.
+export async function resendInvite(memberId: string, tenantId: string): Promise<{ email: string; reactivated: boolean }> {
+    if (isDevBypass()) {
+        return { email: 'dev-bypass@example.com', reactivated: false }
+    }
+
+    try {
+        const res = await thunderCore.post<ThunderResponse<{ email: string; reactivated: boolean }>>(
+            `/tenants/${tenantId}/members/${memberId}/resend-invite`,
+            {}
+        )
+        return res.data.data
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.data) {
+            const data = error.response.data as { message?: string; error?: string }
+            throw new Error(data.message || data.error || `Failed to resend invite (${error.response.status})`)
+        }
+        throw error
+    }
+}
+
+export async function getMemberDetails(memberId: string, tenantId: string): Promise<MemberDetails> {
+    if (isDevBypass()) {
+        const member = MOCK_MEMBERS.find((m) => m.id === memberId || m.user_id === memberId) || MOCK_MEMBERS[0]
+
+        const fullName = member.user?.full_name ?? ''
+        const [firstName, ...rest] = fullName.split(' ')
+
+        return {
+            ...member,
+            profiles: {
+                first_name: firstName ?? '',
+                last_name: rest.join(' '),
+                email: member.user?.email ?? '',
+            },
+        }
+    }
+
+    const res = await thunderCore.get<ThunderResponse<any>>(`/tenants/${tenantId}/members/${memberId}`)
+    const data = res.data.data
+
+    const fullName = data?.user?.full_name || data?.profiles?.full_name || data?.full_name || ''
+    const [firstName, ...rest] = fullName.split(' ')
+    const rawRole = data?.role || data?.role_code || data?.role_type || ''
+
+    return {
+        ...data,
+        role: rawRole,
+        profiles: {
+            first_name: data?.profiles?.first_name || firstName || '',
+            last_name: data?.profiles?.last_name || rest.join(' ') || '',
+            email: data?.profiles?.email || data?.user?.email || data?.email || '',
+        },
+    }
+}
+
+type UpdateMemberProfileInput = { first_name: string; last_name: string }
+
+export async function updateMemberProfile(userId: string, data: UpdateMemberProfileInput): Promise<void> {
+    if (isDevBypass()) return
+
+    try {
+        await thunderCore.patch(`/users/${userId}`, {
+            first_name: data.first_name,
+            last_name: data.last_name
+        })
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.data) {
+            const resData = error.response.data as { message?: string; error?: string }
+            throw new Error(resData.message || resData.error || `Failed to update profile (${error.response.status})`)
+        }
+        throw error
+    }
+}
