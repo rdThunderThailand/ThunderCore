@@ -11,7 +11,7 @@ import { useParams, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getTenantRoles, resendInvite } from './actions'
 import { DeleteConfirmModal } from './components/delete-confirm-modal'
-import { InviteModal } from './components/invite-modal'
+import { InviteModal, SentInvite } from './components/invite-modal'
 import { useMemberStore } from '@/store/useMemberStore'
 
 // Mirrors thunder_core_API's MEMBERSHIP_STATUSES (src/lib/core/member-view.ts). Kept here rather
@@ -58,9 +58,9 @@ export function TenantsManagementidMembersClient() {
     const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
     const [resendingId, setResendingId] = useState<string | null>(null)
     const [roleUpdatingId, setRoleUpdatingId] = useState<string | null>(null)
-    // Set when addMembership() falls back to a pending invitation (brand-new email) — the
-    // backend never sends the invite email itself, so this link is the only way to deliver it.
-    const [pendingInviteUrl, setPendingInviteUrl] = useState<string | null>(null)
+    // Set whenever addMembership() returns an invite link (brand-new email, or an existing account
+    // added as 'invited'). Unless the backend reports email_sent, this link is the only delivery.
+    const [pendingInvite, setPendingInvite] = useState<SentInvite | null>(null)
     const [roles, setRoles] = useState<TenantRoleDefinition[]>([])
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
@@ -88,10 +88,11 @@ export function TenantsManagementidMembersClient() {
 
         try {
             const result = await inviteMember(tenantId, email, roleCode)
-            if (isPendingInvite(result)) {
+            const hasAccount = !isPendingInvite(result)
+            if (result.invite_url) {
                 // Keep the modal open so the invite link can be handed to the invitee — closing
                 // it here would throw the only copy of the link away.
-                setPendingInviteUrl(result.invite_url)
+                setPendingInvite({ url: result.invite_url, email, isEmailSent: result.email_sent === true, hasAccount })
             } else {
                 setShowInviteModal(false)
                 setSuccess('Member added successfully!')
@@ -170,6 +171,8 @@ export function TenantsManagementidMembersClient() {
     const filteredMembers = members
     const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage))
 
+    const getRoleCode = (member: Membership) => member.role || member.role_code || ''
+
     const getMemberRole = (member: Membership) => {
         const rawRole = (
             member.role ||
@@ -206,7 +209,7 @@ export function TenantsManagementidMembersClient() {
                 </div>
                 <button
                     onClick={() => {
-                        setPendingInviteUrl(null)
+                        setPendingInvite(null)
                         setShowInviteModal(true)
                     }}
                     className="flex items-center gap-2 px-4 py-2 bg-[#0F53FF] text-white font-medium rounded-lg hover:bg-blue-700 transition-all shadow-sm shadow-blue-200 text-sm whitespace-nowrap"
@@ -296,7 +299,7 @@ export function TenantsManagementidMembersClient() {
                                         <td className="px-4 py-4 text-center">
                                             {roles.length > 0 ? (
                                                 <select
-                                                    value={member.role}
+                                                    value={getRoleCode(member)}
                                                     onChange={(e) => handleRoleChange(member.id, e.target.value)}
                                                     disabled={roleUpdatingId === member.id}
                                                     className="text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded px-2 py-1 cursor-pointer disabled:opacity-50 disabled:cursor-wait"
@@ -304,8 +307,8 @@ export function TenantsManagementidMembersClient() {
                                                     {/* The member's current role_code may not be in this tenant's role list
                                                         (e.g. a stale/legacy code) — keep it selectable rather than silently
                                                         switching the <select> to the first option in the list. */}
-                                                    {!roles.some((r) => r.code === member.role) && (
-                                                        <option value={member.role} className="bg-white text-slate-700">{getMemberRole(member)}</option>
+                                                    {!roles.some((r) => r.code === getRoleCode(member)) && (
+                                                        <option value={getRoleCode(member)} className="bg-white text-slate-700">{getMemberRole(member)}</option>
                                                     )}
                                                     {roles.map((r) => (
                                                         <option key={r.code} value={r.code} className="bg-white text-slate-700">{r.name}</option>
@@ -392,10 +395,10 @@ export function TenantsManagementidMembersClient() {
                     onSubmit={handleInviteSubmit}
                     onClose={() => {
                         setShowInviteModal(false)
-                        setPendingInviteUrl(null)
+                        setPendingInvite(null)
                     }}
                     isSubmitting={isSubmitting}
-                    inviteUrl={pendingInviteUrl}
+                    sentInvite={pendingInvite}
                     roles={roles}
                 />
             )}

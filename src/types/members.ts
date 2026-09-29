@@ -19,6 +19,9 @@ export interface Membership {
     // A raw roles.code (e.g. 'admin_company', 'operator_technician') — the backend never
     // returns a translated label, so this is always the real per-tenant role code.
     role: string;
+    // What Core's member view actually returns for the primary role (role is only set locally
+    // after a role change) — read role first, then this.
+    role_code?: string;
     // Raw memberships.status from Core: 'invited' | 'active' | 'suspended' | 'removed' | 'archived'.
     // Distinct from the unused MemberStatus above — this is the real value the API returns.
     status?: string;
@@ -58,8 +61,16 @@ export interface PendingInvite {
     invite_url: string;
 }
 
-export type AddMembershipResult = Membership | PendingInvite;
+// Agreed with core (thunder_core_API), both branches: email_sent is true once the backend has
+// actually emailed the invitee; absent/false → nothing was sent and the frontend must hand out
+// invite_url itself. The existing-account branch also carries invite_url/invitation_id now.
+export type AddMembershipResult = (Membership | PendingInvite) & {
+    email_sent?: boolean;
+    invite_url?: string;
+};
 
+// Keyed on user_id, not invitation_id: the existing-account branch returns an invitation_id too,
+// but only a real membership has a user_id.
 export function isPendingInvite(result: AddMembershipResult): result is PendingInvite {
-    return 'invitation_id' in result;
+    return !('user_id' in result);
 }

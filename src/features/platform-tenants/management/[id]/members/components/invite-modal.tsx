@@ -1,16 +1,18 @@
 import { useTranslation } from '@/i18n/context';
 import { TenantRoleDefinition } from '@/types/roles';
-import { Check, Copy, Loader2, UserPlus, X } from 'lucide-react';
+import { Check, Copy, Loader2, MailCheck, UserPlus, X } from 'lucide-react';
 import { useState } from 'react';
 
-export function InviteModal({ onSubmit, onClose, isSubmitting, inviteUrl, roles }: {
+export type SentInvite = { url: string; email: string; isEmailSent: boolean; hasAccount: boolean };
+
+export function InviteModal({ onSubmit, onClose, isSubmitting, sentInvite, roles }: {
     onSubmit: (email: string, roleCode: string) => void;
     onClose: () => void;
     isSubmitting: boolean;
     // Set once the backend responds with a pending invitation (brand-new email, no account
-    // yet) instead of a membership — there's no email delivery on the backend, so this link
-    // is the only way the inviter can actually hand it to the invitee.
-    inviteUrl?: string | null;
+    // yet) instead of a membership. The link is always shown: it's the only delivery channel
+    // when the backend didn't email it, and a fallback when the email doesn't arrive.
+    sentInvite?: SentInvite | null;
     // The tenant's real assignable roles (GET /tenants/:id/roles) — sent as-is, not translated
     // through a fixed label map. A tenant can have several roles sharing one role_type (e.g.
     // multiple operator personas), so there is no generic code to guess from a label.
@@ -29,9 +31,9 @@ export function InviteModal({ onSubmit, onClose, isSubmitting, inviteUrl, roles 
     }
 
     const handleCopy = async () => {
-        if (!inviteUrl) return
+        if (!sentInvite) return
         try {
-            await navigator.clipboard.writeText(inviteUrl)
+            await navigator.clipboard.writeText(sentInvite.url)
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)
         } catch {
@@ -40,26 +42,50 @@ export function InviteModal({ onSubmit, onClose, isSubmitting, inviteUrl, roles 
         }
     }
 
-    if (inviteUrl) {
+    if (sentInvite) {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                 <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg animate-in zoom-in-95 duration-200 border border-slate-100">
                     <div className="px-6 py-5 flex justify-between items-center border-b border-slate-50">
-                        <h3 className="font-bold text-lg text-slate-900">Invitation created</h3>
+                        <h3 className="font-bold text-lg text-slate-900">
+                            {sentInvite.isEmailSent ? 'Invitation sent' : 'Invitation created'}
+                        </h3>
                         <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
                             <X className="w-5 h-5" />
                         </button>
                     </div>
 
                     <div className="p-6 space-y-3">
-                        <p className="text-sm text-slate-600">
-                            This email doesn&apos;t have a Thunder Core account yet, so it wasn&apos;t added to the
-                            roster. Send them this link so they can accept the invite:
-                        </p>
+                        {sentInvite.isEmailSent ? (
+                            <>
+                                <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50 text-emerald-800 text-sm">
+                                    <MailCheck className="w-5 h-5 shrink-0" />
+                                    <p>
+                                        An invitation email was sent to <span className="font-bold">{sentInvite.email}</span>.
+                                        {sentInvite.hasAccount
+                                            ? ' They\'re on the roster as invited until they accept it.'
+                                            : ' They\'ll join the roster once they accept it.'}
+                                    </p>
+                                </div>
+                                <p className="text-sm text-slate-600">
+                                    If the email doesn&apos;t arrive, you can share this link with them directly:
+                                </p>
+                            </>
+                        ) : sentInvite.hasAccount ? (
+                            <p className="text-sm text-slate-600">
+                                They were added to the roster as invited, but the invitation email couldn&apos;t be
+                                sent. Send them this link so they can accept the invite:
+                            </p>
+                        ) : (
+                            <p className="text-sm text-slate-600">
+                                This email doesn&apos;t have a Thunder Core account yet, so it wasn&apos;t added to the
+                                roster. Send them this link so they can accept the invite:
+                            </p>
+                        )}
                         <div className="flex gap-2">
                             <input
                                 readOnly
-                                value={inviteUrl}
+                                value={sentInvite.url}
                                 onFocus={(e) => e.currentTarget.select()}
                                 className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 truncate"
                             />

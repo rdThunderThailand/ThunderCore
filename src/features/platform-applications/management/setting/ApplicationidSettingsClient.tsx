@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import {
     addApplicationAuthorization,
+    getAllTenantsForSelect,
     getApplicationById,
     getApplicationTenants,
     getSubTenantsForSelect,
@@ -305,7 +306,10 @@ function AddTenantModal({
     const [isSaving, setIsSaving] = useState(false)
 
     useEffect(() => {
-        getSubTenantsForSelect(ownerTenantId)
+        // A global app (tenant_id null — every app on the super-admin list) has no owner to scope
+        // sub-tenants by; /tenants//sub-tenants would 400 on the empty id. Offer every tenant.
+        const loadTenants = ownerTenantId ? getSubTenantsForSelect(ownerTenantId) : getAllTenantsForSelect()
+        loadTenants
             .then((all) => {
                 const available = all.filter((o) => !existingIds.includes(o.id))
                 setOptions(available)
