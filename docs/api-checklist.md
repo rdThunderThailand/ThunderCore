@@ -108,6 +108,12 @@ role : company_admin
 | `GET /applications/:id/members` | ผู้ใช้ทั้งหมดที่เข้าแอปนี้ได้ | ✅ | ✅ | ✅ |
 | `GET /applications/:id/api-key` | ดู API key ของแอป | ✅ | ✅ | ✅ |
 | `POST /applications/:id/api-key/regenerate` | ออก API key ใหม่ (ต้องเป็น super_admin) | ✅ | ✅ | ✅ |
+| `GET /applications/:id/workspaces` | catalog workspace ของแอป (super_admin) — `src/lib/application-workspaces.ts` | ✅ | ✅ | ⬜ |
+| `POST /applications/:id/workspaces` | import workspace เข้า catalog (upsert ตาม code) | ✅ | ✅ | ⬜ |
+| `PATCH /applications/:id/workspaces/:workspaceId` | เปลี่ยนชื่อ/ลำดับ/status (inactive = ซ่อนจากทุก tenant) | ✅ | ✅ | ⬜ |
+| `DELETE /applications/:id/workspaces/:workspaceId` | ลบ workspace + สวิตช์ของทุก tenant | ✅ | ✅ | ⬜ |
+| `GET /tenants/:id/applications/:appId/workspaces` | workspace ของแอปพร้อมสวิตช์ของ tenant นี้ | ✅ | ✅ | ⬜ |
+| `PUT /tenants/:id/applications/:appId/workspaces/:workspaceId` | เปิด/ปิด workspace ให้ tenant (`{ is_active }`) | ✅ | ✅ | ⬜ |
 
 **มีอยู่แล้วใน core/v1 ทับกับหมวดนี้:** `POST /tenants/:id/apps/enable` และ `disable` ทำงานเดียวกับ
 `POST/DELETE /applications/:id/tenants` แต่เป็น soft-disable (`ended_at`) ซึ่งดีกว่า — ตอนทำอย่าสร้างซ้ำ
