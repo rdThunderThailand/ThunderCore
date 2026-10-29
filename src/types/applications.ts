@@ -102,3 +102,40 @@ export interface IAppModule {
   href?: string;
   requiredRole?: string[];
 }
+
+/** A workspace in an application's catalog (Core `application_workspaces`). `code` is the id the
+ * application itself uses for it — for Thunder One, the App id (e.g. `media-workspace`). */
+export interface ApplicationWorkspace {
+  id: string
+  application_id: string
+  code: string
+  name: string
+  description: string | null
+  sort_order: number
+  status: 'active' | 'inactive'
+  created_at: string
+  updated_at: string
+}
+
+/** A catalog workspace as one tenant sees it: `is_active` is the tenant's own switch, `enabled` is
+ * whether the application will actually let the tenant open it (switch on and catalog active). */
+export interface TenantApplicationWorkspace extends ApplicationWorkspace {
+  is_active: boolean
+  enabled: boolean
+  switched_at: string | null
+}
+
+export interface TenantApplicationWorkspaces {
+  tenant_id: string
+  application_id: string
+  /** 'owner' sees every workspace whatever the switches say; null = tenant has no access to the app. */
+  access: 'owner' | 'granted' | null
+  workspaces: TenantApplicationWorkspace[]
+}
+
+export interface WorkspaceImportItem {
+  code: string
+  name: string
+  description?: string | null
+  sort_order?: number
+}

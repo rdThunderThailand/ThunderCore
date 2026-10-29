@@ -5,11 +5,12 @@ import { useApplicationStore } from '@/store/useApplicationStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { Application } from '@/types/applications'
 import {
-    AlertCircle, AppWindow, Code, ExternalLink, Globe, Loader2, Plus,
+    AlertCircle, AppWindow, Code, ExternalLink, Globe, LayoutGrid, Loader2, Plus,
     Search, Server, Settings, X
 } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { TenantWorkspacesModal } from './components/TenantWorkspacesModal'
 
 export function TenantsManagementidApplicationsClient({ basePath }: { basePath?: string } = {}) {
     const params = useParams()
@@ -29,6 +30,7 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
     // Modal States
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [editingApp, setEditingApp] = useState<Application | null>(null)
+    const [workspacesApp, setWorkspacesApp] = useState<Application | null>(null)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [showApiKey, setShowApiKey] = useState<{ id: string; name: string } | null>(null)
 
@@ -237,6 +239,15 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
                                                     Edit Details
                                                 </button>
                                             )}
+                                            {isSuperAdmin && (
+                                                <button
+                                                    onClick={() => setWorkspacesApp(app)}
+                                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 text-slate-900 text-xs font-black rounded-md hover:bg-slate-200 transition-all"
+                                                >
+                                                    <LayoutGrid className="w-4 h-4" />
+                                                    Workspaces
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => handleLaunch(app)}
                                                 disabled={!app.url}
@@ -254,6 +265,15 @@ export function TenantsManagementidApplicationsClient({ basePath }: { basePath?:
                         </div>
                     ))}
                 </div>
+            )}
+
+            {workspacesApp && (
+                <TenantWorkspacesModal
+                    tenantId={tenantId}
+                    appId={workspacesApp.id}
+                    appName={workspacesApp.name}
+                    onClose={() => setWorkspacesApp(null)}
+                />
             )}
 
             {/* Create/Edit Modal */}
