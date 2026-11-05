@@ -13,6 +13,7 @@ import {
     updateApplication,
 } from '../../actions'
 import { Application, ApplicationTenantsAccess } from '@/types'
+import { WorkspaceCatalogSection } from './components/WorkspaceCatalogSection'
 
 type TenantAccess = ApplicationTenantsAccess
 type AccessStatus = 'Active' | 'Scheduled' | 'Expired'
@@ -261,6 +262,8 @@ export function ApplicationidSettingsClient({ appId }: { appId: string }) {
 
                 <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} className="mt-2" />
             </section>
+
+            <WorkspaceCatalogSection appId={appId} />
 
             {isAddOpen && (
                 <AddTenantModal

@@ -1,5 +1,6 @@
 'use server'
 
+import * as applicationWorkspaces from '@/lib/application-workspaces'
 import * as tenantApplications from '@/lib/tenant-applications'
 
 // Server Action boundary for the tenant-scoped applications surface — delegates to the src/lib seam.
@@ -55,4 +56,17 @@ export async function launchApplication(
     applicationId: string
 ) {
     return tenantApplications.launchTenantApplication(tenantId, applicationId)
+}
+
+export async function getTenantApplicationWorkspaces(tenantId: string, applicationId: string) {
+    return applicationWorkspaces.getTenantApplicationWorkspaces(tenantId, applicationId)
+}
+
+export async function setTenantApplicationWorkspace(
+    tenantId: string,
+    applicationId: string,
+    workspaceId: string,
+    isActive: boolean
+) {
+    return applicationWorkspaces.setTenantApplicationWorkspace(tenantId, applicationId, workspaceId, isActive)
 }

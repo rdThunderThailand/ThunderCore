@@ -11,6 +11,34 @@ decisions were made). This file is the *history*; those are the *rules*.
 
 ---
 
+## 2026-10-29 — Per-tenant workspace switches (Thunder One)
+
+**Branch:** `feat/tenant-workspace-toggle` · **Pairs with:** Thunder_Core + thunder_one_prj branches of the same name
+
+**Goal:** super admin imports an application's workspaces (e.g. Media Workspace, Asset Workspace) and
+switches each one on/off per tenant; Thunder One shows a tenant only what is switched on.
+Contract: Thunder_Core `docs/api/application-workspaces.md`.
+
+**Done + verified:**
+- `src/lib/application-workspaces.ts` — seam for the 6 new Core endpoints (+ dev-bypass in-memory mock).
+- Application settings (`/applications/[id]/settings`) → new **Workspaces** section
+  (`components/WorkspaceCatalogSection.tsx`): import box (one per line, `Name` or `code | Name`,
+  parsed by `workspace-import.ts`), Active/Inactive per workspace, delete with confirm.
+- Tenant › Applications (`/tenants/management/[code]/applications`) → **Workspaces** button on each
+  app card (super admin only) → `components/TenantWorkspacesModal.tsx` with an on/off switch per
+  workspace (optimistic, rollback + toast).
+- `eslint` clean on touched files; `tsc` shows only pre-existing errors (logo.png imports).
+  Import parser checked ad hoc with node.
+
+**Not done / next up:**
+- **Not verified against real Thunder Core** — needs the Core migration pushed to develop
+  (owner) and the Core branch running. E2E column in `docs/api-checklist.md` is still ⬜.
+- E2E checklist: import "Media Workspace / Asset Workspace" → switch Asset Workspace on for a
+  non-owner tenant → log into Thunder One as that tenant → launcher shows it; switch off → gone and
+  `/asset-workspace` redirects.
+
+---
+
 ## 2026-08-27 — Invite-new-member-by-email: send flow finished, accept flow built
 
 **Branch:** `fix/tenants-lint` · **Commits:** none yet (uncommitted — user is actively editing
