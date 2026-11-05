@@ -30,6 +30,8 @@ export async function getAllTenantsForSelect(): Promise<Array<{ id: string; name
 /** Add-tenant-access picker — only sub-tenants of the app's owning tenant. */
 export async function getSubTenantsForSelect(tenantId: string): Promise<Array<{ id: string; name: string }>> {
     if (isDevBypass()) return MOCK_TENANTS.map(({ id, name }) => ({ id, name }))
+    // Platform-level apps have no owning tenant; an empty id would hit `/tenants//sub-tenants` (308 → 400).
+    if (!tenantId) return getAllTenantsForSelect()
     const res = await thunderCore.get<ThunderResponse<Tenant[]>>(`/tenants/${tenantId}/sub-tenants`)
     return res.data.data.map((t) => ({ id: t.id, name: t.name }))
 }
