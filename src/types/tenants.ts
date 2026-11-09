@@ -15,6 +15,8 @@ export interface Tenant {
     contactEmail?: string | null;
     websiteUrl?: string | null;
     description?: string | null;
+    /** Parent tenant id (Core `parent_tenant_id`); null for a top-level tenant. Partners of the parent manage this tenant (Thunder_Core ADR 0027). */
+    parentTenantId?: string | null;
 }
 
 export interface TenantDashboardMember {

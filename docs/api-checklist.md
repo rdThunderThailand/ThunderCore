@@ -44,6 +44,9 @@
 
 ---
 
+| `GET /tenants/:id/sub-tenants` | child tenants (Child Tenants page) — `getChildTenants` | ✅ | ✅ | ⬜ |
+| `PATCH /tenants/:id` `parent_tenant_id` | attach / detach a child (super admin) | ✅ | ✅ | ⬜ |
+
 ## 3. Members · `src/lib/members.ts`, `member-applications.ts`
 role : company_admin
 | Endpoint | ทำอะไร | BE | FE | E2E |

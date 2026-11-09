@@ -98,6 +98,8 @@ function getManagementBreadcrumbs(pathname: string, isSuperAdmin: boolean): Crum
         } else if (rest[0] === "members") {
             crumbs.push({ label: "Tenant Members", href: `${base}/members` });
             if (rest[1] && rest[2] === "settings") crumbs.push({ label: "Member Settings", href: pathname });
+        } else if (rest[0] === "children") {
+            crumbs.push({ label: "Child Tenants", href: pathname });
         } else if (rest[0] === "settings") {
             crumbs.push({ label: "Tenant Settings", href: pathname });
         }

@@ -49,6 +49,8 @@ export type TenantInput = {
     contact_email?: string
     website_url?: string
     description?: string
+    /** Super admin only (Core checks). null = top-level. */
+    parent_tenant_id?: string | null
 }
 
 export async function createTenant(data: TenantInput): Promise<Tenant> {
@@ -70,6 +72,13 @@ export async function createTenant(data: TenantInput): Promise<Tenant> {
     }
     // tenant_code is generated server-side — nothing to send for it.
     const res = await thunderCore.post<ThunderResponse<Tenant>>('/tenants', data)
+    return res.data.data
+}
+
+/** Direct child tenants (Core GET /tenants/:id/sub-tenants). */
+export async function getChildTenants(tenantId: string): Promise<Tenant[]> {
+    if (isDevBypass()) return MOCK_TENANTS.filter((t) => t.parentTenantId === tenantId)
+    const res = await thunderCore.get<ThunderResponse<Tenant[]>>(`/tenants/${tenantId}/sub-tenants`)
     return res.data.data
 }
 

@@ -11,6 +11,27 @@ decisions were made). This file is the *history*; those are the *rules*.
 
 ---
 
+## 2026-11-09 — Parent / child tenants (super admin)
+
+**Branch:** `feat/tenant-parent` · **Pairs with:** Thunder_Core `feat/tenant-parent` (parent_tenant_id on POST/PATCH /tenants)
+
+**Goal:** a super admin attaches a tenant under a parent, so Partners of the parent (Thunder_Core ADR 0027)
+can switch into it from Thunder One.
+
+**Done + verified:**
+- Tenant › **Child Tenants** page (`/tenants/management/[code]/children`, super admin): list direct children,
+  attach an existing tenant (picker excludes self, current children and ancestors), detach with confirm.
+- Create tenant modal: optional **Parent tenant** select.
+- `src/lib/tenants.ts`: `getChildTenants` (GET /tenants/:id/sub-tenants), `parent_tenant_id` on create/update.
+- `tsc` (only the old logo.png errors), `eslint` on touched files, `next build` exit 0.
+
+**Not done / next up:**
+- **Not verified against real Thunder Core** — needs the Core PR deployed.
+- E2E: Tenants → Create with parent → Child Tenants of the parent lists it → detach → gone; try attaching
+  a parent under its own child → Core refuses with "would create a cycle".
+
+---
+
 ## 2026-10-29 — Per-tenant workspace switches (Thunder One)
 
 **Branch:** `feat/tenant-workspace-toggle` · **Pairs with:** Thunder_Core + thunder_one_prj branches of the same name
