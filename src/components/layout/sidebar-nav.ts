@@ -1,4 +1,4 @@
-import { AppWindow, BarChart3, LayoutDashboard, LayoutGrid, MonitorCog, Radar, Settings, SquareKanban, Trash2, UsersRound } from "lucide-react";
+import { AppWindow, BarChart3, Network, LayoutDashboard, LayoutGrid, MonitorCog, Radar, Settings, SquareKanban, Trash2, UsersRound } from "lucide-react";
 import { NavItem } from "./SideBar";
 
 export const defaultNavigationItems: NavItem[] = [
@@ -16,6 +16,7 @@ export const getSuperAdminNavigationItemsAtManagement = (tenantId: string): NavI
     { label: "Assets", href: `/tenants/management/${tenantId}/assets`, icon: MonitorCog },
     { label: "Applications", href: `/tenants/management/${tenantId}/applications`, icon: AppWindow },
     { label: "Members", href: `/tenants/management/${tenantId}/members`, icon: UsersRound },
+    { label: "Child Tenants", href: `/tenants/management/${tenantId}/children`, icon: Network },
     { label: "Tenant Settings", href: `/tenants/management/${tenantId}/settings`, icon: Settings },
 ];
 
