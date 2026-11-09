@@ -138,7 +138,8 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
     const [formData, setFormData] = useState({
         name: '',
         type: 'enterprise' as Tenant['type'],
-        status: 'active' as Tenant['status']
+        status: 'active' as Tenant['status'],
+        parentTenantId: ''
     })
 
     const handleSave = async () => {
@@ -152,7 +153,7 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
 
         try {
             if (editingOrg) {
-                const updated = await updateTenant(editingOrg.id, formData)
+                const updated = await updateTenant(editingOrg.id, { name: formData.name, type: formData.type, status: formData.status })
                 setOrgs(orgs.map(o => o.id === editingOrg.id ? updated : o))
                 toast.success('Tenant updated successfully.')
                 setIsModalOpen(false)
@@ -162,10 +163,10 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
                     setIsLoading(false)
                     return
                 }
-                const newOrg = await createTenant(formData)
+                const newOrg = await createTenant({ name: formData.name, type: formData.type, status: formData.status, parent_tenant_id: formData.parentTenantId || null })
                 setOrgs([newOrg, ...orgs])
                 setIsModalOpen(false)
-                setFormData({ name: '', type: 'enterprise', status: 'active' })
+                setFormData({ name: '', type: 'enterprise', status: 'active', parentTenantId: '' })
                 router.push(`/tenants/management/${newOrg.id}/settings?created=true`)
             }
         } catch (err) {
@@ -202,10 +203,10 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
     const openModal = (org?: Tenant) => {
         if (org) {
             setEditingOrg(org)
-            setFormData({ name: org.name, type: org.type, status: org.status })
+            setFormData({ name: org.name, type: org.type, status: org.status, parentTenantId: org.parentTenantId ?? '' })
         } else {
             setEditingOrg(null)
-            setFormData({ name: '', type: 'enterprise', status: 'active' })
+            setFormData({ name: '', type: 'enterprise', status: 'active', parentTenantId: '' })
         }
         setIsModalOpen(true)
         setError(null)
@@ -497,6 +498,22 @@ export function TenantsClient({ initialTenants, userRole, usageStats }: TenantsC
                                         placeholder={t('modal.enterOrgName')}
                                     />
                                 </div>
+
+                                {!editingOrg && (
+                                    <div className="space-y-2">
+                                        <label htmlFor="parent-tenant" className="block text-sm font-semibold text-slate-700">Parent tenant (optional)</label>
+                                        <select
+                                            id="parent-tenant"
+                                            value={formData.parentTenantId}
+                                            onChange={(e) => setFormData({ ...formData, parentTenantId: e.target.value })}
+                                            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white"
+                                        >
+                                            <option value="">— None (top-level tenant) —</option>
+                                            {orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                                        </select>
+                                        <p className="text-xs text-slate-500">Partners of the parent tenant can switch into and manage this tenant.</p>
+                                    </div>
+                                )}
 
                                 {/* Hidden default fields if needed, or just removed from UI since screenshot doesn't show them */}
 

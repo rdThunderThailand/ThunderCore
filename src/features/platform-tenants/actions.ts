@@ -5,7 +5,7 @@ import { Tenant } from '@/types/tenants'
 
 // Server Action boundary for the tenants surface — delegates to the src/lib seam.
 
-export async function createTenant(data: { name: string; type: Tenant['type']; status: Tenant['status'] }) {
+export async function createTenant(data: { name: string; type: Tenant['type']; status: Tenant['status']; parent_tenant_id?: string | null }) {
     return tenants.createTenant(data)
 }
 
